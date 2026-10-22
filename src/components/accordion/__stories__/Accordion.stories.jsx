@@ -1,30 +1,40 @@
-import React from 'react'
-import { Bars3Icon, PlusIcon } from '@heroicons/react/24/solid'
-import { brandTheme } from '../../../styles'
-import { Accordion } from '../Accordion'
+import React from 'react';
+import { Bars3Icon, PlusIcon } from '@heroicons/react/24/solid';
+import { Accordion } from '../Accordion';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const appearances = ['default', 'label', 'outline', 'text'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
 
-const accordionVariants = [
-  'default',
-  ...Object.keys(brandTheme.colors).filter(color => ['primary', 'secondary'].includes(color)),
-]
+const accordionItems = [
+  { id: '1', title: 'Accordion Item 1', content: 'Content for the first accordion item' },
+  { id: '2', title: 'Accordion Item 2', content: 'Content for the second accordion item' },
+  { id: '3', title: 'Accordion Item 3', content: 'Content for the third accordion item' },
+];
+
+const baseArgs = {
+  items: accordionItems,
+  allowMultiple: false,
+  variant: 'default',
+  tone: 'primary',
+  size: 'normal',
+  iconPosition: 'right',
+};
 
 export default {
   component: Accordion,
-  title: 'Components/Accordion',
+  title: 'Data Display/Accordion',
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
         component:
-          'An accessible accordion with a neutral default style and primary or secondary color variants. Use custom collapsed and expanded icons when needed.',
+          'An accessible accordion with Button-style default (solid), label (tinted), outline, and text header variants, six tones, two sizes, and customizable icons. Previous outlined, filled, and standard values remain aliases for outline, default, and text.',
       },
     },
   },
+  args: baseArgs,
   argTypes: {
     allowMultiple: {
       control: { type: 'inline-radio' },
@@ -34,19 +44,25 @@ export default {
         false: 'Single panel only',
       },
       description: 'When true, multiple accordion panels can stay open at once.',
-      table: {
-        category: 'Behavior',
-        defaultValue: { summary: false },
-      },
+      table: { category: 'Behavior', defaultValue: { summary: false } },
     },
     variant: {
       control: 'select',
-      options: accordionVariants,
-      description: 'Choose the accordion color treatment.',
-      table: {
-        category: 'Appearance',
-        defaultValue: { summary: 'default' },
-      },
+      options: appearances,
+      description: 'Matches Button variants: solid default, tinted label, outline, or text.',
+      table: { category: 'Appearance', defaultValue: { summary: 'default' } },
+    },
+    tone: {
+      control: 'select',
+      options: tones,
+      description: 'Choose the tone for the header background, text, border, and interaction states.',
+      table: { category: 'Appearance', defaultValue: { summary: 'primary' } },
+    },
+    size: {
+      control: 'select',
+      options: ['small', 'normal'],
+      description: 'Controls the header height, typography, and content spacing.',
+      table: { category: 'Layout', defaultValue: { summary: 'normal' } },
     },
     className: {
       control: 'text',
@@ -57,10 +73,7 @@ export default {
       control: 'inline-radio',
       options: ['left', 'right'],
       description: 'Places the collapsed or expanded icon before or after the title.',
-      table: {
-        category: 'Icons',
-        defaultValue: { summary: 'right' },
-      },
+      table: { category: 'Icons', defaultValue: { summary: 'right' } },
     },
     items: {
       control: 'object',
@@ -69,117 +82,64 @@ export default {
     },
     collapsedIcon: { table: { disable: true } },
     expandedIcon: { table: { disable: true } },
+    children: { table: { disable: true } },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            color: activeTheme.colors.text,
-            border: `1px solid ${activeTheme.colors.border}`,
-            padding: '16px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
+export const Playground = {};
 
-const accordionItems = [
-  { id: '1', title: 'Accordion Item 1', content: 'Content for the first accordion item' },
-  { id: '2', title: 'Accordion Item 2', content: 'Content for the second accordion item' },
-  { id: '3', title: 'Accordion Item 3', content: 'Content for the third accordion item' },
-]
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      {appearances.map((variant) => (
+        <Accordion key={variant} {...args} variant={variant} />
+      ))}
+    </Frame>
+  ),
+};
 
-const baseArgs = {
-  items: accordionItems,
-  allowMultiple: false,
-  variant: 'default',
-  iconPosition: 'right',
-}
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Accordion key={tone} {...args} tone={tone} items={[accordionItems[0]]} />
+      ))}
+    </Frame>
+  ),
+};
 
-export const Default = {
-  name: 'Default variant',
-  args: baseArgs,
-}
+export const Sizes = {
+  render: (args) => (
+    <Frame>
+      <Accordion {...args} size="small" />
+      <Accordion {...args} size="normal" />
+    </Frame>
+  ),
+};
 
-export const Primary = {
-  name: 'Primary variant',
-  args: {
-    ...baseArgs,
-    variant: 'primary',
-  },
-}
-
-export const Secondary = {
-  name: 'Secondary variant',
-  args: {
-    ...baseArgs,
-    variant: 'secondary',
-  },
-}
-
-export const MultiOpen = {
-  name: 'Multiple panels open',
-  args: {
-    ...baseArgs,
-    allowMultiple: true,
-  },
-  parameters: {
-    docs: {
-      description: {
-        story: 'Allows more than one panel to remain open at the same time.',
-      },
-    },
-  },
-}
+export const States = {
+  render: (args) => (
+    <Frame>
+      <section>
+        <h2 className="mb-2 text-18 font-semibold text-text-primary">Single panel open</h2>
+        <Accordion {...args} allowMultiple={false} />
+      </section>
+      <section>
+        <h2 className="mb-2 text-18 font-semibold text-text-primary">Multiple panels open</h2>
+        <Accordion {...args} allowMultiple />
+      </section>
+    </Frame>
+  ),
+};
 
 const customIconArgs = {
-  collapsedIcon: <PlusIcon width='1em' height='1em' aria-hidden='true' />,
-  expandedIcon: <Bars3Icon width='1em' height='1em' aria-hidden='true' />,
-}
+  collapsedIcon: <PlusIcon className="size-4" aria-hidden="true" />,
+  expandedIcon: <Bars3Icon className="size-4" aria-hidden="true" />,
+};
 
-export const DefaultWithCustomIcons = {
-  name: 'Default with custom icons',
-  args: {
-    ...baseArgs,
-    ...customIconArgs,
-  },
+export const WithIcons = {
+  args: customIconArgs,
   parameters: {
-    docs: {
-      description: {
-        story: 'The default variant with custom icons for collapsed and expanded states.',
-      },
-    },
+    docs: { description: { story: 'Use custom icons for collapsed and expanded states.' } },
   },
-}
-
-export const PrimaryWithCustomIcons = {
-  name: 'Primary with custom icons',
-  args: {
-    ...Primary.args,
-    ...customIconArgs,
-  },
-}
-
-export const SecondaryWithCustomIcons = {
-  name: 'Secondary with custom icons',
-  args: {
-    ...Secondary.args,
-    ...customIconArgs,
-  },
-}
-
-export const IconsLeftDefault = {
-  name: 'Custom icons on the left',
-  args: {
-    ...baseArgs,
-    ...customIconArgs,
-    iconPosition: 'left',
-  },
-}
+};

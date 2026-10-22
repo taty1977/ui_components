@@ -1,17 +1,19 @@
-import React from 'react';
-interface AccordionItem {
-    id: string;
-    title: string;
-    content?: React.ReactNode;
-}
-export type AccordionVariant = 'default' | 'leftIcon';
+import { type ReactNode } from 'react';
+export type AccordionVariant = 'default' | 'primary' | 'secondary';
+export type AccordionIconPosition = 'left' | 'right';
 export interface AccordionProps {
-    items: AccordionItem[];
+    items: {
+        id: string;
+        title: string;
+        content?: ReactNode;
+    }[];
+    className?: string;
     allowMultiple?: boolean;
-    collapsedIcon?: React.ReactNode;
-    expandedIcon?: React.ReactNode;
+    collapsedIcon?: ReactNode;
+    expandedIcon?: ReactNode;
+    iconPosition?: AccordionIconPosition;
     variant?: AccordionVariant;
-    children?: React.ReactNode;
+    children?: ReactNode;
 }
-export declare const Accordion: ({ items, allowMultiple, collapsedIcon, expandedIcon, variant, children, }: AccordionProps) => import("react/jsx-runtime").JSX.Element;
+export declare function Accordion({ items, className, allowMultiple, collapsedIcon, expandedIcon, iconPosition, variant, children, }: AccordionProps): import("react/jsx-runtime").JSX.Element;
 export default Accordion;

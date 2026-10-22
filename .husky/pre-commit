@@ -1,1 +1,4 @@
-npm test -- --runInBand
+npx lint-staged
+npm run check-tokens
+npm run typecheck
+npm test

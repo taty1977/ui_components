@@ -1,11 +1,10 @@
-import React from 'react'
-import { brandTheme } from '../../../styles'
-import { Carousel } from '../Carousel'
-import Heading from '../../heading/Heading'
+import React from 'react';
+import { fn } from 'storybook/test';
+import { Carousel } from '../Carousel';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const appearances = ['label', 'outline', 'text'];
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid w-full min-w-0 gap-6">{children}</div>;
 
 const createGalleryImage = (background, accent) =>
   `data:image/svg+xml,${encodeURIComponent(`
@@ -14,58 +13,13 @@ const createGalleryImage = (background, accent) =>
       <circle cx="600" cy="400" r="240" fill="${accent}" />
       <rect x="410" y="310" width="380" height="180" rx="90" fill="#ffffff" opacity="0.92" />
     </svg>
-  `)}`
+  `)}`;
 
-const renderShowcase = (args, context) => {
-  const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
-  const titleId = `gallery-showcase-title-${context.id}`
-
-  return (
-    <main
-      aria-labelledby={titleId}
-      style={{
-        background: activeTheme.colors.surface,
-        color: activeTheme.colors.text,
-        border: `1px solid ${activeTheme.colors.border}`,
-        padding: activeTheme.spaces.lg,
-        borderRadius: activeTheme.sizes.sz_075,
-        display: 'grid',
-        gap: activeTheme.spaces.lg,
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gap: '8px',
-        }}
-      >
-        <span
-          style={{
-            fontSize: '12px',
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: activeTheme.colors.mutedText,
-          }}
-        >
-          Storybook Preview
-        </span>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <Heading id={titleId} level='h2' weight='extraBold'>
-              Performance Runner XZ
-            </Heading>
-            <p style={{ margin: '8px 0 0', color: activeTheme.colors.mutedText }}>
-              Preview the gallery across themes, breakpoints, and thumbnail positions.
-            </p>
-          </div>
-          <div style={{ alignSelf: 'start', fontWeight: 700, fontSize: '24px' }}>$189</div>
-        </div>
-      </div>
-
-      <Carousel {...args} />
-    </main>
-  )
-}
+const renderCarousel = (args) => (
+  <Frame>
+    <Carousel {...args} />
+  </Frame>
+);
 
 const imageSet = [
   {
@@ -110,10 +64,10 @@ const imageSet = [
     src: createGalleryImage('#f0f9ff', '#7dd3fc'),
     alt: 'Skyline blue product image',
   },
-]
+];
 
 const meta = {
-  title: 'Components/Carousel',
+  title: 'Data Display/Carousel',
   component: Carousel,
   tags: ['autodocs'],
   parameters: {
@@ -121,15 +75,18 @@ const meta = {
     docs: {
       description: {
         component:
-          'An ecommerce-ready product image carousel with responsive thumbnails, indicators, favorites, keyboard navigation, and an accessible modal gallery.',
+          'A product image carousel with Button-style label (tinted), outline, and text frames and controls in six tones. Includes responsive thumbnails, indicators, favorites, keyboard navigation, and an accessible modal gallery. Legacy primary and secondary variants retain their original neutral frames and accented controls.',
       },
     },
   },
-  render: renderShowcase,
+  render: renderCarousel,
   args: {
+    onImageChange: fn(),
+    className: 'border-0 bg-transparent',
     images: imageSet,
     likeButton: true,
-    variant: 'primary',
+    variant: 'outline',
+    tone: 'primary',
     showThumbnails: true,
     thumbnailsPosition: 'bottom',
     showIndicators: true,
@@ -149,8 +106,14 @@ const meta = {
     },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary'],
-      description: 'Selects the color treatment for active carousel controls.',
+      options: appearances,
+      description: 'Matches Button appearances for the carousel frame and navigation controls.',
+      table: { category: 'Appearance' },
+    },
+    tone: {
+      control: 'select',
+      options: tones,
+      description: 'Sets the tone for the frame, controls, active thumbnails, indicators, and badges.',
       table: { category: 'Appearance' },
     },
     className: {
@@ -201,75 +164,76 @@ const meta = {
       table: { category: 'Content' },
     },
     onImageChange: {
-      table: { disable: true },
+      control: false,
+      description: 'Called with the selected index and image when navigating.',
+      table: { category: 'Events' },
     },
   },
-}
+};
 
-export default meta
+export default meta;
 
-export const Default = {}
+export const Playground = {};
 
-export const NoThumbnails = {
-  args: {
-    showThumbnails: false,
-  },
-}
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      {appearances.map((variant) => (
+        <section key={variant} className="min-w-0">
+          <h2 className="mb-2 text-18 font-semibold text-text-primary">{variant}</h2>
+          <Carousel {...args} variant={variant} ariaLabel={`${args.ariaLabel} - ${variant} variant`} />
+        </section>
+      ))}
+    </Frame>
+  ),
+};
 
-export const IndicatorsOnly = {
-  args: {
-    showThumbnails: false,
-    showIndicators: true,
-  },
-}
+export const Tones = {
+  args: { variant: 'label' },
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <section key={tone} className="min-w-0">
+          <h2 className="mb-2 text-18 font-semibold text-text-primary">{tone}</h2>
+          <Carousel {...args} tone={tone} ariaLabel={`${args.ariaLabel} - ${tone} tone`} />
+        </section>
+      ))}
+    </Frame>
+  ),
+};
 
-export const ThumbnailsOnly = {
-  args: {
-    showThumbnails: true,
-    showIndicators: false,
-  },
-}
+export const States = {
+  render: (args) => (
+    <Frame>
+      {[
+        { name: 'Single image', images: [imageSet[0]] },
+        { name: 'Without favorites', likeButton: false },
+        { name: 'Without modal opening', openOnClick: false },
+        { name: 'Empty', images: [] },
+      ].map(({ name, ...state }) => (
+        <section key={name} className="min-w-0">
+          <h2 className="mb-2 text-18 font-semibold text-text-primary">{name}</h2>
+          <Carousel {...args} {...state} ariaLabel={`${args.ariaLabel} - ${name}`} />
+        </section>
+      ))}
+    </Frame>
+  ),
+};
 
-export const WithoutModalOpening = {
-  args: {
-    openOnClick: false,
-  },
-}
-
-export const ThumbnailsLeft = {
-  args: {
-    thumbnailsPosition: 'left',
-  },
-}
-
-export const ThumbnailsRight = {
-  args: {
-    thumbnailsPosition: 'right',
-  },
-}
-
-export const StartFromMiddle = {
-  args: {
-    initialIndex: 2,
-  },
-}
-
-export const SingleImage = {
-  args: {
-    images: [imageSet[0]],
-  },
-}
-
-export const MissingAltFallback = {
-  args: {
-    images: [{ ...imageSet[0], alt: ' ' }],
-    showThumbnails: false,
-    showIndicators: false,
-  },
-}
-
-export const WithoutLikeButton = {
-  args: {
-    likeButton: false,
-  },
-}
+export const ThumbnailPositions = {
+  render: (args) => (
+    <Frame>
+      {['bottom', 'left', 'right'].map((position) => (
+        <section key={position} className="min-w-0">
+          <h2 className="mb-2 text-18 font-semibold text-text-primary">{position}</h2>
+          <Carousel
+            {...args}
+            showThumbnails
+            thumbnailsPosition={position}
+            ariaLabel={`${args.ariaLabel} - ${position} thumbnails`}
+          />
+        </section>
+      ))}
+    </Frame>
+  ),
+};

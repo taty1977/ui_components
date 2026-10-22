@@ -1,7 +1,7 @@
-import React, { useCallback, useId, useMemo } from 'react'
-import styled, { useTheme } from 'styled-components'
-import type { ThemeType } from '../../styles/theme'
-import Heading from '../heading/Heading'
+import React, { useCallback, useId, useMemo } from 'react';
+import { cn } from '../../utils/cn';
+import Heading from '../heading/Heading';
+import type { ButtonTone } from '../button/button.styles';
 import {
   ResponsiveContainer,
   LineChart,
@@ -17,157 +17,83 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-} from 'recharts'
+} from 'recharts';
 
 export interface ChartSeries {
-  dataKey: string
-  name?: string
-  color?: string
-  strokeWidth?: number
-  dot?: boolean | object
-  activeDot?: boolean | object
-  fillOpacity?: number
-  radius?: [number, number, number, number] | number
+  dataKey: string;
+  name?: string;
+  color?: string;
+  strokeWidth?: number;
+  dot?: boolean | object;
+  activeDot?: boolean | object;
+  fillOpacity?: number;
+  radius?: [number, number, number, number] | number;
 }
 
 export interface ChartDataItem {
-  [key: string]: any
+  [key: string]: unknown;
 }
-
-export type ChartVariant = 'primary' | 'secondary'
 
 export interface ChartProps {
   /** Chart type to display */
-  type?: 'line' | 'bar' | 'area' | 'pie'
-  /** Theme color treatment for the default series palette */
-  variant?: ChartVariant
+  type?: 'line' | 'bar' | 'area' | 'pie';
+  /** Leading default series color */
+  tone?: ButtonTone;
   /** Data points for the chart */
-  data: ChartDataItem[]
+  data: ChartDataItem[];
   /** Series configuration for lines/bars/areas or pie dataKey */
-  series: ChartSeries[]
+  series: ChartSeries[];
   /** Custom color palette for series/slices (overrides theme palette) */
-  colors?: string[]
+  colors?: string[];
   /** Custom stroke color for grid lines (overrides theme border color) */
-  gridColor?: string
+  gridColor?: string;
   /** Custom text color for axes and legend (overrides theme mutedText color) */
-  textColor?: string
+  textColor?: string;
   /** Custom background color for tooltips (overrides theme surface color) */
-  tooltipBgColor?: string
+  tooltipBgColor?: string;
   /** Custom border color for tooltips (overrides theme border color) */
-  tooltipBorderColor?: string
+  tooltipBorderColor?: string;
   /** Key for the X-axis (category axis) */
-  xAxisKey?: string
+  xAxisKey?: string;
   /** Title shown above the chart */
-  title?: string
+  title?: string;
   /** Short description shown below the title */
-  description?: string
+  description?: string;
   /** Accessible ARIA label for screen readers */
-  ariaLabel?: string
+  ariaLabel?: string;
   /** Height of the chart container (e.g., 300 or "100%") */
-  height?: number | string
+  height?: number | string;
   /** Stroke width for lines and area borders */
-  strokeWidth?: number
+  strokeWidth?: number;
   /** Dot config or boolean for line chart data points */
-  dot?: boolean | object
+  dot?: boolean | object;
   /** Active dot config or boolean for hovered line data points */
-  activeDot?: boolean | object
+  activeDot?: boolean | object;
   /** Fill opacity for area chart areas */
-  fillOpacity?: number
+  fillOpacity?: number;
   /** Border radius for bar chart bars */
-  barRadius?: [number, number, number, number] | number
+  barRadius?: [number, number, number, number] | number;
   /** Outer radius for pie chart */
-  outerRadius?: number | string
+  outerRadius?: number | string;
   /** Inner radius for pie chart (e.g. for donut charts) */
-  innerRadius?: number | string
+  innerRadius?: number | string;
   /** Show background grid lines */
-  showGrid?: boolean
+  showGrid?: boolean;
   /** Show hover tooltip */
-  showTooltip?: boolean
+  showTooltip?: boolean;
   /** Show series legend */
-  showLegend?: boolean
+  showLegend?: boolean;
   /** Optional custom CSS class name */
-  className?: string
+  className?: string;
 }
 
-const ChartContainer = styled.div<{ $variant: ChartVariant }>`
-  width: 100%;
-  box-sizing: border-box;
-  font-family: ${({ theme }) => theme.fontFamily};
-  background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme, $variant }) => theme.colors[$variant].border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  padding: ${({ theme }) => theme.spaces.lg};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-`
-
-const Header = styled.div`
-  margin-bottom: ${({ theme }) => theme.spaces.md};
-`
-
-const Description = styled.p`
-  margin: ${({ theme }) => `${theme.spaces.xs} 0 0`};
-  color: ${({ theme }) => theme.colors.text};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`
-
-const ChartWrapper = styled.div<{ $height: number | string }>`
-  width: 100%;
-  height: ${({ $height }) => (typeof $height === 'number' ? `${$height}px` : $height)};
-  min-height: ${({ theme }) => theme.sizes.sz_1200};
-  background-color: ${({ theme }) => theme.colors.surface};
-
-  & .recharts-default-legend,
-  & .recharts-legend-wrapper,
-  & .recharts-legend-item,
-  & .recharts-legend-item-text {
-    color: ${({ theme }) => theme.colors.text} !important;
-  }
-
-  & .recharts-text,
-  & .recharts-cartesian-axis-tick-value,
-  & .recharts-pie-label-text,
-  & .recharts-label {
-    fill: ${({ theme }) => theme.colors.text} !important;
-  }
-`
-
-const VisuallyHidden = styled.div`
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-`
-
-const getVariantPalette = (theme: ThemeType, variant: ChartVariant) => {
-  if (variant === 'secondary') {
-    return [
-      theme.colors.secondary.base,
-      theme.colors.primary.base,
-      theme.colors.nature.base,
-      theme.colors.secondary.hover,
-      theme.colors.primary.hover,
-      theme.colors.nature.hover,
-    ]
-  }
-
-  return [
-    theme.colors.primary.base,
-    theme.colors.secondary.base,
-    theme.colors.nature.base,
-    theme.colors.primary.hover,
-    theme.colors.secondary.hover,
-    theme.colors.nature.hover,
-  ]
-}
+const paletteTones: ButtonTone[] = ['primary', 'secondary', 'success', 'info', 'warning', 'error'];
+const getTonePalette = (tone: ButtonTone) =>
+  [tone, ...paletteTones.filter((entry) => entry !== tone)].map((entry) => `var(--palette-${entry}-main)`);
 
 export const Chart: React.FC<ChartProps> = ({
   type = 'line',
-  variant = 'primary',
+  tone = 'primary',
   data,
   series,
   colors,
@@ -192,40 +118,34 @@ export const Chart: React.FC<ChartProps> = ({
   showLegend = true,
   className,
 }) => {
-  const theme = useTheme()
-  const chartId = useId()
-  const titleId = `${chartId}-title`
-  const descriptionId = `${chartId}-desc`
-
-  // Explicit palettes take precedence; the selected variant sets the leading series color.
+  const chartId = useId();
+  const titleId = `${chartId}-title`;
+  const descriptionId = `${chartId}-desc`;
+  // Explicit palettes take precedence; tone sets the leading series color.
   const palette = useMemo(() => {
     if (colors && colors.length > 0) {
-      return colors
+      return colors;
     }
-    if (theme?.colors) {
-      return getVariantPalette(theme as ThemeType, variant)
-    }
-    return []
-  }, [colors, theme, variant])
+    return getTonePalette(tone);
+  }, [colors, tone]);
 
   // Resolve series color
   const getColor = useCallback(
     (seriesItem: ChartSeries, index: number) => {
-      return seriesItem.color || palette[index % palette.length]
+      return seriesItem.color || palette[index % palette.length];
     },
     [palette],
-  )
+  );
 
   // Resolve theme styles
   const { gridColor, textColor, customTooltipStyle, tooltipItemStyle, tooltipLabelStyle, axisTickStyle, legendStyle } =
     useMemo(() => {
-      const variantColors = theme?.colors?.[variant]
-      const grid = customGridColor || variantColors?.border || theme?.colors?.border
-      const text = customTextColor || theme?.colors?.text || theme?.colors?.title
-      const bg = customTooltipBgColor || variantColors?.surface || theme?.colors?.surface
-      const border = customTooltipBorderColor || variantColors?.border || theme?.colors?.border
-      const fontFamily = theme?.fontFamily
-      const fontSize = theme?.fontSizes?.sm
+      const grid = customGridColor || 'var(--border-subtle)';
+      const text = customTextColor || 'var(--text-primary)';
+      const bg = customTooltipBgColor || 'var(--background-surface)';
+      const border = customTooltipBorderColor || 'var(--border-subtle)';
+      const fontFamily = 'var(--font-family)';
+      const fontSize = 'var(--font-size-13)';
 
       return {
         gridColor: grid,
@@ -233,8 +153,7 @@ export const Chart: React.FC<ChartProps> = ({
         customTooltipStyle: {
           backgroundColor: bg,
           borderColor: border,
-          borderRadius: theme?.sizes?.sz_050,
-          boxShadow: theme?.boxShadow?.bs_03,
+          borderRadius: 'var(--radius-md)',
           color: text,
           fontSize,
           fontFamily,
@@ -245,7 +164,7 @@ export const Chart: React.FC<ChartProps> = ({
           fontFamily,
         },
         tooltipLabelStyle: {
-          color: variantColors?.base || theme?.colors?.title || text,
+          color: `var(--palette-${tone}-main)`,
           fontSize,
           fontFamily,
           fontWeight: 600,
@@ -260,42 +179,42 @@ export const Chart: React.FC<ChartProps> = ({
           fontSize,
           fontFamily,
         },
-      }
-    }, [customGridColor, customTextColor, customTooltipBgColor, customTooltipBorderColor, theme, variant])
+      };
+    }, [customGridColor, customTextColor, customTooltipBgColor, customTooltipBorderColor, tone]);
 
   const renderLegendFormatter = useCallback(
     (value: string) => <span style={{ color: textColor }}>{value}</span>,
     [textColor],
-  )
+  );
 
   // Shared Cartesian elements
   const renderCartesianElements = () => [
-    showGrid ? <CartesianGrid key='grid' strokeDasharray='3 3' stroke={gridColor} /> : null,
-    <XAxis key='xaxis' dataKey={xAxisKey} stroke={textColor} tick={axisTickStyle} />,
-    <YAxis key='yaxis' stroke={textColor} tick={axisTickStyle} />,
+    showGrid ? <CartesianGrid key="grid" strokeDasharray="3 3" stroke={gridColor} /> : null,
+    <XAxis key="xaxis" dataKey={xAxisKey} stroke={textColor} tick={axisTickStyle} />,
+    <YAxis key="yaxis" stroke={textColor} tick={axisTickStyle} />,
     showTooltip ? (
       <Tooltip
-        key='tooltip'
+        key="tooltip"
         contentStyle={customTooltipStyle}
         itemStyle={tooltipItemStyle}
         labelStyle={tooltipLabelStyle}
       />
     ) : null,
-    showLegend ? <Legend key='legend' wrapperStyle={legendStyle} formatter={renderLegendFormatter} /> : null,
-  ]
+    showLegend ? <Legend key="legend" wrapperStyle={legendStyle} formatter={renderLegendFormatter} /> : null,
+  ];
 
   // Render chart by type
   const renderChartContent = () => {
     switch (type) {
       case 'pie': {
-        const primarySeries = series[0]
-        const dataKey = primarySeries?.dataKey || 'value'
-        const nameKey = xAxisKey || 'name'
+        const primarySeries = series[0];
+        const dataKey = primarySeries?.dataKey || 'value';
+        const nameKey = xAxisKey || 'name';
 
         const pieData = data.map((item, index) => ({
           ...item,
           fill: item.fill || item.color || series[index]?.color || palette[index % palette.length],
-        }))
+        }));
 
         return (
           <PieChart>
@@ -307,14 +226,14 @@ export const Chart: React.FC<ChartProps> = ({
               data={pieData}
               dataKey={dataKey}
               nameKey={nameKey}
-              cx='50%'
-              cy='50%'
+              cx="50%"
+              cy="50%"
               innerRadius={innerRadius}
               outerRadius={outerRadius}
               label
             />
           </PieChart>
-        )
+        );
       }
 
       case 'bar':
@@ -331,18 +250,18 @@ export const Chart: React.FC<ChartProps> = ({
               />
             ))}
           </BarChart>
-        )
+        );
 
       case 'area':
         return (
           <AreaChart data={data}>
             {renderCartesianElements()}
             {series.map((s, i) => {
-              const color = getColor(s, i)
+              const color = getColor(s, i);
               return (
                 <Area
                   key={s.dataKey}
-                  type='monotone'
+                  type="monotone"
                   dataKey={s.dataKey}
                   name={s.name || s.dataKey}
                   stroke={color}
@@ -350,10 +269,10 @@ export const Chart: React.FC<ChartProps> = ({
                   fill={color}
                   fillOpacity={s.fillOpacity ?? fillOpacity}
                 />
-              )
+              );
             })}
           </AreaChart>
-        )
+        );
 
       case 'line':
       default:
@@ -363,7 +282,7 @@ export const Chart: React.FC<ChartProps> = ({
             {series.map((s, i) => (
               <Line
                 key={s.dataKey}
-                type='monotone'
+                type="monotone"
                 dataKey={s.dataKey}
                 name={s.name || s.dataKey}
                 stroke={getColor(s, i)}
@@ -373,36 +292,43 @@ export const Chart: React.FC<ChartProps> = ({
               />
             ))}
           </LineChart>
-        )
+        );
     }
-  }
+  };
 
   return (
-    <ChartContainer
-      className={className}
-      $variant={variant}
-      role='region'
+    <div
+      className={cn(
+        'w-full rounded-md border border-border-subtle bg-background-surface p-6 font-sans text-text-primary',
+        className,
+      )}
+      data-tone={tone}
+      role="region"
       aria-label={title ? undefined : ariaLabel || 'Chart'}
       aria-labelledby={title ? titleId : undefined}
       aria-describedby={description ? descriptionId : undefined}
     >
       {(title || description) && (
-        <Header>
+        <div className="mb-4">
           {title && (
-            <Heading id={titleId} level='h3' weight='semiBold'>
+            <Heading id={titleId} level="h3" weight="semiBold">
               {title}
             </Heading>
           )}
-          {description && <Description id={descriptionId}>{description}</Description>}
-        </Header>
+          {description && (
+            <p className="mt-1 text-13 text-text-secondary" id={descriptionId}>
+              {description}
+            </p>
+          )}
+        </div>
       )}
-      <VisuallyHidden>
+      <div className="sr-only">
         <table aria-label={title ? `${title} data` : ariaLabel || 'Chart data'}>
           <thead>
             <tr>
-              <th scope='col'>{xAxisKey}</th>
-              {series.map(s => (
-                <th key={s.dataKey} scope='col'>
+              <th scope="col">{xAxisKey}</th>
+              {series.map((s) => (
+                <th key={s.dataKey} scope="col">
                   {s.name || s.dataKey}
                 </th>
               ))}
@@ -411,22 +337,27 @@ export const Chart: React.FC<ChartProps> = ({
           <tbody>
             {data.map((item, idx) => (
               <tr key={idx}>
-                <td>{item[xAxisKey]}</td>
-                {series.map(s => (
-                  <td key={s.dataKey}>{item[s.dataKey]}</td>
+                <td>{String(item[xAxisKey] ?? '')}</td>
+                {series.map((s) => (
+                  <td key={s.dataKey}>{String(item[s.dataKey] ?? '')}</td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
-      </VisuallyHidden>
-      <ChartWrapper $height={height} role='img' aria-label={`${title || ariaLabel || 'Chart'} visualization`}>
-        <ResponsiveContainer width='100%' height='100%'>
+      </div>
+      <div
+        className="min-h-48 w-full rounded-md bg-background-surface text-text-primary"
+        style={{ height }}
+        role="img"
+        aria-label={`${title || ariaLabel || 'Chart'} visualization`}
+      >
+        <ResponsiveContainer width="100%" height="100%">
           {renderChartContent()}
         </ResponsiveContainer>
-      </ChartWrapper>
-    </ChartContainer>
-  )
-}
+      </div>
+    </div>
+  );
+};
 
-export default Chart
+export default Chart;

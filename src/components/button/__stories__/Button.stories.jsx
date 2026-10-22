@@ -1,199 +1,95 @@
-import React from 'react'
-import { ArrowRightIcon, PlusIcon } from '@heroicons/react/24/solid'
-import { brandTheme } from '../../../styles'
-import Button from '../Button'
+import React from 'react';
+import { fn } from 'storybook/test';
+import { ArrowRightIcon, PlusIcon } from '@heroicons/react/24/solid';
+import Button from '../Button';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const variants = ['default', 'label', 'outline', 'text'];
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid max-w-80 justify-items-start gap-6">{children}</div>;
+const renderButton = (args) => (
+  <Frame>
+    <Button {...args} />
+  </Frame>
+);
 
-const buttonVariants = Object.keys(brandTheme.colors).filter(color => ['primary', 'secondary'].includes(color))
-
-const meta = {
-  title: 'Components/Button',
+export default {
+  title: 'Inputs/Button',
   component: Button,
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
     docs: {
       description: {
-        component:
-          'A themed action button with primary and secondary colors, rectangle or pill shapes, outline styling, sizes, widths, disabled state, and optional icons.',
+        component: 'A themed button with solid, tinted, outline, and text appearances, six tones, and three sizes.',
       },
     },
   },
-  args: {
-    children: 'Continue',
-    size: 'default',
-    variant: 'primary',
-    outline: false,
-    shape: 'rectangle',
-    width: 'default',
-    disabled: false,
-    showLeftIcon: false,
-    showRightIcon: false,
-  },
+  args: { children: 'Continue', variant: 'default', tone: 'primary', size: 'md', disabled: false, onClick: fn() },
   argTypes: {
-    children: {
-      control: 'text',
-      description: 'Text or content displayed inside the button.',
-      table: { category: 'Content' },
-    },
-    className: {
-      control: 'text',
-      description: 'Optional custom CSS class name applied to the button.',
-      table: { category: 'Layout' },
-    },
-    size: {
-      control: 'select',
-      options: ['default', 'sm', 'md', 'lg'],
-      description: 'Controls the button padding and minimum height.',
-      table: { category: 'Sizing' },
-    },
-    variant: {
-      control: 'select',
-      options: buttonVariants,
-      description: 'Selects the button color treatment.',
-      table: { category: 'Appearance' },
-    },
-    outline: {
-      control: 'boolean',
-      description: 'Renders the button as an outline using the selected brand color.',
-      table: { category: 'Appearance' },
-    },
-    width: {
-      control: 'select',
-      options: ['default', 'sm', 'md', 'lg', 'full'],
-      description: 'Selects the button width preset.',
-      table: { category: 'Sizing' },
-    },
-    shape: {
-      control: 'select',
-      options: ['rectangle', 'pill'],
-      description: 'Selects the button corner radius style.',
-      table: { category: 'Appearance' },
-    },
-    disabled: {
-      control: 'boolean',
-      description: 'Disables interaction and applies disabled styling.',
-      table: { category: 'State' },
-    },
-    showLeftIcon: {
-      control: 'boolean',
-      description: 'Show the left icon.',
-      table: { category: 'Icons' },
-    },
-    showRightIcon: {
-      control: 'boolean',
-      description: 'Show the right icon.',
-      table: { category: 'Icons' },
-    },
-    iconLeft: {
-      table: { disable: true },
-    },
-    iconRight: {
-      table: { disable: true },
-    },
+    onClick: { control: false, description: 'Called when the button is activated.', table: { category: 'Events' } },
+    children: { control: 'text', table: { category: 'Content' } },
+    variant: { control: 'select', options: variants, table: { category: 'Appearance' } },
+    tone: { control: 'select', options: tones, table: { category: 'Appearance' } },
+    size: { control: 'select', options: ['sm', 'md', 'lg'], table: { category: 'Layout' } },
+    width: { control: 'select', options: ['auto', 'sm', 'md', 'lg', 'full'], table: { category: 'Layout' } },
+    shape: { control: 'select', options: ['rectangle', 'pill'], table: { category: 'Appearance' } },
+    disabled: { control: 'boolean', table: { category: 'State' } },
+    className: { control: 'text', table: { category: 'Layout' } },
+    iconLeft: { table: { disable: true } },
+    iconRight: { table: { disable: true } },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
-
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            border: `1px solid ${activeTheme.colors.border}`,
-            padding: '16px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
-
-export default meta
-
-const renderButton = ({ showLeftIcon, showRightIcon, ...args }) => (
-  <Button
-    {...args}
-    iconLeft={showLeftIcon ? <PlusIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-    iconRight={showRightIcon ? <ArrowRightIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-  />
-)
-
-export const Default = {
-  render: renderButton,
-}
-
-export const Primary = {
+};
+export const Playground = { render: renderButton };
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      {variants.map((variant) => (
+        <Button {...args} key={variant} variant={variant}>
+          {variant}
+        </Button>
+      ))}
+    </Frame>
+  ),
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Button {...args} key={tone} tone={tone}>
+          {tone}
+        </Button>
+      ))}
+    </Frame>
+  ),
+};
+export const WithIcons = {
   render: renderButton,
   args: {
-    variant: 'primary',
-    showLeftIcon: true,
-    showRightIcon: true,
+    iconLeft: <PlusIcon className="size-5" aria-hidden="true" />,
+    iconRight: <ArrowRightIcon className="size-5" aria-hidden="true" />,
   },
-}
-
-export const Secondary = {
-  render: renderButton,
-  args: {
-    variant: 'secondary',
-    showLeftIcon: true,
-    showRightIcon: true,
-  },
-}
-
-export const PrimaryPill = {
-  render: renderButton,
-  args: {
-    variant: 'primary',
-    shape: 'pill',
-  },
-}
-
-export const SecondaryPill = {
-  render: renderButton,
-  args: {
-    variant: 'secondary',
-    shape: 'pill',
-  },
-}
-
-export const OutlinePrimary = {
-  render: renderButton,
-  args: {
-    variant: 'primary',
-    outline: true,
-    showLeftIcon: true,
-    showRightIcon: true,
-  },
-}
-
-export const OutlineSecondary = {
-  render: renderButton,
-  args: {
-    variant: 'secondary',
-    outline: true,
-    showLeftIcon: true,
-    showRightIcon: true,
-    children: 'Secondary outline',
-  },
-}
-
-export const Disabled = {
-  render: renderButton,
-  args: {
-    disabled: true,
-  },
-}
-
-export const WithBothIcons = {
-  render: renderButton,
-  args: {
-    showLeftIcon: true,
-    showRightIcon: true,
-  },
-}
+};
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Button {...args} disabled={false}>
+        Enabled
+      </Button>
+      <Button {...args} disabled>
+        Disabled
+      </Button>
+    </Frame>
+  ),
+};
+export const Sizes = {
+  render: (args) => (
+    <Frame>
+      {['sm', 'md', 'lg'].map((size) => (
+        <Button {...args} key={size} size={size}>
+          {size}
+        </Button>
+      ))}
+    </Frame>
+  ),
+};
+export const FullWidth = { render: renderButton, args: { width: 'full' } };

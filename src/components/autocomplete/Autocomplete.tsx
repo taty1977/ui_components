@@ -1,337 +1,317 @@
-import React, { useId, useState } from 'react'
-import styled from 'styled-components'
-import { XMarkIcon } from '@heroicons/react/24/solid'
-import type { ThemeType } from '../../styles/theme'
-
-export type AutocompleteVariant = 'primary' | 'secondary'
-
-export interface AutocompleteProps
-  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'onSelect' | 'value'> {
-  options: string[]
-  onSelect: (option: string) => void
-  label?: string
-  error?: string
-  placeholder?: string
-  variant?: AutocompleteVariant
-  iconLeft?: React.ReactNode
-  iconRight?: React.ReactNode
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
-  value?: string
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type InputHTMLAttributes,
+  type ReactNode,
+  type ChangeEventHandler,
+} from 'react';
+import { XMarkIcon } from '@heroicons/react/24/solid';
+import { cn } from '../../utils/cn';
+import {
+  fieldStyles,
+  resolveFieldVariant,
+  fieldInputClasses,
+  fieldCenterAlignmentClasses,
+  toneClasses,
+  toneTextClasses,
+  notchToneClasses,
+  errorClasses,
+  optionListClasses,
+  type InputVariant,
+  type InputTone,
+  type InputSize,
+} from '../input/input.styles';
+import { LabelText } from '../input/LabelText';
+export type AutocompleteVariant = InputVariant;
+export interface AutocompleteProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'onChange' | 'onSelect' | 'value' | 'size'
+> {
+  options: string[];
+  onSelect: (option: string) => void;
+  label?: string;
+  helperText?: string;
+  error?: string;
+  variant?: AutocompleteVariant;
+  tone?: InputTone;
+  size?: InputSize | number;
+  iconLeft?: ReactNode;
+  iconRight?: ReactNode;
+  onChange?: ChangeEventHandler<HTMLInputElement>;
+  value?: string;
 }
-
-const AutocompleteContainer = styled.div`
-  position: relative;
-  width: 100%;
-  max-width: ${({ theme }) => theme.sizes.sz_2400};
-  font-family: ${({ theme }) => theme.fontFamily};
-`
-
-const InputWrapper = styled.div`
-  position: relative;
-`
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: ${({ theme }) => theme.spaces.sm};
-  color: ${({ theme }) => theme.colors.title};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
-`
-
-const RequiredIndicator = styled.span`
-  margin-left: ${({ theme }) => theme.spaces.xs};
-  color: ${({ theme }) => theme.actionColors.danger};
-`
-
-const getVariantAppearance = (theme: ThemeType, variant: AutocompleteVariant) => {
-  if (variant === 'secondary') {
-    return { color: theme.colors.secondary.base, focusBorder: theme.colors.secondary.focusBorder }
-  }
-
-  return { color: theme.colors.primary.base, focusBorder: theme.colors.primary.focusBorder }
-}
-
-const InputLeftIcon = styled.span<{ $variant: AutocompleteVariant }>`
-  position: absolute;
-  left: ${({ theme }) => theme.spaces.md};
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  pointer-events: none;
-
-  & > svg {
-    width: 100%;
-    height: 100%;
-  }
-`
-
-const InputRightIcon = styled.span<{ $variant: AutocompleteVariant }>`
-  position: absolute;
-  right: ${({ theme }) => theme.spaces.md};
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  pointer-events: none;
-
-  & > svg {
-    width: 100%;
-    height: 100%;
-  }
-`
-
-const ClearButton = styled.button<{ $variant: AutocompleteVariant }>`
-  position: absolute;
-  right: ${({ theme }) => theme.spaces.md};
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  border: none;
-  border-radius: ${({ theme }) => theme.sizes.sz_999};
-  background: transparent;
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  cursor: pointer;
-  padding: 0;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
-  }
-`
-
-const Input = styled.input<{
-  $hasLeftIcon?: boolean
-  $hasRightIcon?: boolean
-  $hasError?: boolean
-  $variant: AutocompleteVariant
-}>`
-  width: 100%;
-  box-sizing: border-box;
-  /* Reserve input space for optional icons and the contextual clear button. */
-  padding: ${({ theme, $hasLeftIcon, $hasRightIcon }) => {
-    const leftPadding = $hasLeftIcon ? `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})` : theme.spaces.lg
-    const rightPadding = $hasRightIcon ? `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})` : theme.spaces.lg
-    return `${theme.spaces.md} ${rightPadding} ${theme.spaces.md} ${leftPadding}`
-  }};
-  border: 1px solid ${({ theme, $hasError }) => ($hasError ? theme.actionColors.danger : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.title};
-  font-family: ${({ theme }) => theme.fontFamily};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.fontWeights.normal};
-  line-height: 1.4;
-  outline: none;
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.mutedText};
-  }
-
-  &:focus {
-    border-color: ${({ theme, $hasError, $variant }) =>
-      $hasError ? theme.actionColors.danger : getVariantAppearance(theme, $variant).color};
-    box-shadow: ${({ theme, $hasError, $variant }) =>
-      $hasError
-        ? `0 0 0 3px ${theme.actionColors.danger}33`
-        : `0 0 0 3px ${getVariantAppearance(theme, $variant).color}33`};
-  }
-`
-
-const ErrorMessage = styled.p`
-  margin: ${({ theme }) => `${theme.spaces.sm} 0 0`};
-  color: ${({ theme }) => theme.actionColors.danger};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`
-
-const OptionsList = styled.ul`
-  position: absolute;
-  top: calc(100% + ${({ theme }) => theme.spaces.sm});
-  width: 100%;
-  box-sizing: border-box;
-  left: 0;
-  margin: 0;
-  padding: ${({ theme }) => `${theme.spaces.sm} 0`};
-  list-style: none;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_04};
-  z-index: 20;
-  overflow: hidden;
-`
-
-const OptionItem = styled.li`
-  padding: ${({ theme }) => `${theme.spaces.sm} ${theme.spaces.lg}`};
-  cursor: pointer;
-  color: ${({ theme }) => theme.colors.title};
-  font-family: ${({ theme }) => theme.fontFamily};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.normal};
-  transition: background-color 0.15s ease, color 0.15s ease;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
-  }
-
-  &:active {
-    background-color: ${({ theme }) => theme.colors.border};
-  }
-`
-
-const Autocomplete: React.FC<AutocompleteProps> = ({
+export default function Autocomplete({
   className,
   error,
+  helperText,
   iconLeft,
   iconRight,
   label,
-  variant = 'primary',
-  onChange: externalOnChange,
+  variant = 'outlined',
+  tone = 'primary',
+  size = 'normal',
+  onChange,
   onSelect,
   options,
-  placeholder,
   value,
+  defaultValue,
+  id,
+  'aria-describedby': describedBy,
+  onFocus,
+  onBlur,
+  onKeyDown,
   ...props
-}) => {
-  const generatedId = useId()
-  const inputId = props.id ?? generatedId
-  const errorId = `${inputId}-error`
-  const [inputValue, setInputValue] = useState(value ?? '')
-  const [filteredOptions, setFilteredOptions] = useState<string[]>([])
-  const [isFocused, setIsFocused] = useState(false)
+}: AutocompleteProps) {
+  const generatedId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const labelRef = useRef<HTMLLabelElement>(null);
+  const [notchWidth, setNotchWidth] = useState<number>();
+  const { appearance, accent } = resolveFieldVariant(variant, tone, error);
+  const inputId = id ?? generatedId;
+  const listId = `${inputId}-options`;
+  const message = error ?? helperText;
+  const messageId = `${inputId}-${error ? 'error' : 'helper'}`;
+  const [localValue, setLocalValue] = useState(String(value ?? defaultValue ?? ''));
+  const [focused, setFocused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const currentValue = value ?? localValue;
+  const floating = currentValue.length > 0;
+  const showLabel = floating || !props.placeholder;
+  const outlinedFloating = Boolean(label && floating && appearance === 'outlined');
+  const notched = Boolean(outlinedFloating && notchWidth !== undefined);
+  const labelTone = props.disabled
+    ? 'text-text-disabled'
+    : error
+      ? toneTextClasses.error
+      : focused
+        ? toneTextClasses[accent]
+        : 'text-text-secondary';
+  const filtered =
+    open && currentValue.trim()
+      ? options.filter((option) => option.toLowerCase().includes(currentValue.toLowerCase()))
+      : [];
+  useEffect(() => {
+    if (!label || !floating || appearance !== 'outlined') return;
+    const width = labelRef.current?.offsetWidth;
+    if (width) setNotchWidth(width);
+  }, [appearance, floating, label, props.required]);
 
-  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value
-    setInputValue(value)
-    externalOnChange?.(event)
-    if (value.trim().length === 0) {
-      setFilteredOptions([])
-      return
-    }
-    setFilteredOptions(options.filter(option => option.toLowerCase().includes(value.toLowerCase())))
-  }
-
-  const handleOptionClick = (option: string) => {
-    setInputValue(option)
-    setFilteredOptions([])
-    onSelect(option)
-  }
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && filteredOptions.length > 0) {
-      event.preventDefault()
-      handleOptionClick(filteredOptions[0])
-    }
-
-    if (event.key === 'Escape') {
-      setFilteredOptions([])
-    }
-  }
-
-  const handleFocus = () => {
-    setIsFocused(true)
-    if (inputValue.trim().length === 0) {
-      setFilteredOptions([])
-      return
-    }
-    setFilteredOptions(options.filter(option => option.toLowerCase().includes(inputValue.toLowerCase())))
-  }
-
-  const handleBlur = () => {
-    setIsFocused(false)
-    // Preserve the option click long enough for its mouse handler to run.
-    setTimeout(() => setFilteredOptions([]), 100)
-  }
-
-  const handleClear = () => {
-    setInputValue('')
-    setFilteredOptions([])
-  }
-
-  const showClear = isFocused && inputValue.trim().length > 0
-  // The clear affordance takes precedence over a supplied right icon.
-  const hasRightAdornment = showClear || !!iconRight
-
+  const selectOption = (option: string) => {
+    setLocalValue(option);
+    setOpen(false);
+    onSelect(option);
+  };
   return (
-    <AutocompleteContainer className={className}>
-      {label ? (
-        <Label htmlFor={inputId}>
+    <div
+      className={cn('relative w-full max-w-sm font-sans', className)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+      }}
+    >
+      {label && appearance === 'standard' && floating && showLabel && (
+        <LabelText
+          ref={labelRef}
+          htmlFor={inputId}
+          required={props.required}
+          className={cn('absolute left-0 top-0 z-10 mb-0 pl-4', labelTone)}
+        >
           {label}
-          {props.required ? <RequiredIndicator aria-hidden='true'>*</RequiredIndicator> : null}
-        </Label>
-      ) : null}
-      <InputWrapper>
-        {iconLeft && (
-          <InputLeftIcon $variant={variant} aria-hidden='true'>
-            {iconLeft}
-          </InputLeftIcon>
+        </LabelText>
+      )}
+      <div
+        className={cn(
+          fieldStyles({
+            variant: appearance,
+            size: typeof size === 'number' ? 'normal' : size,
+            disabled: props.disabled,
+            iconLeft: Boolean(iconLeft),
+            iconRight: Boolean(iconRight || (focused && currentValue.trim())),
+            notched,
+          }),
+          'group',
+          outlinedFloating && 'mt-2 bg-background-surface',
+          label && floating && appearance === 'standard' && 'mt-2',
+          !props.disabled && toneClasses[accent],
         )}
-        <Input
-          type='text'
-          value={inputValue}
-          onChange={handleInputChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder}
-          {...props}
-          id={inputId}
-          aria-describedby={error ? errorId : undefined}
-          aria-invalid={error ? true : undefined}
-          $hasLeftIcon={!!iconLeft}
-          $hasRightIcon={hasRightAdornment}
-          $hasError={Boolean(error)}
-          $variant={variant}
-        />
-        {showClear ? (
-          <ClearButton
-            type='button'
-            $variant={variant}
-            aria-label='Clear input'
-            onMouseDown={event => event.preventDefault()}
-            onClick={handleClear}
+      >
+        {notched && (
+          <>
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 left-0 top-0 w-3 rounded-l-md border-b border-l border-t group-focus-within:border-b-2 group-focus-within:border-l-2 group-focus-within:border-t-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 left-3 right-3 border-b group-focus-within:border-b-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 right-0 top-0 rounded-r-md border-b border-r border-t group-focus-within:border-b-2 group-focus-within:border-r-2 group-focus-within:border-t-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+              style={{ left: 12 + (notchWidth ?? 0) }}
+            />
+          </>
+        )}
+        {label && !(appearance === 'standard' && floating && showLabel) && (
+          <LabelText
+            ref={labelRef}
+            htmlFor={inputId}
+            required={props.required}
+            className={cn(
+              'pointer-events-none absolute z-10 mb-0 transition-all',
+              !showLabel
+                ? 'sr-only'
+                : floating && appearance === 'outlined'
+                  ? 'left-3 -top-2 px-1 text-13'
+                  : floating && appearance === 'filled'
+                    ? 'left-4 top-1 text-13'
+                    : cn(
+                        'top-1/2 -translate-y-1/2 text-inherit',
+                        iconLeft ? (size === 'small' ? 'left-9' : 'left-[42px]') : 'left-4',
+                      ),
+              !floating && appearance !== 'outlined' && 'mt-[0.5px] group-focus-within:mt-px',
+              floating && appearance === 'outlined' && 'bg-background-surface',
+              floating && appearance === 'filled' && 'leading-14',
+              labelTone,
+            )}
           >
-            <XMarkIcon width='1em' height='1em' aria-hidden='true' />
-          </ClearButton>
+            {label}
+          </LabelText>
+        )}
+        {iconLeft && (
+          <span
+            aria-hidden="true"
+            className={cn(
+              'inline-flex size-5 shrink-0 items-center justify-center text-text-secondary [&_svg]:size-5',
+              fieldCenterAlignmentClasses[appearance],
+            )}
+          >
+            {iconLeft}
+          </span>
+        )}
+        <input
+          {...props}
+          ref={inputRef}
+          size={typeof size === 'number' ? size : undefined}
+          id={inputId}
+          type="text"
+          role="combobox"
+          aria-autocomplete="list"
+          aria-expanded={filtered.length > 0}
+          aria-controls={listId}
+          aria-activedescendant={filtered[activeIndex] ? `${listId}-${activeIndex}` : undefined}
+          aria-describedby={[describedBy, message && messageId].filter(Boolean).join(' ') || undefined}
+          aria-invalid={error ? true : props['aria-invalid']}
+          value={currentValue}
+          className={cn(
+            fieldInputClasses,
+            !floating && fieldCenterAlignmentClasses[appearance],
+            appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+          )}
+          onChange={(event) => {
+            setLocalValue(event.target.value);
+            setOpen(true);
+            setActiveIndex(0);
+            onChange?.(event);
+          }}
+          onFocus={(event) => {
+            setFocused(true);
+            setOpen(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setOpen(false);
+            onBlur?.(event);
+          }}
+          onKeyDown={(event) => {
+            onKeyDown?.(event);
+            if (event.defaultPrevented) return;
+            if (event.key === 'Enter' && filtered.length) {
+              event.preventDefault();
+              selectOption(filtered[activeIndex] ?? filtered[0]);
+            }
+            if (event.key === 'Escape') setOpen(false);
+            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+              event.preventDefault();
+              setOpen(true);
+              setActiveIndex((index) =>
+                Math.max(0, Math.min(filtered.length - 1, index + (event.key === 'ArrowDown' ? 1 : -1))),
+              );
+            }
+          }}
+        />
+        {focused && currentValue.trim() ? (
+          <button
+            type="button"
+            disabled={props.disabled}
+            aria-label="Clear input"
+            className={cn(
+              'inline-flex size-5 items-center justify-center text-text-secondary [&_svg]:size-4',
+              fieldCenterAlignmentClasses[appearance],
+            )}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              setLocalValue('');
+              setOpen(false);
+              onSelect('');
+              inputRef.current?.focus();
+            }}
+          >
+            <XMarkIcon className="size-4" aria-hidden="true" />
+          </button>
         ) : iconRight ? (
-          <InputRightIcon $variant={variant} aria-hidden='true'>
+          <span
+            aria-hidden="true"
+            className={cn(
+              'inline-flex size-5 shrink-0 items-center justify-center text-text-secondary [&_svg]:size-5',
+              fieldCenterAlignmentClasses[appearance],
+            )}
+          >
             {iconRight}
-          </InputRightIcon>
+          </span>
         ) : null}
-      </InputWrapper>
-      {filteredOptions.length > 0 && (
-        <OptionsList>
-          {filteredOptions.map(option => (
-            <OptionItem
+      </div>
+      {filtered.length > 0 && (
+        <ul id={listId} role="listbox" className={optionListClasses}>
+          {filtered.map((option, index) => (
+            <li
               key={option}
-              onMouseDown={event => event.preventDefault()}
-              onClick={() => handleOptionClick(option)}
+              id={`${listId}-${index}`}
+              role="option"
+              aria-selected={activeIndex === index}
+              className={cn(
+                'cursor-pointer px-4 py-2 hover:bg-action-hover',
+                activeIndex === index && 'bg-action-selected',
+              )}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => selectOption(option)}
             >
               {option}
-            </OptionItem>
+            </li>
           ))}
-        </OptionsList>
+        </ul>
       )}
-      {error ? (
-        <ErrorMessage id={errorId} aria-live='polite' role='alert'>
-          {error}
-        </ErrorMessage>
-      ) : null}
-    </AutocompleteContainer>
-  )
+      {message && (
+        <p
+          id={messageId}
+          role={error ? 'alert' : undefined}
+          aria-live="polite"
+          className={error ? errorClasses : 'mt-1 text-13 text-text-secondary'}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
-
-export default Autocomplete

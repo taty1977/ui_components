@@ -1,471 +1,53 @@
-import React, { useEffect, useId, useRef, useState } from 'react'
-import styled from 'styled-components'
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon, ChevronUpIcon, HeartIcon } from '@heroicons/react/24/solid'
-import type { Breakpoint } from '../../styles'
-import type { ThemeType } from '../../styles/theme'
-import Heading from '../heading/Heading'
+import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import {
+  ChevronDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+  HeartIcon,
+} from '@heroicons/react/24/solid';
+import { cn } from '../../utils/cn';
+import type { Breakpoint } from '../../utils/breakpoints';
+import Heading from '../heading/Heading';
+import { toneClasses, type ButtonTone, type ButtonVariant } from '../button/button.styles';
+import { toneTextClasses } from '../input/input.styles';
 
 export interface CarouselImageItem {
-  id?: string
-  src: string
-  alt: string
-  thumbnailSrc?: string
-  badge?: string
-  likeButton?: boolean
+  id?: string;
+  src: string;
+  alt: string;
+  thumbnailSrc?: string;
+  badge?: string;
+  likeButton?: boolean;
 }
-
-export type CarouselVariant = 'primary' | 'secondary'
-
+export type CarouselVariant = Exclude<ButtonVariant, 'default'>;
 export interface CarouselProps {
-  images: CarouselImageItem[]
-  className?: string
-  likeButton?: boolean
-  breakpoint?: Breakpoint
-  variant?: CarouselVariant
-  initialIndex?: number
-  onImageChange?: (index: number, image: CarouselImageItem) => void
-  showThumbnails?: boolean
-  thumbnailsPosition?: 'left' | 'right' | 'bottom'
-  showIndicators?: boolean
-  ariaLabel?: string
-  ofText?: string
-  openOnClick?: boolean
+  images: CarouselImageItem[];
+  className?: string;
+  likeButton?: boolean;
+  breakpoint?: Breakpoint;
+  variant?: CarouselVariant;
+  tone?: ButtonTone;
+  initialIndex?: number;
+  onImageChange?: (index: number, image: CarouselImageItem) => void;
+  showThumbnails?: boolean;
+  thumbnailsPosition?: 'left' | 'right' | 'bottom';
+  showIndicators?: boolean;
+  ariaLabel?: string;
+  ofText?: string;
+  openOnClick?: boolean;
 }
+const imageKey = (image: CarouselImageItem) => image.id || image.src;
+const imageAlt = (image: CarouselImageItem, index: number) => image.alt.trim() || `Product image ${index + 1}`;
+const controlClasses =
+  'inline-flex size-8 shrink-0 items-center justify-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-45';
 
-type ThumbnailPosition = 'left' | 'right' | 'bottom'
-
-const getAccessibleAlt = (image: CarouselImageItem, index: number) => {
-  const alt = image.alt.trim()
-  return alt || `Product image ${index + 1}`
-}
-
-// The source fallback keeps image state stable when an optional id is absent.
-const getImageKey = (image: CarouselImageItem) => image.id || image.src
-
-// Keep every active carousel treatment aligned with the selected color variant.
-const getVariantAppearance = (theme: ThemeType, variant: CarouselVariant) => {
-  if (variant === 'secondary') {
-    return {
-      color: theme.colors.secondary.base,
-      hoverColor: theme.colors.secondary.hover,
-      focusBorder: theme.colors.secondary.focusBorder,
-      surface: theme.colors.secondary.surface,
-    }
-  }
-
-  return {
-    color: theme.colors.primary.base,
-    hoverColor: theme.colors.primary.hover,
-    focusBorder: theme.colors.primary.focusBorder,
-    surface: theme.colors.primary.surface,
-  }
-}
-
-const GalleryRoot = styled.section<{ $breakpoint: Breakpoint; $thumbnailsPosition: ThumbnailPosition }>`
-  /* Breakpoint-specific values are exposed as CSS variables for nested gallery layouts. */
-  --carousel-thumb-size: ${({ theme }) => theme.sizes.sz_450};
-  --carousel-main-image-height: ${({ theme }) => theme.carouselImageGallery.maxHeight};
-  width: 100%;
-  box-sizing: border-box;
-  min-width: 0;
-  font-family: ${({ theme }) => theme.fontFamily};
-  background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  padding: ${({ theme }) => theme.spaces.lg};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-  display: grid;
-  gap: ${({ theme }) => theme.spaces.md};
-
-  ${({ $breakpoint, theme }) =>
-    $breakpoint === 'tablet'
-      ? `
-    --carousel-thumb-size: ${theme.sizes.sz_375};
-    --carousel-main-image-height: ${theme.carouselImageGallery.tabletMaxHeight};
-  `
-      : ''}
-
-  ${({ $breakpoint, $thumbnailsPosition, theme }) =>
-    $breakpoint === 'tablet' && $thumbnailsPosition !== 'bottom'
-      ? `--carousel-main-image-min-height: calc(${theme.sizes.sz_375} * 5 + ${theme.sizes.sz_0625} * 4);`
-      : ''}
-
-  ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? `
-    --carousel-thumb-size: ${theme.sizes.sz_325};
-    --carousel-main-image-height: ${theme.carouselImageGallery.mobileMaxHeight};
-  `
-      : ''}
-`
-
-const MainStage = styled.div`
-  --carousel-control-size: ${({ theme }) => theme.sizes.sz_200};
-  position: relative;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: min(80vh, var(--carousel-main-image-height));
-  min-height: var(
-    --carousel-main-image-min-height,
-    min(${({ theme }) => theme.carouselImageGallery.minHeight}, var(--carousel-main-image-height))
-  );
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  overflow: hidden;
-  background-color: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-`
-
-const GalleryBody = styled.div<{
-  $showThumbnails: boolean
-  $thumbnailsPosition: ThumbnailPosition
-  $breakpoint: Breakpoint
-}>`
-  min-width: 0;
-  display: ${({ $showThumbnails, $thumbnailsPosition }) =>
-    $showThumbnails && $thumbnailsPosition !== 'bottom' ? 'grid' : 'block'};
-  gap: ${({ theme }) => theme.spaces.md};
-  grid-template-columns: ${({ $thumbnailsPosition }) =>
-    $thumbnailsPosition === 'left'
-      ? `var(--carousel-thumb-size) minmax(0, 1fr)`
-      : $thumbnailsPosition === 'right'
-      ? `minmax(0, 1fr) var(--carousel-thumb-size)`
-      : '1fr'};
-
-  ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? `
-    display: block;
-    gap: ${theme.spaces.sm};
-  `
-      : ''}
-`
-
-const GalleryInlineBody = styled(GalleryBody)``
-
-const MainImage = styled.img<{ $clickable?: boolean; $variant: CarouselVariant }>`
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: var(
-    --carousel-main-image-min-height,
-    min(${({ theme }) => theme.carouselImageGallery.minHeight}, var(--carousel-main-image-height))
-  );
-  max-height: var(--carousel-main-image-height);
-  object-fit: cover;
-  object-position: center;
-  cursor: ${({ $clickable }) => ($clickable ? 'zoom-in' : 'default')};
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-`
-
-const Badge = styled.span<{ $variant: CarouselVariant }>`
-  position: absolute;
-  top: ${({ theme }) => theme.spaces.md};
-  left: ${({ theme }) => theme.spaces.md};
-  background-color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  color: ${({ theme }) => theme.colors.surface};
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  font-weight: ${({ theme }) => theme.fontWeights.semiBold};
-  padding: ${({ theme }) => `${theme.spaces.xs} ${theme.spaces.sm}`};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-`
-
-const LikeButton = styled.button<{ $active: boolean; $variant: CarouselVariant }>`
-  position: absolute;
-  top: ${({ theme }) => theme.spaces.md};
-  right: ${({ theme }) => theme.spaces.md};
-  width: var(--carousel-control-size);
-  height: var(--carousel-control-size);
-  border: none;
-  border-radius: 999px;
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme, $active, $variant }) => ($active ? theme.actionColors.danger : theme.colors.nature.base)};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-
-  &:hover {
-    color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).hoverColor};
-    background-color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).surface};
-  }
-`
-
-const NavButton = styled.button<{ $side: 'left' | 'right'; $variant: CarouselVariant }>`
-  position: absolute;
-  ${({ $side, theme }) => ($side === 'left' ? `left: ${theme.spaces.md};` : `right: ${theme.spaces.md};`)}
-  top: 50%;
-  transform: translateY(-50%);
-  width: var(--carousel-control-size);
-  height: var(--carousel-control-size);
-  border: none;
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-
-  &:hover {
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
-  }
-`
-
-const Footer = styled.div`
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surfaceAlt};
-  padding: ${({ theme }) => theme.spaces.md};
-  display: grid;
-  gap: ${({ theme }) => theme.spaces.sm};
-`
-
-const Indicators = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spaces.sm};
-`
-
-const DotButton = styled.button<{ $active: boolean; $variant: CarouselVariant }>`
-  width: ${({ theme }) => theme.sizes.sz_0625};
-  height: ${({ theme }) => theme.sizes.sz_0625};
-  border-radius: ${({ theme }) => theme.carouselImageGallery.borderRadius};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  padding: 0;
-  cursor: pointer;
-  background-color: ${({ theme, $active, $variant }) =>
-    $active ? getVariantAppearance(theme, $variant).color : theme.colors.surface};
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-`
-
-const Thumbnails = styled.div<{ $position: ThumbnailPosition; $slots: number; $breakpoint: Breakpoint }>`
-  display: ${({ $breakpoint }) => ($breakpoint === 'mobile' ? 'none' : 'grid')};
-  width: 100%;
-  gap: ${({ theme }) => theme.sizes.sz_0625};
-  overflow: hidden;
-
-  ${({ $position, $slots, theme }) =>
-    $position === 'bottom'
-      ? `
-      grid-template-columns: repeat(${$slots}, var(--carousel-thumb-size));
-      grid-template-rows: 1fr;
-      justify-content: center;
-    `
-      : `
-      height: 100%;
-      max-height: ${theme.carouselImageGallery.maxHeight};
-      grid-template-columns: var(--carousel-thumb-size);
-      grid-template-rows: repeat(${$slots}, var(--carousel-thumb-size));
-      align-content: start;
-    `}
-`
-
-const ThumbnailsRail = styled.div<{ $position: ThumbnailPosition; $breakpoint: Breakpoint }>`
-  display: ${({ $breakpoint }) => ($breakpoint === 'mobile' ? 'none' : 'grid')};
-  gap: ${({ $position, theme }) => ($position === 'bottom' ? theme.spaces.md : theme.sizes.sz_0625)};
-  align-items: ${({ $position }) => ($position === 'bottom' ? 'center' : 'start')};
-  align-content: ${({ $position }) => ($position === 'bottom' ? 'center' : 'start')};
-  grid-template-columns: ${({ $position }) => ($position === 'bottom' ? 'auto 1fr auto' : '1fr')};
-  grid-template-rows: ${({ $position }) => ($position === 'bottom' ? '1fr' : 'auto auto auto')};
-  ${({ $position, theme }) =>
-    $position === 'bottom'
-      ? ''
-      : `
-      height: ${theme.carouselImageGallery.maxHeight};
-      overflow: hidden;
-    `}
-`
-
-const ThumbNavButton = styled.button<{ $variant: CarouselVariant }>`
-  width: ${({ theme }) => theme.sizes.sz_200};
-  height: ${({ theme }) => theme.sizes.sz_200};
-  justify-self: center;
-  align-self: center;
-  border: none;
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-
-  &:hover:not(:disabled) {
-    color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).hoverColor};
-    background-color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).surface};
-  }
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-`
-
-const ThumbButton = styled.button<{ $active: boolean; $variant: CarouselVariant }>`
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: ${({ theme }) => theme.sizes.sz_050};
-  border: 1px solid
-    ${({ theme, $active, $variant }) => ($active ? getVariantAppearance(theme, $variant).color : theme.colors.border)};
-  background-color: ${({ theme }) => theme.colors.surfaceAlt};
-  overflow: hidden;
-  padding: 0;
-  cursor: pointer;
-  line-height: 0;
-  box-shadow: ${({ theme, $active, $variant }) =>
-    $active ? `0 0 0 1px ${getVariantAppearance(theme, $variant).color}40` : 'none'};
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-`
-
-const MoreCountOverlay = styled.span`
-  position: absolute;
-  inset: 0;
-  background-color: ${({ theme }) => theme.colors.overlay};
-  color: ${({ theme }) => theme.colors.surface};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.semiBold};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-`
-
-const ThumbImage = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-`
-
-const EmptyState = styled.div`
-  border: 1px dashed ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  padding: ${({ theme }) => `${theme.spaces.lg} ${theme.spaces.md}`};
-  color: ${({ theme }) => theme.colors.mutedText};
-  text-align: center;
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`
-
-const GalleryOverlay = styled.div<{ $breakpoint: Breakpoint }>`
-  position: fixed;
-  inset: 0;
-  background-color: ${({ theme }) => theme.colors.overlayBackdrop};
-  display: grid;
-  place-items: center;
-  z-index: 1000;
-  padding: ${({ theme }) => theme.spaces.md};
-
-  ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? `padding: ${theme.spaces.sm};`
-      : $breakpoint === 'tablet'
-      ? `padding: ${theme.spaces.md};`
-      : ''}
-`
-
-const GalleryDialog = styled.div<{ $breakpoint: Breakpoint }>`
-  width: ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? '100%'
-      : $breakpoint === 'tablet'
-      ? `min(${theme.carouselImageGallery.modalTabletMaxWidth}, 100%)`
-      : `min(${theme.carouselImageGallery.modalMaxWidth}, 100%)`};
-  max-height: ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? theme.carouselImageGallery.modalMobileMaxHeight
-      : $breakpoint === 'tablet'
-      ? theme.carouselImageGallery.modalTabletMaxHeight
-      : theme.carouselImageGallery.modalMaxHeight};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-  display: grid;
-  grid-template-rows: auto 1fr;
-  overflow: hidden;
-`
-
-const GalleryHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spaces.md};
-  padding: ${({ theme }) => theme.spaces.md};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-`
-
-const CloseButton = styled.button<{ $variant: CarouselVariant }>`
-  border: none;
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  padding: ${({ theme }) => `${theme.spaces.xs} ${theme.spaces.sm}`};
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).focusBorder};
-    outline-offset: 2px;
-  }
-`
-
-const GalleryDialogContent = styled.div<{ $breakpoint: Breakpoint }>`
-  padding: ${({ theme }) => theme.spaces.md};
-  overflow: auto;
-  display: grid;
-  gap: ${({ theme }) => theme.spaces.md};
-
-  ${({ $breakpoint, theme }) =>
-    $breakpoint === 'mobile'
-      ? `padding: ${theme.spaces.sm}; gap: ${theme.spaces.sm};`
-      : $breakpoint === 'tablet'
-      ? `padding: ${theme.spaces.md}; gap: ${theme.spaces.md};`
-      : ''}
-`
-
-export const Carousel: React.FC<CarouselProps> = ({
+export function Carousel({
   images,
   className,
   likeButton = true,
-  variant = 'primary',
+  variant = 'outline',
+  tone = 'primary',
   initialIndex = 0,
   onImageChange,
   showThumbnails = true,
@@ -475,372 +57,333 @@ export const Carousel: React.FC<CarouselProps> = ({
   ofText = 'of',
   breakpoint = 'desktop',
   openOnClick = true,
-}) => {
-  const safeImages = images
-  const galleryTitleId = useId()
-  const normalizedInitial = Math.min(Math.max(initialIndex, 0), Math.max(safeImages.length - 1, 0))
-  const [activeIndex, setActiveIndex] = useState(normalizedInitial)
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false)
-  const [thumbStartIndex, setThumbStartIndex] = useState(0)
-  const [likedImages, setLikedImages] = useState<Record<string, boolean>>({})
-  const closeButtonRef = useRef<HTMLButtonElement>(null)
-  const galleryTriggerRef = useRef<HTMLImageElement>(null)
+}: CarouselProps) {
+  const titleId = useId();
+  const [activeIndex, setActiveIndex] = useState(Math.min(Math.max(initialIndex, 0), Math.max(images.length - 1, 0)));
+  const [open, setOpen] = useState(false);
+  const [thumbStart, setThumbStart] = useState(0);
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLImageElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const index = Math.min(activeIndex, Math.max(0, images.length - 1));
+  const image = images[index];
+  const slots = thumbnailsPosition === 'bottom' ? 8 : 5;
+  const mobile = breakpoint === 'mobile';
+  const stageHeight = mobile ? '10rem' : breakpoint === 'tablet' ? '15rem' : '25rem';
+  const legacy = variant === 'primary' || variant === 'secondary';
+  const accent = legacy ? variant : tone;
+  const appearance = legacy ? 'solid' : variant;
+  const accentClasses = cn(toneTextClasses[accent], 'focus-visible:outline-current');
+  const controlAppearance = legacy
+    ? cn('bg-background-surface hover:bg-action-hover', accentClasses)
+    : toneClasses[accent][appearance];
+  const surfaceClasses = legacy
+    ? 'border border-border-subtle bg-background-surface text-text-primary'
+    : toneClasses[accent][appearance];
 
   useEffect(() => {
-    setActiveIndex(current => Math.min(current, Math.max(safeImages.length - 1, 0)))
-    setThumbStartIndex(current => Math.min(current, Math.max(safeImages.length - 1, 0)))
-    if (safeImages.length === 0) {
-      setIsGalleryOpen(false)
-    }
-  }, [safeImages.length])
+    setActiveIndex((previous) => Math.min(previous, Math.max(images.length - 1, 0)));
+    setThumbStart((previous) => Math.min(previous, Math.max(images.length - slots, 0)));
+    if (!images.length) setOpen(false);
+  }, [images.length, slots]);
 
   useEffect(() => {
-    if (!isGalleryOpen) {
-      return
-    }
-
-    closeButtonRef.current?.focus()
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsGalleryOpen(false)
+    if (!open) return;
+    const trigger = triggerRef.current;
+    closeRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Tab' && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]');
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
       }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
+    };
+    document.addEventListener('keydown', handleKey);
     return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      galleryTriggerRef.current?.focus()
-    }
-  }, [isGalleryOpen])
+      document.removeEventListener('keydown', handleKey);
+      trigger?.focus();
+    };
+  }, [open]);
 
-  if (safeImages.length === 0) {
-    return <EmptyState className={className}>No product images available.</EmptyState>
-  }
+  if (!image)
+    return (
+      <div
+        className={cn('rounded-md px-4 py-6 text-center font-sans text-13', surfaceClasses, className)}
+        data-variant={variant}
+        data-tone={accent}
+      >
+        No product images available.
+      </div>
+    );
 
-  const activeImage = safeImages[activeIndex]
-
-  const maxThumbSlots = thumbnailsPosition === 'bottom' ? 8 : 5
-  const hasOverflow = safeImages.length > maxThumbSlots
-  const visibleThumbCount = hasOverflow ? maxThumbSlots : safeImages.length
-  const hiddenThumbCount = hasOverflow ? safeImages.length - maxThumbSlots : 0
-  const maxThumbStart = Math.max(0, safeImages.length - maxThumbSlots)
-  const canThumbPrev = thumbStartIndex > 0
-  const canThumbNext = thumbStartIndex + maxThumbSlots < safeImages.length
-
-  // Keep the selected thumbnail inside the visible window in the dialog rail.
-  const ensureThumbVisible = (index: number) => {
-    setThumbStartIndex(previousStart => {
-      if (index < previousStart) {
-        return index
-      }
-
-      if (index >= previousStart + maxThumbSlots) {
-        return index - maxThumbSlots + 1
-      }
-
-      return previousStart
-    })
-  }
-
-  const selectIndex = (index: number) => {
-    const nextIndex = (index + safeImages.length) % safeImages.length
-    setActiveIndex(nextIndex)
-    ensureThumbVisible(nextIndex)
-    if (onImageChange) {
-      onImageChange(nextIndex, safeImages[nextIndex])
-    }
-  }
-
-  const toggleLike = (image: CarouselImageItem) => {
-    const key = getImageKey(image)
-    setLikedImages(current => ({
-      ...current,
-      [key]: !current[key],
-    }))
-  }
-
-  const isActiveImageLiked = Boolean(likedImages[getImageKey(activeImage)])
-
+  const ensureVisible = (next: number) =>
+    setThumbStart((start) => (next < start ? next : next >= start + slots ? next - slots + 1 : start));
+  const selectIndex = (next: number) => {
+    const selected = (next + images.length) % images.length;
+    setActiveIndex(selected);
+    ensureVisible(selected);
+    onImageChange?.(selected, images[selected]);
+  };
   const openGallery = () => {
-    ensureThumbVisible(activeIndex)
-    setIsGalleryOpen(true)
-  }
-
-  // Inline and dialog stages intentionally share these controls and their accessibility labels.
-  const renderLikeButton = () => {
-    if (!likeButton || activeImage.likeButton === false) {
-      return null
-    }
-
-    return (
-      <LikeButton
-        type='button'
-        $active={isActiveImageLiked}
-        $variant={variant}
-        aria-label={isActiveImageLiked ? 'Remove from favorites' : 'Add to favorites'}
-        aria-pressed={isActiveImageLiked}
-        onClick={() => toggleLike(activeImage)}
+    ensureVisible(index);
+    setOpen(true);
+  };
+  const bodyClasses = cn(
+    'min-w-0',
+    showThumbnails &&
+      thumbnailsPosition !== 'bottom' &&
+      !mobile &&
+      (thumbnailsPosition === 'left'
+        ? 'grid grid-cols-[var(--carousel-thumb-size)_minmax(0,1fr)] gap-4'
+        : 'grid grid-cols-[minmax(0,1fr)_var(--carousel-thumb-size)] gap-4'),
+  );
+  const thumbStyle: CSSProperties =
+    thumbnailsPosition === 'bottom'
+      ? { gridTemplateColumns: `repeat(${Math.min(slots, images.length)}, var(--carousel-thumb-size))` }
+      : { gridTemplateRows: `repeat(${Math.min(slots, images.length)}, var(--carousel-thumb-size))` };
+  const thumbnails = (position: 'left' | 'right' | 'bottom', dialog = false) => {
+    if (!showThumbnails || mobile || thumbnailsPosition !== position) return null;
+    const start = dialog ? thumbStart : 0;
+    const more = images.length - slots;
+    const list = (
+      <div
+        className={cn('grid gap-2.5 overflow-hidden p-1', position === 'bottom' ? 'justify-center' : 'content-start')}
+        style={thumbStyle}
       >
-        <HeartIcon width='1.5em' height='1.5em' aria-hidden='true' />
-      </LikeButton>
-    )
-  }
-
-  const renderImageNavigation = () => (
-    <>
-      <NavButton
-        type='button'
-        $side='left'
-        $variant={variant}
-        aria-label='Previous image'
-        onClick={() => selectIndex(activeIndex - 1)}
-      >
-        <ChevronLeftIcon width='1em' height='1em' aria-hidden='true' />
-      </NavButton>
-      <NavButton
-        type='button'
-        $side='right'
-        $variant={variant}
-        aria-label='Next image'
-        onClick={() => selectIndex(activeIndex + 1)}
-      >
-        <ChevronRightIcon width='1em' height='1em' aria-hidden='true' />
-      </NavButton>
-    </>
-  )
-
-  const handleMainImageKeyDown = (event: React.KeyboardEvent<HTMLImageElement>) => {
-    if (!openOnClick) {
-      return
-    }
-
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      openGallery()
-    }
-  }
-
-  const renderInlineThumbnails = (position: ThumbnailPosition) => {
-    if (!showThumbnails || thumbnailsPosition !== position) {
-      return null
-    }
-
-    return (
-      <Thumbnails $position={position} $slots={visibleThumbCount} $breakpoint={breakpoint}>
-        {safeImages.slice(0, visibleThumbCount).map((image, index) => {
-          const isOverflowThumb = hiddenThumbCount > 0 && index === visibleThumbCount - 1
-
+        {images.slice(start, start + slots).map((item, offset) => {
+          const actual = start + offset;
+          const overflow = !dialog && more > 0 && offset === slots - 1;
           return (
-            <ThumbButton
-              key={`thumb-${getImageKey(image)}-${index}`}
-              type='button'
-              $active={!isOverflowThumb && activeIndex === index}
-              $variant={variant}
+            <button
+              key={`${imageKey(item)}-${actual}`}
+              type="button"
+              className={cn(
+                'relative aspect-square w-full overflow-hidden rounded-md border border-border-subtle bg-background-surface p-0 leading-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
+                accentClasses,
+                !overflow &&
+                  index === actual &&
+                  'border-current ring-2 ring-current ring-offset-2 ring-offset-background-surface',
+              )}
               aria-label={
-                isOverflowThumb
+                overflow
                   ? openOnClick
-                    ? `Open image gallery (${hiddenThumbCount} more)`
-                    : `${hiddenThumbCount} additional images`
-                  : `Select ${getAccessibleAlt(image, index)}`
+                    ? `Open image gallery (${more} more)`
+                    : `${more} additional images`
+                  : `Select ${imageAlt(item, actual)}`
               }
               onClick={() => {
-                if (isOverflowThumb) {
-                  if (openOnClick) {
-                    openGallery()
-                  }
-                  return
-                }
-
-                selectIndex(index)
+                if (overflow) {
+                  if (openOnClick) openGallery();
+                } else selectIndex(actual);
               }}
             >
-              <ThumbImage src={image.thumbnailSrc || image.src} alt='' aria-hidden='true' />
-              {isOverflowThumb ? <MoreCountOverlay>+{hiddenThumbCount}</MoreCountOverlay> : null}
-            </ThumbButton>
-          )
+              <img
+                src={item.thumbnailSrc || item.src}
+                alt=""
+                aria-hidden="true"
+                className="block size-full object-cover"
+              />
+              {overflow && (
+                <span className="absolute inset-0 flex items-center justify-center bg-backdrop-overlay text-13 font-semibold text-misc-bg-white">
+                  +{more}
+                </span>
+              )}
+            </button>
+          );
         })}
-      </Thumbnails>
-    )
-  }
-
-  const renderGalleryThumbnails = (position: ThumbnailPosition) => {
-    if (!showThumbnails || thumbnailsPosition !== position) {
-      return null
-    }
-
+      </div>
+    );
+    if (!dialog) return list;
     return (
-      <ThumbnailsRail $position={position} $breakpoint={breakpoint}>
-        <ThumbNavButton
-          type='button'
-          $variant={variant}
-          aria-label='Previous thumbnails'
-          disabled={!canThumbPrev}
-          onClick={() => setThumbStartIndex(current => Math.max(0, current - 1))}
-        >
-          {position === 'bottom' ? (
-            <ChevronLeftIcon width='1em' height='1em' aria-hidden='true' />
-          ) : (
-            <ChevronUpIcon width='1em' height='1em' aria-hidden='true' />
-          )}
-        </ThumbNavButton>
-
-        <Thumbnails
-          $position={position}
-          $slots={Math.min(maxThumbSlots, safeImages.length - thumbStartIndex)}
-          $breakpoint={breakpoint}
-        >
-          {safeImages.slice(thumbStartIndex, thumbStartIndex + maxThumbSlots).map((image, index) => {
-            const actualIndex = thumbStartIndex + index
-
-            return (
-              <ThumbButton
-                key={`thumb-${getImageKey(image)}-${actualIndex}`}
-                type='button'
-                $active={activeIndex === actualIndex}
-                $variant={variant}
-                aria-label={`Select ${getAccessibleAlt(image, actualIndex)}`}
-                onClick={() => selectIndex(actualIndex)}
-              >
-                <ThumbImage src={image.thumbnailSrc || image.src} alt='' aria-hidden='true' />
-              </ThumbButton>
-            )
-          })}
-        </Thumbnails>
-
-        <ThumbNavButton
-          type='button'
-          $variant={variant}
-          aria-label='Next thumbnails'
-          disabled={!canThumbNext}
-          onClick={() => setThumbStartIndex(current => Math.min(maxThumbStart, current + 1))}
-        >
-          {position === 'bottom' ? (
-            <ChevronRightIcon width='1em' height='1em' aria-hidden='true' />
-          ) : (
-            <ChevronDownIcon width='1em' height='1em' aria-hidden='true' />
-          )}
-        </ThumbNavButton>
-      </ThumbnailsRail>
-    )
-  }
-
-  const showFooter = showIndicators || (showThumbnails && thumbnailsPosition === 'bottom')
-
-  return (
-    <GalleryRoot
-      className={className}
-      aria-label={ariaLabel}
-      $breakpoint={breakpoint}
-      $thumbnailsPosition={thumbnailsPosition}
-    >
-      <GalleryInlineBody
-        $showThumbnails={showThumbnails}
-        $thumbnailsPosition={thumbnailsPosition}
-        $breakpoint={breakpoint}
+      <div
+        className={cn(
+          'grid items-center gap-2.5',
+          position === 'bottom' ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'content-start',
+        )}
       >
-        {renderInlineThumbnails('left')}
-
-        <MainStage>
-          {activeImage.badge ? <Badge $variant={variant}>{activeImage.badge}</Badge> : null}
-          {renderLikeButton()}
-          <MainImage
-            $clickable={openOnClick}
-            $variant={variant}
-            ref={openOnClick ? galleryTriggerRef : undefined}
-            src={activeImage.src}
-            alt={getAccessibleAlt(activeImage, activeIndex)}
-            {...(openOnClick
-              ? {
-                  role: 'button' as const,
-                  'aria-label': `Open image gallery: ${getAccessibleAlt(activeImage, activeIndex)}`,
-                  tabIndex: 0,
-                  onClick: openGallery,
-                  onKeyDown: handleMainImageKeyDown,
+        <button
+          type="button"
+          className={cn(controlClasses, controlAppearance, 'justify-self-center')}
+          aria-label="Previous thumbnails"
+          disabled={thumbStart <= 0}
+          onClick={() => setThumbStart((start) => Math.max(0, start - 1))}
+        >
+          {position === 'bottom' ? <ChevronLeftIcon className="size-4" /> : <ChevronUpIcon className="size-4" />}
+        </button>
+        {list}
+        <button
+          type="button"
+          className={cn(controlClasses, controlAppearance, 'justify-self-center')}
+          aria-label="Next thumbnails"
+          disabled={thumbStart + slots >= images.length}
+          onClick={() => setThumbStart((start) => Math.min(images.length - slots, start + 1))}
+        >
+          {position === 'bottom' ? <ChevronRightIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
+        </button>
+      </div>
+    );
+  };
+  const stage = (dialog = false) => (
+    <div
+      className="relative flex w-full min-w-0 items-center justify-center overflow-hidden rounded-md border border-border-subtle bg-background-surface"
+      style={{ height: stageHeight }}
+    >
+      {image.badge && (
+        <span
+          className={cn(
+            'absolute left-4 top-4 z-10 rounded-md px-2 py-1 text-12 font-semibold text-misc-bg-white',
+            toneClasses[accent].solid,
+          )}
+        >
+          {image.badge}
+        </span>
+      )}
+      {likeButton && image.likeButton !== false && (
+        <button
+          type="button"
+          className={cn(
+            controlClasses,
+            liked[imageKey(image)] ? toneClasses.error.label : controlAppearance,
+            'absolute right-4 top-4 z-10 rounded-full',
+          )}
+          aria-label={liked[imageKey(image)] ? 'Remove from favorites' : 'Add to favorites'}
+          aria-pressed={Boolean(liked[imageKey(image)])}
+          onClick={() => setLiked((previous) => ({ ...previous, [imageKey(image)]: !previous[imageKey(image)] }))}
+        >
+          <HeartIcon className="size-6" aria-hidden="true" />
+        </button>
+      )}
+      <img
+        ref={!dialog && openOnClick ? triggerRef : undefined}
+        src={image.src}
+        alt={imageAlt(image, index)}
+        className={cn('block size-full object-cover', !dialog && openOnClick && 'cursor-zoom-in')}
+        {...(!dialog && openOnClick
+          ? {
+              role: 'button',
+              'aria-label': `Open image gallery: ${imageAlt(image, index)}`,
+              tabIndex: 0,
+              onClick: openGallery,
+              onKeyDown: (event: React.KeyboardEvent<HTMLImageElement>) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  openGallery();
                 }
-              : {})}
-          />
-          {renderImageNavigation()}
-        </MainStage>
-
-        {renderInlineThumbnails('right')}
-      </GalleryInlineBody>
-
-      {showFooter && breakpoint !== 'mobile' ? (
-        <Footer>
-          {showIndicators ? (
-            <Indicators>
-              {safeImages.map((image, index) => (
-                <DotButton
-                  key={`dot-${getImageKey(image)}-${index}`}
-                  type='button'
-                  aria-label={`Go to image ${index + 1}`}
-                  $active={activeIndex === index}
-                  $variant={variant}
-                  onClick={() => selectIndex(index)}
+              },
+            }
+          : {})}
+      />
+      <button
+        type="button"
+        aria-label="Previous image"
+        className={cn(controlClasses, controlAppearance, 'absolute left-4 top-1/2 -translate-y-1/2')}
+        onClick={() => selectIndex(index - 1)}
+      >
+        <ChevronLeftIcon className="size-4" aria-hidden="true" />
+      </button>
+      <button
+        type="button"
+        aria-label="Next image"
+        className={cn(controlClasses, controlAppearance, 'absolute right-4 top-1/2 -translate-y-1/2')}
+        onClick={() => selectIndex(index + 1)}
+      >
+        <ChevronRightIcon className="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  );
+  return (
+    <section
+      aria-label={ariaLabel}
+      className={cn('grid w-full min-w-0 gap-4 rounded-md p-6 font-sans', surfaceClasses, className)}
+      data-variant={variant}
+      data-tone={accent}
+      style={
+        {
+          '--carousel-thumb-size': mobile ? '3.25rem' : breakpoint === 'tablet' ? '3.75rem' : '4.5rem',
+        } as CSSProperties
+      }
+    >
+      <div className={bodyClasses}>
+        {thumbnails('left')}
+        {stage()}
+        {thumbnails('right')}
+      </div>
+      {!mobile && (showIndicators || (showThumbnails && thumbnailsPosition === 'bottom')) && (
+        <div className="grid gap-2 rounded-md border border-border-subtle p-4">
+          {showIndicators && (
+            <div className="flex items-center justify-center gap-2">
+              {images.map((item, offset) => (
+                <button
+                  type="button"
+                  key={`${imageKey(item)}-${offset}`}
+                  aria-label={`Go to image ${offset + 1}`}
+                  className={cn(
+                    'size-2.5 rounded-full border border-border-subtle p-0',
+                    index === offset ? toneClasses[accent].solid : 'bg-background-surface',
+                  )}
+                  onClick={() => selectIndex(offset)}
                 />
               ))}
-            </Indicators>
-          ) : null}
-
-          {renderInlineThumbnails('bottom')}
-        </Footer>
-      ) : null}
-
-      {isGalleryOpen ? (
-        <GalleryOverlay $breakpoint={breakpoint} role='presentation' onClick={() => setIsGalleryOpen(false)}>
-          <GalleryDialog
-            $breakpoint={breakpoint}
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby={galleryTitleId}
+            </div>
+          )}
+          {thumbnails('bottom')}
+        </div>
+      )}
+      {open && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-[1000] grid place-items-center bg-backdrop-overlay p-4"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
             tabIndex={-1}
-            onClick={event => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+            className={cn(
+              'grid max-h-[90dvh] w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-border-subtle bg-background-surface',
+              breakpoint === 'tablet' ? 'max-w-3xl' : mobile ? 'max-h-dvh' : 'max-w-5xl',
+            )}
           >
-            <GalleryHeader>
-              <Heading id={galleryTitleId} level='h4' weight='medium'>
-                {`Image gallery: ${activeIndex + 1} ${ofText} ${safeImages.length}`}
-              </Heading>
-              <CloseButton
-                ref={closeButtonRef}
-                type='button'
-                $variant={variant}
-                aria-label='Close image gallery'
-                onClick={() => setIsGalleryOpen(false)}
+            <div className="flex items-center justify-between gap-4 border-b border-border-subtle p-4">
+              <Heading
+                id={titleId}
+                level="h4"
+                weight="medium"
+              >{`Image gallery: ${index + 1} ${ofText} ${images.length}`}</Heading>
+              <button
+                ref={closeRef}
+                type="button"
+                aria-label="Close image gallery"
+                className={cn(controlClasses, controlAppearance)}
+                onClick={() => setOpen(false)}
               >
-                <span aria-hidden='true'>&#10005;</span>
-              </CloseButton>
-            </GalleryHeader>
-
-            <GalleryDialogContent $breakpoint={breakpoint}>
-              <GalleryBody
-                $showThumbnails={showThumbnails}
-                $thumbnailsPosition={thumbnailsPosition}
-                $breakpoint={breakpoint}
-              >
-                {renderGalleryThumbnails('left')}
-
-                <MainStage>
-                  {activeImage.badge ? <Badge $variant={variant}>{activeImage.badge}</Badge> : null}
-                  {renderLikeButton()}
-                  <MainImage
-                    $variant={variant}
-                    src={activeImage.src}
-                    alt={getAccessibleAlt(activeImage, activeIndex)}
-                  />
-                  {renderImageNavigation()}
-                </MainStage>
-
-                {renderGalleryThumbnails('right')}
-              </GalleryBody>
-
-              {thumbnailsPosition === 'bottom' ? renderGalleryThumbnails('bottom') : null}
-            </GalleryDialogContent>
-          </GalleryDialog>
-        </GalleryOverlay>
-      ) : null}
-    </GalleryRoot>
-  )
+                <span aria-hidden="true">&#10005;</span>
+              </button>
+            </div>
+            <div className={cn('grid gap-4 overflow-auto p-4', mobile && 'gap-2 p-2')}>
+              <div className={bodyClasses}>
+                {thumbnails('left', true)}
+                {stage(true)}
+                {thumbnails('right', true)}
+              </div>
+              {thumbnails('bottom', true)}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
 }
-
-export default Carousel
+export default Carousel;

@@ -1,291 +1,309 @@
-import React, { useId, useMemo, useState } from 'react'
-import styled from 'styled-components'
-import { CheckIcon } from '@heroicons/react/24/solid'
-import type { ThemeType } from '../../styles/theme'
-
-export type SelectVariant = 'primary' | 'secondary'
-
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  /** Visible label associated with the select. */
-  label?: string
-  /** Class name applied to the outer field container. */
-  className?: string
-  /** Placeholder text shown when no option is selected. */
-  placeholder?: string
-  /** Validation message displayed below the select. */
-  error?: string
-  /** Theme color treatment for selection controls and focus state. */
-  variant?: SelectVariant
-  /** Custom React content rendered inside the left side of the trigger. */
-  iconLeft?: React.ReactNode
-  /** Show a check icon beside the selected non-default option. */
-  showSelectionCheck?: boolean
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type SelectHTMLAttributes,
+  type OptionHTMLAttributes,
+  type ReactNode,
+} from 'react';
+import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { cn } from '../../utils/cn';
+import { LabelText } from '../input/LabelText';
+import {
+  fieldStyles,
+  fieldCenterAlignmentClasses,
+  resolveFieldVariant,
+  toneClasses,
+  toneTextClasses,
+  notchToneClasses,
+  errorClasses,
+  optionListClasses,
+  type InputVariant,
+  type InputTone,
+  type InputSize,
+} from '../input/input.styles';
+export type SelectVariant = InputVariant;
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+  label?: string;
+  placeholder?: string;
+  helperText?: string;
+  error?: string;
+  variant?: SelectVariant;
+  tone?: InputTone;
+  size?: InputSize | number;
+  iconLeft?: ReactNode;
+  showSelectionCheck?: boolean;
 }
-
-const Field = styled.div`
-  width: 100%;
-  max-width: ${({ theme }) => theme.sizes.sz_2400};
-  font-family: ${({ theme }) => theme.fontFamily};
-`
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: ${({ theme }) => theme.spaces.sm};
-  color: ${({ theme }) => theme.colors.title};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
-`
-
-const RequiredIndicator = styled.span`
-  margin-left: ${({ theme }) => theme.spaces.xs};
-  color: ${({ theme }) => theme.actionColors.danger};
-`
-
-const getVariantAppearance = (theme: ThemeType, variant: SelectVariant) => {
-  if (variant === 'secondary') {
-    return { color: theme.colors.secondary.base, focusBorder: theme.colors.secondary.focusBorder }
-  }
-
-  return { color: theme.colors.primary.base, focusBorder: theme.colors.primary.focusBorder }
-}
-
-const SelectWrapper = styled.div<{ $variant: SelectVariant }>`
-  position: relative;
-  width: 100%;
-
-  &::after {
-    position: absolute;
-    top: 50%;
-    right: ${({ theme }) => theme.spaces.md};
-    width: ${({ theme }) => theme.sizes.sz_050};
-    height: ${({ theme }) => theme.sizes.sz_050};
-    border-right: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-    border-bottom: 2px solid ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-    content: '';
-    pointer-events: none;
-    transform: translateY(-65%) rotate(45deg);
-  }
-`
-
-const HiddenSelect = styled.select`
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  clip-path: inset(50%);
-`
-
-const Adornment = styled.span`
-  position: absolute;
-  left: ${({ theme }) => theme.spaces.md};
-  top: 50%;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  color: ${({ theme }) => theme.colors.title};
-  pointer-events: none;
-  transform: translateY(-50%);
-
-  & > svg {
-    width: 100%;
-    height: 100%;
-  }
-`
-
-const SelectTrigger = styled.button<{ $hasLeftIcon: boolean; $hasError: boolean; $variant: SelectVariant }>`
-  width: 100%;
-  box-sizing: border-box;
-  padding: ${({ theme, $hasLeftIcon }) => {
-    const leftPadding = $hasLeftIcon ? `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})` : theme.spaces.lg
-    const rightPadding = `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})`
-    return `${theme.spaces.md} ${rightPadding} ${theme.spaces.md} ${leftPadding}`
-  }};
-  border: 1px solid ${({ theme, $hasError }) => ($hasError ? theme.actionColors.danger : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.title};
-  font-family: ${({ theme }) => theme.fontFamily};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.fontWeights.normal};
-  line-height: 1.4;
-  text-align: left;
-  outline: none;
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &:focus-visible,
-  &[aria-expanded='true'] {
-    border-color: ${({ theme, $hasError, $variant }) =>
-      $hasError ? theme.actionColors.danger : getVariantAppearance(theme, $variant).color};
-    box-shadow: ${({ theme, $hasError, $variant }) =>
-      $hasError
-        ? `0 0 0 3px ${theme.actionColors.danger}33`
-        : `0 0 0 3px ${getVariantAppearance(theme, $variant).color}33`};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`
-
-const OptionsList = styled.ul`
-  position: absolute;
-  top: calc(100% + ${({ theme }) => theme.spaces.sm});
-  z-index: 20;
-  width: 100%;
-  box-sizing: border-box;
-  max-height: 16rem;
-  margin: 0;
-  padding: ${({ theme }) => `${theme.spaces.sm} 0`};
-  overflow: auto;
-  list-style: none;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_04};
-`
-
-const OptionItem = styled.li<{ $selected: boolean }>`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: ${({ theme }) => `${theme.spaces.sm} ${theme.spaces.lg}`};
-  color: ${({ theme }) => theme.colors.title};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  cursor: pointer;
-  background-color: ${({ theme, $selected }) => ($selected ? theme.colors.surfaceAlt : 'transparent')};
-
-  &:hover,
-  &:focus {
-    background-color: ${({ theme }) => theme.colors.surfaceAlt};
-    outline: none;
-  }
-`
-
-const SelectedIcon = styled(CheckIcon)<{ $variant: SelectVariant }>`
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  flex-shrink: 0;
-`
-
-const ErrorMessage = styled.p`
-  margin: ${({ theme }) => `${theme.spaces.sm} 0 0`};
-  color: ${({ theme }) => theme.actionColors.danger};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`
-
-const Select: React.FC<SelectProps> = ({
+export default function Select({
   className,
-  'aria-describedby': ariaDescribedBy,
+  label,
+  placeholder,
+  helperText,
+  error,
+  variant = 'outlined',
+  tone = 'primary',
+  size = 'normal',
+  iconLeft,
+  showSelectionCheck = false,
+  id,
   children,
   defaultValue,
-  error,
-  iconLeft,
-  id,
-  label,
-  variant = 'primary',
-  showSelectionCheck = false,
-  onChange,
   value,
+  onChange,
+  'aria-describedby': describedBy,
   ...props
-}) => {
-  const generatedId = useId()
-  const selectId = id ?? generatedId
-  const errorId = `${selectId}-error`
-  const describedBy = [ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-  const optionElements = useMemo(
-    () =>
-      React.Children.toArray(children).filter(React.isValidElement) as React.ReactElement<
-        React.OptionHTMLAttributes<HTMLOptionElement>
-      >[],
-    [children],
-  )
-  const initialValue = String(value ?? defaultValue ?? optionElements[0]?.props.value ?? '')
-  const [selectedValue, setSelectedValue] = useState(initialValue)
-  const [isOpen, setIsOpen] = useState(false)
-  const selectedOption = optionElements.find(option => String(option.props.value ?? '') === selectedValue)
-  const selectValue = (value: string) => {
-    setSelectedValue(value)
-    setIsOpen(false)
-    if (onChange) {
-      onChange({ target: { value }, currentTarget: { value } } as React.ChangeEvent<HTMLSelectElement>)
+}: SelectProps) {
+  const generatedId = useId();
+  const { appearance, accent } = resolveFieldVariant(variant, tone, error);
+  const selectId = id ?? generatedId;
+  const nativeSelect = useRef<HTMLSelectElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const options = Children.toArray(children).filter(isValidElement<OptionHTMLAttributes<HTMLOptionElement>>);
+  const [localValue, setLocalValue] = useState(String(defaultValue ?? options[0]?.props.value ?? ''));
+  const [open, setOpen] = useState(false);
+  const selectedValue = String(value ?? localValue);
+  const selected = options.find((option) => String(option.props.value ?? '') === selectedValue);
+  const floating = selectedValue.length > 0 || (!placeholder && Boolean(selected?.props.children));
+  const showLabel = floating || !placeholder;
+  const outlinedFloating = Boolean(label && floating && appearance === 'outlined');
+  const notched = Boolean(outlinedFloating);
+  const message = error ?? helperText;
+  const messageId = `${selectId}-${error ? 'error' : 'helper'}`;
+  const description = [describedBy, message && messageId].filter(Boolean).join(' ') || undefined;
+  const [notchWidth, setNotchWidth] = useState<number>();
+  const labelRef = useRef<HTMLLabelElement>(null);
+  const labelTone = props.disabled
+    ? 'text-text-disabled'
+    : error
+      ? toneTextClasses.error
+      : open
+        ? toneTextClasses[accent]
+        : 'text-text-secondary';
+
+  useEffect(() => {
+    if (!label || !floating || appearance !== 'outlined') return;
+    const width = labelRef.current?.offsetWidth;
+    if (width) setNotchWidth(width);
+  }, [appearance, floating, label, props.required]);
+
+  const selectValue = (next: string) => {
+    setLocalValue(next);
+    setOpen(false);
+    if (nativeSelect.current) {
+      nativeSelect.current.value = next;
+      nativeSelect.current.dispatchEvent(new Event('change', { bubbles: true }));
     }
-  }
-
+    trigger.current?.focus();
+  };
   return (
-    <Field className={className}>
-      {label ? (
-        <Label htmlFor={selectId}>
+    <div
+      className={cn('relative w-full max-w-sm font-sans', className)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+      }}
+    >
+      {label && appearance === 'standard' && floating && showLabel && (
+        <LabelText
+          ref={labelRef}
+          id={`${selectId}-label`}
+          htmlFor={selectId}
+          required={props.required}
+          className={cn('absolute left-0 top-0 z-10 mb-0 pl-4', labelTone)}
+        >
           {label}
-          {props.required ? <RequiredIndicator aria-hidden='true'>*</RequiredIndicator> : null}
-        </Label>
-      ) : null}
-      <SelectWrapper $variant={variant}>
-        {iconLeft ? <Adornment aria-hidden='true'>{iconLeft}</Adornment> : null}
-        <HiddenSelect
-          {...props}
-          id={selectId}
-          aria-describedby={describedBy}
-          aria-invalid={error ? true : undefined}
-          value={selectedValue}
-          onChange={event => selectValue(event.target.value)}
-          tabIndex={-1}
+        </LabelText>
+      )}
+      <select
+        {...props}
+        size={typeof size === 'number' ? size : undefined}
+        id={selectId}
+        ref={nativeSelect}
+        className="sr-only"
+        tabIndex={-1}
+        value={selectedValue}
+        aria-describedby={description}
+        aria-invalid={error ? true : props['aria-invalid']}
+        onChange={(event) => {
+          setLocalValue(event.target.value);
+          onChange?.(event);
+        }}
+      >
+        {children}
+      </select>
+      <button
+        ref={trigger}
+        type="button"
+        disabled={props.disabled}
+        aria-labelledby={label ? `${selectId}-label` : undefined}
+        aria-label={!label ? (props['aria-label'] ?? placeholder ?? 'Select an option') : undefined}
+        aria-describedby={description}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={`${selectId}-options`}
+        aria-invalid={error ? true : undefined}
+        className={cn(
+          fieldStyles({
+            variant: appearance,
+            size: typeof size === 'number' ? 'normal' : size,
+            disabled: props.disabled,
+            iconLeft: Boolean(iconLeft),
+            iconRight: true,
+            notched,
+          }),
+          'group text-left',
+          outlinedFloating && 'group mt-2 bg-background-surface',
+          label && floating && appearance === 'standard' && 'mt-2',
+          !props.disabled && toneClasses[accent],
+        )}
+        onClick={() => setOpen((previous) => !previous)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') setOpen(false);
+          if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+        onBlur={(event) => {
+          if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) setOpen(false);
+        }}
+      >
+        {notched && (
+          <>
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 left-0 top-0 w-3 rounded-l-md border-b border-l border-t group-focus-within:border-b-2 group-focus-within:border-l-2 group-focus-within:border-t-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 left-3 right-3 border-b group-focus-within:border-b-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+            />
+            <span
+              aria-hidden="true"
+              className={cn(
+                'absolute bottom-0 right-0 top-0 rounded-r-md border-b border-r border-t group-focus-within:border-b-2 group-focus-within:border-r-2 group-focus-within:border-t-2',
+                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
+              )}
+              style={{ left: 12 + (notchWidth ?? 0) }}
+            />
+          </>
+        )}
+        {label && !(appearance === 'standard' && floating && showLabel) && (
+          <LabelText
+            ref={labelRef}
+            id={`${selectId}-label`}
+            htmlFor={selectId}
+            required={props.required}
+            className={cn(
+              'pointer-events-none absolute z-10 mb-0 transition-all',
+              !showLabel
+                ? 'sr-only'
+                : floating && appearance === 'outlined'
+                  ? 'left-3 -top-2 px-1 text-13'
+                  : floating && appearance === 'filled'
+                    ? 'left-4 top-1 text-13'
+                    : cn(
+                        'top-1/2 -translate-y-1/2 text-inherit',
+                        iconLeft ? (size === 'small' ? 'left-9' : 'left-[42px]') : 'left-4',
+                      ),
+              !floating && appearance !== 'outlined' && 'mt-[0.5px] group-focus-within:mt-px',
+              floating && appearance === 'outlined' && 'bg-background-surface',
+              floating && appearance === 'filled' && 'leading-14',
+              labelTone,
+            )}
+          >
+            {label}
+          </LabelText>
+        )}
+        {iconLeft && (
+          <span
+            className={cn(
+              'inline-flex size-5 shrink-0 items-center justify-center [&_svg]:size-5',
+              fieldCenterAlignmentClasses[appearance],
+            )}
+            aria-hidden="true"
+          >
+            {iconLeft}
+          </span>
+        )}
+        <span
+          className={cn(
+            'flex flex-1 items-center py-2 leading-5',
+            !floating && fieldCenterAlignmentClasses[appearance],
+            appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+          )}
         >
-          {children}
-        </HiddenSelect>
-        <SelectTrigger
-          type='button'
-          aria-describedby={describedBy}
-          aria-expanded={isOpen}
-          aria-haspopup='listbox'
-          aria-invalid={error ? true : undefined}
-          aria-labelledby={label ? undefined : selectId}
-          disabled={props.disabled}
-          $hasError={Boolean(error)}
-          $hasLeftIcon={Boolean(iconLeft)}
-          $variant={variant}
-          onClick={() => setIsOpen(current => !current)}
+          {selected?.props.children ?? placeholder ?? 'Select an option'}
+        </span>
+        <span
+          className={cn(
+            'inline-flex size-5 shrink-0 items-center justify-center',
+            fieldCenterAlignmentClasses[appearance],
+          )}
+          aria-hidden="true"
         >
-          {selectedOption?.props.children ?? props.placeholder ?? 'Select an option'}
-        </SelectTrigger>
-        {isOpen ? (
-          <OptionsList role='listbox' aria-label={label ?? 'Options'}>
-            {optionElements.map(option => {
-              const value = String(option.props.value ?? '')
-              const isSelected = value !== '' && value === selectedValue
-              const showCheck = showSelectionCheck && isSelected
-              return (
-                <OptionItem
-                  key={value}
-                  $selected={isSelected}
-                  role='option'
-                  aria-selected={isSelected}
-                  onMouseDown={event => event.preventDefault()}
-                  onClick={() => selectValue(value)}
-                >
-                  {option.props.children}
-                  {showCheck ? <SelectedIcon $variant={variant} aria-hidden='true' /> : null}
-                </OptionItem>
-              )
-            })}
-          </OptionsList>
-        ) : null}
-      </SelectWrapper>
-      {error ? (
-        <ErrorMessage id={errorId} aria-live='polite' role='alert'>
-          {error}
-        </ErrorMessage>
-      ) : null}
-    </Field>
-  )
+          <ChevronDownIcon className="size-4" />
+        </span>
+      </button>
+      {open && (
+        <ul id={`${selectId}-options`} role="listbox" aria-label={label ?? 'Options'} className={optionListClasses}>
+          {options.map((option) => {
+            const optionValue = String(option.props.value ?? '');
+            const selected = optionValue !== '' && optionValue === selectedValue;
+            return (
+              <li
+                key={optionValue}
+                role="option"
+                aria-selected={selected}
+                aria-disabled={option.props.disabled}
+                tabIndex={option.props.disabled ? undefined : 0}
+                className={cn(
+                  'flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-action-hover focus:bg-action-hover focus:outline-none',
+                  selected && 'bg-action-selected',
+                  option.props.disabled && 'cursor-not-allowed text-text-disabled',
+                )}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (!option.props.disabled) selectValue(optionValue);
+                }}
+                onKeyDown={(event) => {
+                  if (!option.props.disabled && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    selectValue(optionValue);
+                  }
+                  if (event.key === 'Escape') {
+                    setOpen(false);
+                    trigger.current?.focus();
+                  }
+                }}
+              >
+                {option.props.children}
+                {showSelectionCheck && selected && (
+                  <CheckIcon className={cn('size-4', toneTextClasses[accent])} aria-hidden="true" />
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {message && (
+        <p
+          id={messageId}
+          role={error ? 'alert' : undefined}
+          aria-live="polite"
+          className={error ? errorClasses : 'mt-1 text-13 text-text-secondary'}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
-
-export default Select

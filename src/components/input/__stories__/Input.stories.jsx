@@ -1,14 +1,13 @@
-import React from 'react'
-import { ArrowRightIcon, CheckIcon, ClockIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
-import { brandTheme } from '../../../styles'
-import Input from '../Input'
+import React from 'react';
+import { fn } from 'storybook/test';
+import { ArrowRightIcon, CheckIcon, ClockIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import Input from '../Input';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
 
 const meta = {
-  title: 'Forms/Input',
+  title: 'Inputs/Input',
   component: Input,
   tags: ['autodocs'],
   parameters: {
@@ -16,22 +15,34 @@ const meta = {
     docs: {
       description: {
         component:
-          'A themed single-line input with labels, required indicators, optional icons, controlled and uncontrolled state, and accessible validation feedback.',
+          'A themed single-line input with floating labels and a shared 16px text inset. Empty placeholders and inside icons align to the full field midpoint, including border thickness. Filled values reserve space below the inside label.',
       },
     },
   },
   args: {
+    onChange: fn(),
+    onFocus: fn(),
+    onBlur: fn(),
+    handleActions: fn(),
     label: 'Input label',
-    placeholder: 'Enter a value',
+    placeholder: '',
+    helperText: '',
     required: false,
-    variant: 'primary',
+    variant: 'outlined',
+    tone: 'primary',
     showLeftIcon: false,
     showRightIcon: false,
     showOutsideLeftIcon: false,
     showOutsideRightIcon: false,
   },
   argTypes: {
-    label: { control: 'text', description: 'Visible label for the input.', table: { category: 'Content' } },
+    onFocus: { control: false, table: { category: 'Events' } },
+    onBlur: { control: false, table: { category: 'Events' } },
+    label: {
+      control: 'text',
+      description: 'Label aligned to the outlined text inset; empty labels clear any left icon.',
+      table: { category: 'Content' },
+    },
     placeholder: { control: 'text', description: 'Placeholder text.', table: { category: 'Content' } },
     value: {
       control: 'text',
@@ -65,8 +76,8 @@ const meta = {
     },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary'],
-      description: 'Selects the focus and icon color treatment.',
+      options: ['outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment.',
       table: { category: 'Appearance' },
     },
     disabled: {
@@ -74,6 +85,8 @@ const meta = {
       description: 'Disables the input field.',
       table: { category: 'State' },
     },
+    tone: { control: 'select', options: tones },
+    size: { control: 'select', options: ['small', 'normal'] },
     showLeftIcon: {
       control: 'boolean',
       description: 'Shows the configured icon inside the input.',
@@ -108,139 +121,54 @@ const meta = {
     outsideIconLeft: { table: { disable: true } },
     outsideIconRight: { table: { disable: true } },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            border: `1px solid ${activeTheme.colors.border}`,
-            color: activeTheme.colors.text,
-            padding: activeTheme.spaces.lg,
-            maxWidth: '600px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
-
-export default meta
+export default meta;
 
 const renderInput = ({ showLeftIcon, showOutsideLeftIcon, showOutsideRightIcon, showRightIcon, ...args }) => (
-  <Input
-    {...args}
-    iconLeft={showLeftIcon ? <MagnifyingGlassIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-    iconRight={showRightIcon ? <ArrowRightIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-    outsideIconLeft={showOutsideLeftIcon ? <ClockIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-    outsideIconRight={showOutsideRightIcon ? <CheckIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-  />
-)
+  <Frame>
+    <Input
+      {...args}
+      iconLeft={showLeftIcon ? <MagnifyingGlassIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+      iconRight={showRightIcon ? <ArrowRightIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+      outsideIconLeft={showOutsideLeftIcon ? <ClockIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+      outsideIconRight={showOutsideRightIcon ? <CheckIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+    />
+  </Frame>
+);
 
-export const Default = { render: renderInput }
-
-export const WithRightIcon = {
-  render: renderInput,
-  args: {
-    showLeftIcon: false,
-    showRightIcon: true,
-  },
-}
-
-export const WithLeftIcon = {
-  render: renderInput,
-  args: {
-    showLeftIcon: true,
-    showRightIcon: false,
-  },
-}
-
-export const WithError = {
-  render: renderInput,
-  args: {
-    error: 'This field is required.',
-  },
-}
-
-export const Required = {
-  render: renderInput,
-  args: {
-    label: 'Email address',
-    placeholder: 'you@example.com',
-    required: true,
-    type: 'email',
-  },
-}
-
-export const WithOutsideIcons = {
-  render: renderInput,
-  args: {
-    showOutsideLeftIcon: true,
-    showOutsideRightIcon: true,
-    handleActions: () => {},
-  },
-}
-
-export const Disabled = {
-  render: renderInput,
-  args: {
-    disabled: true,
-    defaultValue: 'This field is disabled',
-  },
-}
-
-export const Email = {
-  render: renderInput,
-  args: {
-    label: 'Email address',
-    placeholder: 'you@example.com',
-    type: 'email',
-  },
-}
-
-export const Password = {
-  render: renderInput,
-  args: {
-    label: 'Password',
-    placeholder: 'Enter your password',
-    type: 'password',
-    showRightIcon: true,
-  },
-}
-
-export const Search = {
-  render: renderInput,
-  args: {
-    label: 'Search',
-    placeholder: 'Search...',
-    showLeftIcon: true,
-  },
-}
-
-export const RequiredWithError = {
-  render: renderInput,
-  args: {
-    label: 'Email address',
-    placeholder: 'you@example.com',
-    type: 'email',
-    required: true,
-    error: 'Please enter a valid email address.',
-  },
-}
-
-export const AllStates = {
-  name: 'All states',
-  render: () => (
-    <div style={{ display: 'grid', gap: '2rem' }}>
-      <Input label='Default state' placeholder='Enter a value' />
-      <Input label='Focused state' placeholder='Enter a value' autoFocus />
-      <Input label='Error state' placeholder='Enter a value' error='This field is required.' />
-      <Input label='Disabled state' placeholder='Enter a value' disabled />
-      <Input label='Required field' placeholder='Enter a value' required />
-    </div>
+export const Playground = { render: renderInput };
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      <Input {...args} label="Outlined" variant="outlined" helperText="Default variant" />
+      <Input {...args} label="Filled" variant="filled" helperText="Filled background" />
+      <Input {...args} label="Standard" variant="standard" helperText="Underline only" />
+    </Frame>
   ),
-}
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Input key={tone} {...args} label={tone} tone={tone} defaultValue="Example" />
+      ))}
+    </Frame>
+  ),
+};
+export const WithIcons = {
+  render: renderInput,
+  args: {
+    showLeftIcon: true,
+    showRightIcon: true,
+  },
+};
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Input {...args} label="Error" error="Please enter a valid value." defaultValue="Invalid" />
+      <Input {...args} label="Disabled" disabled placeholder="Cannot edit" />
+      <Input {...args} label="Required" required helperText="Marked with an asterisk" />
+    </Frame>
+  ),
+};

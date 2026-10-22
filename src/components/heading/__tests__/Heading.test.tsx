@@ -1,48 +1,50 @@
 import React from 'react';
-import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { ThemeProvider } from 'styled-components';
-import { theme } from '../../../styles';
 import Heading from '../Heading';
 
-const renderWithTheme = (component: React.ReactElement) =>
-  render(<ThemeProvider theme={theme}>{component}</ThemeProvider>);
-
 describe('Heading', () => {
+  test.each([
+    ['h1', 'text-46'],
+    ['h2', 'text-38'],
+    ['h3', 'text-28'],
+    ['h4', 'text-24'],
+    ['h5', 'text-18'],
+    ['h6', 'text-15'],
+  ] as const)('%s variant sets the web heading level and token size', (variant, size) => {
+    render(<Heading variant={variant}>Title</Heading>);
+    expect(screen.getByRole('heading', { level: Number(variant.slice(1)) })).toHaveClass(size, 'font-bold');
+  });
   test('uses theme tokens for size, weight, and family', () => {
-    renderWithTheme(
-      <Heading level="h3" weight="medium" family="heading">
+    render(
+      <Heading level="h3" weight="medium" family="sans">
         Section title
       </Heading>,
     );
 
     const heading = screen.getByRole('heading', { name: 'Section title' });
     expect(heading.tagName).toBe('H3');
-    expect(heading).toHaveStyle(`font-size: ${theme.headingSizes.h3}`);
-    expect(heading).toHaveStyle(`font-weight: ${theme.fontWeights.medium}`);
+    expect(heading).toHaveClass('text-28', 'font-medium', 'font-sans');
   });
 
   test('supports a semantic heading level independent of visual size', () => {
-    renderWithTheme(<Heading level="h2">Subheading</Heading>);
+    render(<Heading level="h2">Subheading</Heading>);
 
     expect(screen.getByRole('heading', { level: 2, name: 'Subheading' })).toBeInTheDocument();
   });
 
   test('uses semantic theme colors for notification text', () => {
-    renderWithTheme(
+    render(
       <Heading level="h4" color="info">
         Additional information
       </Heading>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveStyle(
-      `color: ${theme.actionColors.info}`,
-    );
+    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-main');
   });
 
   test('supports selectable text transform', () => {
-    renderWithTheme(<Heading textTransform="uppercase">Section title</Heading>);
+    render(<Heading textTransform="uppercase">Section title</Heading>);
 
-    expect(screen.getByRole('heading', { name: 'Section title' })).toHaveStyle('text-transform: uppercase');
+    expect(screen.getByRole('heading', { name: 'Section title' })).toHaveClass('uppercase');
   });
 });

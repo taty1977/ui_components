@@ -1,135 +1,73 @@
-import React from 'react'
-import { brandTheme } from '../../../styles'
-import Paragraph from '../Paragraph'
-
-const themeStyles = {
-  Brand: brandTheme,
-}
-
-const paragraphSizes = Object.keys(brandTheme.fontSizes)
-const paragraphWeights = Object.keys(brandTheme.fontWeights)
-const paragraphFamilies = Object.keys(brandTheme.fontFamilies)
-const paragraphColors = ['text', ...Object.keys(brandTheme.actionColors)]
-const textTransforms = Object.keys(brandTheme.textTransforms)
-
-const meta = {
-  title: 'Typography/Paragraph',
+import React from 'react';
+import Paragraph from '../Paragraph';
+const variants = ['subtitle1', 'subtitle2', 'body1', 'body2', 'caption', 'overline'];
+const tones = ['default', 'muted', 'primary', 'secondary', 'error', 'warning', 'info', 'success', 'inverse'];
+const weights = ['regular', 'medium', 'semibold', 'bold'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
+export default {
+  title: 'Data Display/Paragraph',
   component: Paragraph,
   tags: ['autodocs'],
   parameters: {
-    layout: 'centered',
+    layout: 'padded',
     docs: {
       description: {
-        component: 'A theme-driven paragraph component with independent size, weight, and font-family controls.',
+        component: 'Themed paragraph text with six typography variants, theme tones, and configurable weights.',
       },
     },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
-
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            border: `1px solid ${activeTheme.colors.border}`,
-            color: activeTheme.colors.text,
-            padding: activeTheme.spaces.lg,
-            maxWidth: '600px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-  args: {
-    children:
-      'This is a paragraph component. It provides flexible typography for body text with theme-driven styling and independent control over size, weight, and font family.',
-    size: 'md',
-    weight: 'normal',
-    family: 'openSans',
-    color: 'text',
-    textTransform: 'none',
-  },
+  args: { children: 'Shared tokens keep the web experience consistent.', variant: 'body1', tone: 'default' },
   argTypes: {
-    children: {
-      control: 'text',
-      description: 'Text content of the paragraph.',
-      table: { category: 'Content' },
-    },
-    size: {
+    children: { control: 'text', table: { category: 'Content' } },
+    variant: { control: 'select', options: variants, table: { category: 'Appearance' } },
+    tone: {
       control: 'select',
-      options: paragraphSizes,
-      description: 'Font size from theme.',
+      options: tones,
       table: { category: 'Appearance' },
     },
-    weight: {
-      control: 'select',
-      options: paragraphWeights,
-      description: 'Theme font-weight token.',
-      table: { category: 'Appearance' },
-    },
-    family: {
-      control: 'select',
-      options: paragraphFamilies,
-      description: 'Theme font-family token.',
-      table: { category: 'Appearance' },
-    },
-    color: {
-      control: 'select',
-      options: paragraphColors,
-      description: 'Semantic theme color for paragraph text.',
-      table: { category: 'Appearance' },
-    },
-    textTransform: {
-      control: 'select',
-      options: textTransforms,
-      description: 'Selects the paragraph text transform.',
-      table: { category: 'Appearance' },
-    },
+    weight: { control: 'select', options: weights, table: { category: 'Appearance' } },
+    className: { control: 'text', table: { category: 'Layout' } },
   },
-}
-
-export default meta
-
-export const Default = {
-  name: 'Default paragraph',
-}
-
-export const Small = {
-  name: 'Small paragraph',
-  args: {
-    size: 'sm',
-    children: 'This is a small paragraph.',
-  },
-}
-
-export const Large = {
-  name: 'Large paragraph',
-  args: {
-    size: 'lg',
-    children: 'This is a large paragraph.',
-  },
-}
-
-export const Bold = {
-  name: 'Bold paragraph',
-  args: {
-    weight: 'bold',
-    children: 'This is a bold paragraph.',
-  },
-}
-
-export const AllFontSizes = {
-  name: 'All font sizes',
-  render: () => (
-    <>
-      <Paragraph size='xs'>Extra small text (xs)</Paragraph>
-      <Paragraph size='sm'>Small text (sm)</Paragraph>
-      <Paragraph size='md'>Medium text (md)</Paragraph>
-      <Paragraph size='lg'>Large text (lg)</Paragraph>
-      <Paragraph size='xl'>Extra large text (xl)</Paragraph>
-    </>
+};
+export const Playground = {
+  render: (args) => (
+    <Frame>
+      <Paragraph {...args} />
+    </Frame>
   ),
-}
+};
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      {variants.map((variant) => (
+        <Paragraph {...args} key={variant} variant={variant}>
+          {variant} - {args.children}
+        </Paragraph>
+      ))}
+    </Frame>
+  ),
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <div key={tone} className={tone === 'inverse' ? 'rounded-md bg-palette-secondary-dark p-3' : 'p-3'}>
+          <Paragraph {...args} tone={tone}>
+            {tone} body text
+          </Paragraph>
+        </div>
+      ))}
+    </Frame>
+  ),
+};
+export const Weights = {
+  render: (args) => (
+    <Frame>
+      {weights.map((weight) => (
+        <Paragraph {...args} key={weight} weight={weight}>
+          {weight} body text
+        </Paragraph>
+      ))}
+    </Frame>
+  ),
+};

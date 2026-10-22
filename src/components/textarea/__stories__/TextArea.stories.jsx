@@ -1,13 +1,12 @@
-import React from 'react'
-import { brandTheme } from '../../../styles'
-import Textarea from '../Textarea'
+import React from 'react';
+import { fn } from 'storybook/test';
+import Textarea from '../TextArea';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
 
 const meta = {
-  title: 'Forms/Textarea',
+  title: 'Inputs/Textarea',
   component: Textarea,
   tags: ['autodocs'],
   parameters: {
@@ -15,21 +14,29 @@ const meta = {
     docs: {
       description: {
         component:
-          'A themed multiline text field with labels, required indicators, controlled and uncontrolled state, and accessible validation feedback.',
+          'A themed multiline field with floating labels and a shared 16px text inset. Floating labels do not add a separate layout row, and multiline text reserves space below the label.',
       },
     },
   },
   args: {
+    onChange: fn(),
+    onFocus: fn(),
+    onBlur: fn(),
     label: 'Message',
-    placeholder: 'Write a message',
+    placeholder: '',
+    helperText: '',
     rows: 5,
     required: false,
-    variant: 'primary',
+    variant: 'outlined',
+    tone: 'primary',
+    size: 'normal',
   },
   argTypes: {
+    onFocus: { control: false, table: { category: 'Events' } },
+    onBlur: { control: false, table: { category: 'Events' } },
     label: {
       control: 'text',
-      description: 'Visible label for the textarea.',
+      description: 'Label aligned to the outlined text inset in every variant and size.',
       table: { category: 'Content' },
     },
     placeholder: {
@@ -56,10 +63,15 @@ const meta = {
       description: 'Validation message shown below the field.',
       table: { category: 'Validation' },
     },
+    helperText: {
+      control: 'text',
+      description: 'Hint below the field; turns error-toned when error is set.',
+      table: { category: 'Content' },
+    },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary'],
-      description: 'Selects the focus color treatment.',
+      options: ['outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment.',
       table: { category: 'Appearance' },
     },
     disabled: {
@@ -67,6 +79,8 @@ const meta = {
       description: 'Disables the textarea field.',
       table: { category: 'State' },
     },
+    tone: { control: 'select', options: ['primary', 'secondary', 'error', 'warning', 'info', 'success'] },
+    size: { control: 'select', options: ['small', 'normal'] },
     rows: {
       control: 'number',
       description: 'Number of visible text rows.',
@@ -88,86 +102,41 @@ const meta = {
       table: { category: 'Accessibility' },
     },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            border: `1px solid ${activeTheme.colors.border}`,
-            color: activeTheme.colors.text,
-            padding: activeTheme.spaces.lg,
-            maxWidth: '600px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
+export default meta;
 
-export default meta
-
-export const Default = {}
-
-export const WithError = {
-  args: {
-    error: 'Message is required.',
-  },
-}
-
-export const Required = {
-  args: {
-    label: 'Required message',
-    placeholder: 'Write a required message',
-    required: true,
-  },
-}
-
-export const Disabled = {
-  args: {
-    disabled: true,
-    defaultValue: 'This field is disabled.',
-  },
-}
-
-export const Compact = {
-  args: {
-    label: 'Feedback',
-    placeholder: 'Brief feedback',
-    rows: 3,
-  },
-}
-
-export const Large = {
-  args: {
-    label: 'Description',
-    placeholder: 'Enter a detailed description',
-    rows: 8,
-  },
-}
-
-export const RequiredWithError = {
-  args: {
-    label: 'Message',
-    placeholder: 'Write a message',
-    required: true,
-    error: 'Message is required and must be at least 10 characters.',
-  },
-}
-
-export const AllStates = {
-  name: 'All states',
-  render: () => (
-    <div style={{ display: 'grid', gap: '2rem' }}>
-      <Textarea label='Default state' placeholder='Enter a message' rows={4} />
-      <Textarea label='Focused state' placeholder='Enter a message' rows={4} autoFocus />
-      <Textarea label='Error state' placeholder='Enter a message' rows={4} error='This field is required.' />
-      <Textarea label='Disabled state' placeholder='Enter a message' rows={4} disabled />
-      <Textarea label='Required field' placeholder='Enter a message' rows={4} required />
-    </div>
+export const Playground = {
+  render: (args) => (
+    <Frame>
+      <Textarea {...args} />
+    </Frame>
   ),
-}
+};
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      <Textarea {...args} label="Outlined" variant="outlined" rows={3} helperText="Default variant" />
+      <Textarea {...args} label="Filled" variant="filled" rows={3} helperText="Filled background" />
+      <Textarea {...args} label="Standard" variant="standard" rows={3} helperText="Underline only" />
+    </Frame>
+  ),
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Textarea key={tone} {...args} label={tone} tone={tone} rows={3} defaultValue="Example" />
+      ))}
+    </Frame>
+  ),
+};
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Textarea {...args} label="Error" error="Please enter a message." defaultValue="Invalid" rows={3} />
+      <Textarea {...args} label="Disabled" disabled placeholder="Cannot edit" rows={3} />
+      <Textarea {...args} label="Required" required helperText="Marked with an asterisk" rows={3} />
+    </Frame>
+  ),
+};

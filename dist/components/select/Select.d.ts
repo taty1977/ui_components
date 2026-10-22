@@ -1,15 +1,15 @@
-import React from 'react';
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-    /** Visible label associated with the select. */
+import { type SelectHTMLAttributes, type ReactNode } from 'react';
+import { type InputVariant, type InputTone, type InputSize } from '../input/input.styles';
+export type SelectVariant = InputVariant;
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
     label?: string;
-    /** Placeholder text shown when no option is selected. */
     placeholder?: string;
-    /** Validation message displayed below the select. */
+    helperText?: string;
     error?: string;
-    /** Custom React content rendered inside the left side of the trigger. */
-    iconLeft?: React.ReactNode;
-    /** Show a check icon beside the selected non-default option. */
+    variant?: SelectVariant;
+    tone?: InputTone;
+    size?: InputSize | number;
+    iconLeft?: ReactNode;
     showSelectionCheck?: boolean;
 }
-declare const Select: React.FC<SelectProps>;
-export default Select;
+export default function Select({ className, label, placeholder, helperText, error, variant, tone, size, iconLeft, showSelectionCheck, id, children, defaultValue, value, onChange, 'aria-describedby': describedBy, ...props }: SelectProps): import("react/jsx-runtime").JSX.Element;

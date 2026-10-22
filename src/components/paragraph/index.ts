@@ -1,4 +1,4 @@
-export { default as Paragraph } from './Paragraph';
+export { default as Paragraph, default as BodyText } from './Paragraph';
 export type {
   ParagraphColor,
   ParagraphFamily,
@@ -6,4 +6,8 @@ export type {
   ParagraphSize,
   ParagraphTextTransform,
   ParagraphWeight,
+  BodyTextProps,
+  BodyTextVariant,
+  BodyTextTone,
+  BodyTextWeight,
 } from './Paragraph';

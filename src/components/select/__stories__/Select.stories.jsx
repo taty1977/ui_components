@@ -1,28 +1,27 @@
-import React from 'react'
-import { GlobeAltIcon } from '@heroicons/react/24/solid'
-import { brandTheme } from '../../../styles'
-import Select from '../Select'
+import React from 'react';
+import { fn } from 'storybook/test';
+import { GlobeAltIcon } from '@heroicons/react/24/solid';
+import Select from '../Select';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
 
 const options = [
   { value: '', label: 'Choose a country' },
   { value: 'us', label: 'United States' },
   { value: 'ca', label: 'Canada' },
   { value: 'gb', label: 'United Kingdom' },
-]
+];
 
 const renderOptions = () =>
-  options.map(option => (
+  options.map((option) => (
     <option key={option.value} value={option.value}>
       {option.label}
     </option>
-  ))
+  ));
 
 const meta = {
-  title: 'Forms/Select',
+  title: 'Inputs/Select',
   component: Select,
   tags: ['autodocs'],
   parameters: {
@@ -30,23 +29,31 @@ const meta = {
     docs: {
       description: {
         component:
-          'A themed select with Input styling, custom left icons, optional selection checks, and accessible validation feedback.',
+          'A themed select with floating labels and a shared 16px text inset. Empty placeholders and icons align to the full field midpoint, including border thickness. Filled values reserve space below the inside label.',
       },
     },
   },
   args: {
+    onChange: fn(),
+    onFocus: fn(),
+    onBlur: fn(),
     label: 'Country',
     defaultValue: 'ca',
     placeholder: 'Choose a country',
-    variant: 'primary',
+    helperText: '',
+    variant: 'outlined',
+    tone: 'primary',
+    size: 'normal',
     showLeftIcon: false,
     showSelectionCheck: false,
     required: false,
   },
   argTypes: {
+    onFocus: { control: false, table: { category: 'Events' } },
+    onBlur: { control: false, table: { category: 'Events' } },
     label: {
       control: 'text',
-      description: 'Visible label for the select.',
+      description: 'Label aligned to the outlined text inset; empty labels clear any left icon.',
       table: { category: 'Content' },
     },
     placeholder: {
@@ -56,7 +63,7 @@ const meta = {
     },
     defaultValue: {
       control: 'select',
-      options: options.map(option => option.value),
+      options: options.map((option) => option.value),
       description: 'Initially selected option value.',
       table: { category: 'Content' },
     },
@@ -66,7 +73,7 @@ const meta = {
       table: { category: 'Layout' },
     },
     onChange: {
-      action: 'changed',
+      control: false,
       description: 'Called when the selected value changes.',
       table: { category: 'Events' },
     },
@@ -80,16 +87,28 @@ const meta = {
       description: 'Validation message shown below the select.',
       table: { category: 'Validation' },
     },
+    helperText: {
+      control: 'text',
+      description: 'Hint below the field; turns error-toned when error is set.',
+      table: { category: 'Content' },
+    },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary'],
-      description: 'Selects the focus and selection-control color treatment.',
+      options: ['outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment.',
       table: { category: 'Appearance' },
     },
     disabled: {
       control: 'boolean',
       description: 'Disables the select field.',
       table: { category: 'State' },
+    },
+    tone: { control: 'select', options: ['primary', 'secondary', 'error', 'warning', 'info', 'success'] },
+    size: {
+      control: 'select',
+      options: ['small', 'normal'],
+      description: 'Shared field size. Numeric values still forward to the underlying native select.',
+      table: { category: 'Layout' },
     },
     showLeftIcon: {
       control: 'boolean',
@@ -101,11 +120,6 @@ const meta = {
       description: 'Show a check icon beside the selected non-default option.',
       table: { category: 'Appearance' },
     },
-    size: {
-      control: 'number',
-      description: 'Number of options visible without scrolling.',
-      table: { category: 'Layout' },
-    },
     'aria-describedby': {
       control: 'text',
       description: 'IDs of elements that describe the select.',
@@ -114,105 +128,63 @@ const meta = {
     iconLeft: { table: { disable: true } },
     children: { table: { disable: true } },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            border: `1px solid ${activeTheme.colors.border}`,
-            color: activeTheme.colors.text,
-            padding: activeTheme.spaces.lg,
-            maxWidth: '600px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
-
-export default meta
+export default meta;
 
 const renderSelect = ({ showLeftIcon, ...args }) => (
-  <Select {...args} iconLeft={showLeftIcon ? <GlobeAltIcon aria-hidden='true' /> : undefined}>
-    {renderOptions()}
-  </Select>
-)
+  <Frame>
+    <Select {...args} iconLeft={showLeftIcon ? <GlobeAltIcon aria-hidden="true" /> : undefined}>
+      {renderOptions()}
+    </Select>
+  </Frame>
+);
 
-export const Default = { render: renderSelect }
-
-export const Selected = {
-  render: renderSelect,
-  args: {
-    defaultValue: 'ca',
-    showLeftIcon: true,
-    showSelectionCheck: true,
-  },
-}
-
-export const Dropdown = {
-  render: renderSelect,
-  args: {
-    size: 4,
-    showLeftIcon: true,
-    showSelectionCheck: true,
-    defaultValue: '',
-  },
-}
-
-export const WithError = {
-  render: renderSelect,
-  args: {
-    error: 'Please select a country.',
-    required: true,
-  },
-}
-
-export const Disabled = {
-  render: renderSelect,
-  args: {
-    disabled: true,
-    defaultValue: 'us',
-  },
-}
-
-export const WithIcon = {
-  render: renderSelect,
-  args: {
-    showLeftIcon: true,
-  },
-}
-
-export const RequiredWithError = {
-  render: renderSelect,
-  args: {
-    label: 'Country',
-    required: true,
-    error: 'You must select a country to continue.',
-  },
-}
-
-export const AllStates = {
-  name: 'All states',
-  render: () => (
-    <div style={{ display: 'grid', gap: '2rem' }}>
-      <Select label='Default state'>{renderOptions()}</Select>
-      <Select label='Selected state' defaultValue='ca'>
+export const Playground = { render: renderSelect };
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      <Select {...args} label="Outlined" variant="outlined" defaultValue="ca" helperText="Default variant">
         {renderOptions()}
       </Select>
-      <Select label='Error state' error='Please select a country.'>
+      <Select {...args} label="Filled" variant="filled" defaultValue="ca" helperText="Filled background">
         {renderOptions()}
       </Select>
-      <Select label='Disabled state' disabled defaultValue='us'>
+      <Select {...args} label="Standard" variant="standard" defaultValue="ca" helperText="Underline only">
         {renderOptions()}
       </Select>
-      <Select label='Required field' required>
-        {renderOptions()}
-      </Select>
-    </div>
+    </Frame>
   ),
-}
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Select key={tone} {...args} label={tone} tone={tone} defaultValue="ca">
+          {renderOptions()}
+        </Select>
+      ))}
+    </Frame>
+  ),
+};
+export const WithIcons = {
+  render: renderSelect,
+  args: {
+    showLeftIcon: true,
+  },
+};
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Select {...args} label="Error" error="Please select a country." required>
+        {renderOptions()}
+      </Select>
+      <Select {...args} label="Disabled" disabled defaultValue="us">
+        {renderOptions()}
+      </Select>
+      <Select {...args} label="Required" required helperText="Marked with an asterisk">
+        {renderOptions()}
+      </Select>
+    </Frame>
+  ),
+};

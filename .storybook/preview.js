@@ -1,89 +1,37 @@
-﻿import React from 'react';
-import { ThemeProvider } from 'styled-components';
-import { brandTheme } from '../src/styles';
+import React from 'react';
+import '../global.css';
+import { themeModes } from '../src/themes/themeTokens';
 
-const responsiveFrames = {
-  fluid: { label: 'Fluid', width: '100%' },
-  mobile: { label: 'Mobile', width: '390px' },
-  tablet: { label: 'Tablet', width: '768px' },
-  laptop: { label: 'Laptop', width: '1024px' },
-  desktop: { label: 'Desktop', width: '1280px' },
-};
-
+const frames = { fluid: '100%', mobile: '390px', tablet: '768px', laptop: '1024px', desktop: '1280px' };
 export const parameters = {
   layout: 'padded',
-  options: {
-    storySort: {
-      order: ['Design System', '*'],
-    },
-  },
+  options: { storySort: { order: ['All Components'] } },
 };
-
+export const initialGlobals = { theme: 'light', responsiveFrame: 'fluid' };
 export const globalTypes = {
   theme: {
-    name: 'Theme',
-    description: 'Select the component theme',
-    defaultValue: 'Brand',
-    toolbar: {
-      icon: 'paintbrush',
-      items: ['Brand'],
-      dynamicTitle: true,
-    },
+    description: 'Figma theme mode',
+    toolbar: { icon: 'paintbrush', items: themeModes, dynamicTitle: true },
   },
   responsiveFrame: {
-    name: 'Viewport',
-    description: 'Responsive preview width for all stories',
-    defaultValue: 'fluid',
-    toolbar: {
-      icon: 'browser',
-      items: Object.entries(responsiveFrames).map(([value, frame]) => ({
-        value,
-        title: frame.label,
-      })),
-      dynamicTitle: true,
-    },
+    description: 'Responsive preview width',
+    toolbar: { icon: 'browser', items: Object.keys(frames), dynamicTitle: true },
   },
 };
-
-const themeMap = {
-  Brand: brandTheme,
-};
-
 export const decorators = [
-  (Story, context) => {
-    const themeObject = themeMap[context.globals.theme] || brandTheme;
-    const selectedFrame = responsiveFrames[context.globals.responsiveFrame] || responsiveFrames.fluid;
-    return React.createElement(
-      ThemeProvider,
-      { theme: themeObject },
+  (Story, context) =>
+    React.createElement(
+      'div',
+      {
+        className: `${context.globals.theme ?? 'light'} min-h-screen bg-background-canvas p-4 font-sans text-text-primary`,
+      },
       React.createElement(
         'div',
         {
-          'data-bs-theme': 'light',
-          style: {
-            padding: '1rem',
-            minHeight: '100vh',
-            background: themeObject.colors.surface,
-            colorScheme: 'light',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-          },
+          className: 'mx-auto w-full min-w-0',
+          style: { maxWidth: frames[context.globals.responsiveFrame] ?? frames.fluid },
         },
-        React.createElement(
-          'div',
-          {
-            style: {
-              width: '100%',
-              maxWidth: selectedFrame.width,
-              minWidth: 0,
-              fontFamily: 'Calibri, sans-serif',
-              transition: 'max-width 160ms ease',
-            },
-          },
-          React.createElement(Story)
-        )
-      )
-    );
-  },
+        React.createElement(Story),
+      ),
+    ),
 ];

@@ -1,10 +1,13 @@
-import React from 'react'
-import { brandTheme } from '../../../styles'
-import Chart from '../Chart'
+import React from 'react';
+import Chart from '../Chart';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid w-full min-w-0 gap-6">{children}</div>;
+const renderChart = (args) => (
+  <Frame>
+    <Chart {...args} />
+  </Frame>
+);
 
 const sampleData = [
   { name: 'Jan', Sales: 4000, Revenue: 2400, Profit: 1600 },
@@ -14,37 +17,40 @@ const sampleData = [
   { name: 'May', Sales: 1890, Revenue: 4800, Profit: 2180 },
   { name: 'Jun', Sales: 2390, Revenue: 3800, Profit: 2500 },
   { name: 'Jul', Sales: 3490, Revenue: 4300, Profit: 2100 },
-]
+];
 
 const sampleSeries = [
   { dataKey: 'Sales', name: 'Sales ($)' },
   { dataKey: 'Revenue', name: 'Revenue ($)' },
   { dataKey: 'Profit', name: 'Profit ($)' },
-]
+];
 
 const pieData = [
   { name: 'Direct', value: 400 },
   { name: 'Organic Search', value: 300 },
   { name: 'Paid Ads', value: 300 },
   { name: 'Referral', value: 200 },
-]
+];
 
 const meta = {
-  title: 'Content/Chart',
+  title: 'Data Display/Chart',
   component: Chart,
   tags: ['autodocs'],
+  render: renderChart,
   parameters: {
+    layout: 'padded',
     docs: {
       description: {
         component:
-          'A responsive, themed chart component built with Recharts. Supports line, bar, area, and pie chart types with customizable series, colors, tooltips, grids, and titles.',
+          'A responsive chart with a neutral surface and six tones. Tone sets the leading series color; custom palettes and series colors take precedence. Supports line, bar, area, and pie charts.',
       },
     },
   },
   args: {
+    className: 'border-0 bg-transparent',
     title: 'Financial Overview',
     description: 'Monthly breakdown of sales, revenue, and profit',
-    variant: 'primary',
+    tone: 'primary',
     data: sampleData,
     series: sampleSeries,
     xAxisKey: 'name',
@@ -60,10 +66,10 @@ const meta = {
       description: 'The visual type of chart to display.',
       table: { category: 'Chart Type' },
     },
-    variant: {
-      control: { type: 'select' },
-      options: ['primary', 'secondary'],
-      description: 'Selects the ordered theme palette for series without a custom color.',
+    tone: {
+      control: 'select',
+      options: tones,
+      description: 'Sets the leading color of the default series palette.',
       table: { category: 'Appearance' },
     },
     title: {
@@ -106,6 +112,11 @@ const meta = {
       description: 'Show series legend.',
       table: { category: 'Display' },
     },
+    colors: {
+      control: 'object',
+      description: 'Custom series and pie-slice color palette (overrides the tone palette).',
+      table: { category: 'Colors' },
+    },
     gridColor: {
       control: 'color',
       description: 'Custom stroke color for grid lines (overrides theme border).',
@@ -141,62 +152,79 @@ const meta = {
       description: 'Show or configure active hover dots on line charts.',
       table: { category: 'Styles' },
     },
+    fillOpacity: {
+      control: { type: 'number', min: 0, max: 1, step: 0.05 },
+      description: 'Fill opacity for area charts, from 0 (transparent) to 1 (opaque).',
+      table: { category: 'Styles' },
+    },
+    barRadius: {
+      description: 'Bar corner radius as a number or [top-left, top-right, bottom-right, bottom-left].',
+      table: { category: 'Styles' },
+    },
+    outerRadius: {
+      description: 'Pie outer radius in pixels or as a percentage (for example, "80%").',
+      table: { category: 'Styles' },
+    },
+    innerRadius: {
+      description: 'Pie inner radius in pixels or as a percentage; use a nonzero value for a donut chart.',
+      table: { category: 'Styles' },
+    },
     data: { table: { category: 'Data' } },
     series: { table: { category: 'Data' } },
     xAxisKey: { table: { category: 'Data' } },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            color: activeTheme.colors.text,
-            border: `1px solid ${activeTheme.colors.border}`,
-            padding: '24px',
-            borderRadius: '12px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
+export default meta;
 
-export default meta
+export const Playground = {};
 
-export const LineChart = {
-  args: {
-    type: 'line',
-  },
-}
+export const Types = {
+  render: (args) => (
+    <Frame>
+      {['line', 'bar', 'area', 'pie'].map((type) => (
+        <Chart
+          {...args}
+          key={type}
+          type={type}
+          title={`${args.title} - ${type}`}
+          data={type === 'pie' ? pieData : args.data}
+          series={type === 'pie' ? [{ dataKey: 'value', name: 'Visitors' }] : args.series}
+        />
+      ))}
+      <Chart
+        {...args}
+        type="pie"
+        title={`${args.title} - donut`}
+        data={pieData}
+        series={[{ dataKey: 'value', name: 'Visitors' }]}
+        xAxisKey="name"
+        innerRadius={50}
+      />
+    </Frame>
+  ),
+};
 
-export const BarChart = {
-  args: {
-    type: 'bar',
-    title: 'Monthly Sales Comparison',
-    description: 'Bar chart showing revenue vs sales per month',
-  },
-}
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <section key={tone} className="min-w-0">
+          <h2 className="mb-2 text-18 font-semibold text-text-primary">{tone}</h2>
+          <Chart {...args} tone={tone} title={`${args.title} - ${tone}`} />
+        </section>
+      ))}
+    </Frame>
+  ),
+};
 
-export const AreaChart = {
-  args: {
-    type: 'area',
-    title: 'Cumulative Growth',
-    description: 'Filled area chart illustrating metric trends over time',
-  },
-}
-
-export const PieChart = {
-  args: {
-    type: 'pie',
-    title: 'Traffic Sources',
-    description: 'Distribution of incoming website visitors',
-    data: pieData,
-    series: [{ dataKey: 'value', name: 'Visitors' }],
-    xAxisKey: 'name',
-  },
-}
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Chart {...args} title={`${args.title} - Single series`} series={args.series.slice(0, 1)} />
+      <Chart {...args} title={`${args.title} - Without grid`} showGrid={false} />
+      <Chart {...args} title={`${args.title} - Without legend`} showLegend={false} />
+      <Chart {...args} title={`${args.title} - Without tooltip`} showTooltip={false} />
+    </Frame>
+  ),
+};

@@ -1,17 +1,12 @@
-import React from 'react';
-export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-    /** Visible label associated with the textarea. */
+import { type TextareaHTMLAttributes } from 'react';
+import { type InputVariant, type InputTone, type InputSize } from '../input/input.styles';
+export type TextareaVariant = InputVariant;
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
-    /** Number of visible text rows. */
-    rows?: number;
-    /** Additional element IDs announced with the field. */
-    'aria-describedby'?: string;
-    /** Controlled textarea value. Use with onChange. */
-    value?: React.TextareaHTMLAttributes<HTMLTextAreaElement>['value'];
-    /** Called when the textarea value changes. */
-    onChange?: React.ChangeEventHandler<HTMLTextAreaElement>;
-    /** Validation message displayed below the textarea. */
+    helperText?: string;
     error?: string;
+    variant?: TextareaVariant;
+    tone?: InputTone;
+    size?: InputSize;
 }
-declare const Textarea: React.FC<TextareaProps>;
-export default Textarea;
+export default function Textarea({ className, label, helperText, error, variant, tone, size, id, 'aria-describedby': describedBy, ...props }: TextareaProps): import("react/jsx-runtime").JSX.Element;

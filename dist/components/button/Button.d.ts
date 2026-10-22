@@ -1,14 +1,17 @@
-import React from 'react';
-import type { ControlSize, ControlWidth } from '../../styles/control';
-export type ButtonSize = ControlSize;
-export type ButtonVariant = 'primary' | 'secondary';
-export type ButtonWidth = ControlWidth;
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    iconLeft?: React.ReactNode;
-    iconRight?: React.ReactNode;
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { type ButtonSize, type ButtonTone, type ButtonVariant } from './button.styles';
+export type { ButtonSize, ButtonTone, ButtonVariant } from './button.styles';
+export type ButtonWidth = 'default' | 'auto' | 'sm' | 'md' | 'lg' | 'full';
+export type ButtonShape = 'rectangle' | 'pill';
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+    label?: string;
+    iconLeft?: ReactNode;
+    iconRight?: ReactNode;
     size?: ButtonSize;
     width?: ButtonWidth;
     variant?: ButtonVariant;
+    tone?: ButtonTone;
+    outline?: boolean;
+    shape?: ButtonShape;
 }
-declare const Button: React.FC<ButtonProps>;
-export default Button;
+export default function Button({ className, label, iconLeft, iconRight, size, width, variant, tone, outline, shape, children, ...props }: ButtonProps): import("react/jsx-runtime").JSX.Element;

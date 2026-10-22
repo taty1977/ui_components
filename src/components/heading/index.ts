@@ -3,6 +3,8 @@ export type {
   HeadingColor,
   HeadingFamily,
   HeadingLevel,
+  HeadingVariant,
+  HeadingTone,
   HeadingProps,
   HeadingTextTransform,
   HeadingWeight,

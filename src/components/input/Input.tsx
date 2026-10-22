@@ -1,238 +1,262 @@
-import React, { useId } from 'react'
-import styled from 'styled-components'
-import type { ThemeType } from '../../styles/theme'
+import { useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
+import { cn } from '../../utils/cn';
+import {
+  fieldStyles,
+  resolveFieldVariant,
+  fieldInputClasses,
+  fieldCenterAlignmentClasses,
+  toneClasses,
+  toneTextClasses,
+  notchToneClasses,
+  errorClasses,
+  type InputSize,
+  type InputTone,
+  type InputVariant,
+} from './input.styles';
+import { LabelText } from './LabelText';
 
-export type InputVariant = 'primary' | 'secondary'
+export type { InputSize, InputTone, InputVariant } from './input.styles';
 
-export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string
-  className?: string
-  'aria-describedby'?: string
-  value?: React.InputHTMLAttributes<HTMLInputElement>['value']
-  onChange?: React.ChangeEventHandler<HTMLInputElement>
-  error?: string
-  variant?: InputVariant
-  iconLeft?: React.ReactNode
-  iconRight?: React.ReactNode
-  outsideIconLeft?: React.ReactNode
-  outsideIconRight?: React.ReactNode
-  handleActions?: () => void
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  label?: string;
+  helperText?: string;
+  error?: string;
+  variant?: InputVariant;
+  tone?: InputTone;
+  size?: InputSize;
+  iconLeft?: ReactNode;
+  iconRight?: ReactNode;
+  outsideIconLeft?: ReactNode;
+  outsideIconRight?: ReactNode;
+  handleActions?: () => void;
+  inputClassName?: string;
 }
-
-const Field = styled.div`
-  width: 100%;
-  max-width: ${({ theme }) => theme.sizes.sz_2400};
-  font-family: ${({ theme }) => theme.fontFamily};
-`
-
-const Label = styled.label<{ $hasOutsideLeftIcon: boolean }>`
-  display: block;
-  margin-left: ${({ theme, $hasOutsideLeftIcon }) =>
-    $hasOutsideLeftIcon ? `calc(${theme.sizes.sz_175} + ${theme.spaces.sm})` : '0'};
-  margin-bottom: ${({ theme }) => theme.spaces.sm};
-  color: ${({ theme }) => theme.colors.title};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
-`
-
-const RequiredIndicator = styled.span`
-  margin-left: ${({ theme }) => theme.spaces.xs};
-  color: ${({ theme }) => theme.actionColors.danger};
-`
-
-const InputWrapper = styled.div`
-  position: relative;
-  flex: 1;
-  min-width: 0;
-`
-
-const InputRow = styled.div`
-  display: flex;
-  align-items: stretch;
-  gap: ${({ theme }) => theme.spaces.sm};
-`
-
-const getVariantAppearance = (theme: ThemeType, variant: InputVariant) => {
-  if (variant === 'secondary') {
-    return { color: theme.colors.secondary.base, focusBorder: theme.colors.secondary.focusBorder }
-  }
-
-  return { color: theme.colors.primary.base, focusBorder: theme.colors.primary.focusBorder }
-}
-
-const OutsideIcon = styled.span<{ $interactive: boolean; $variant: InputVariant }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  aspect-ratio: 1;
-  color: ${({ theme, $variant }) => getVariantAppearance(theme, $variant).color};
-  flex-shrink: 0;
-  cursor: ${({ $interactive }) => ($interactive ? 'pointer' : 'default')};
-
-  & > svg {
-    width: 100%;
-    min-width: ${({ theme }) => theme.sizes.sz_175};
-    height: 100%;
-  }
-`
-
-const Icon = styled.span<{ $side: 'left' | 'right'; $variant: InputVariant }>`
-  position: absolute;
-  ${({ $side, theme }) => ($side === 'left' ? `left: ${theme.spaces.md};` : `right: ${theme.spaces.md};`)}
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: ${({ theme }) => theme.sizes.sz_100};
-  height: ${({ theme }) => theme.sizes.sz_100};
-  color: ${({ theme, $side, $variant }) =>
-    $side === 'left' ? theme.colors.title : getVariantAppearance(theme, $variant).color};
-  pointer-events: none;
-
-  & > svg {
-    width: 100%;
-    height: 100%;
-  }
-`
-
-const StyledInput = styled.input<{
-  $hasLeftIcon: boolean
-  $hasRightIcon: boolean
-  $hasError: boolean
-  $variant: InputVariant
-}>`
-  width: 100%;
-  box-sizing: border-box;
-  padding: ${({ theme, $hasLeftIcon, $hasRightIcon }) => {
-    const leftPadding = $hasLeftIcon ? `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})` : theme.spaces.lg
-    const rightPadding = $hasRightIcon ? `calc(${theme.spaces.lg} + ${theme.sizes.sz_100})` : theme.spaces.lg
-    return `${theme.spaces.md} ${rightPadding} ${theme.spaces.md} ${leftPadding}`
-  }};
-  border: 1px solid ${({ theme, $hasError }) => ($hasError ? theme.actionColors.danger : theme.colors.border)};
-  border-radius: ${({ theme }) => theme.sizes.sz_075};
-  background-color: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.title};
-  font-family: ${({ theme }) => theme.fontFamily};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  font-weight: ${({ theme }) => theme.fontWeights.normal};
-  line-height: 1.4;
-  outline: none;
-  box-shadow: ${({ theme }) => theme.boxShadow.bs_01};
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.mutedText};
-  }
-
-  &:focus {
-    border-color: ${({ theme, $hasError, $variant }) =>
-      $hasError ? theme.actionColors.danger : getVariantAppearance(theme, $variant).color};
-    box-shadow: ${({ theme, $hasError, $variant }) =>
-      $hasError
-        ? `0 0 0 3px ${theme.actionColors.danger}33`
-        : `0 0 0 3px ${getVariantAppearance(theme, $variant).color}33`};
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-`
-
-const ErrorMessage = styled.p<{ $hasOutsideLeftIcon: boolean }>`
-  margin: ${({ theme }) => `${theme.spaces.sm} 0 0`};
-  margin-left: ${({ theme, $hasOutsideLeftIcon }) =>
-    $hasOutsideLeftIcon ? `calc(${theme.sizes.sz_175} + ${theme.spaces.sm})` : '0'};
-  color: ${({ theme }) => theme.actionColors.danger};
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-`
-
-const Input: React.FC<InputProps> = ({
+export default function Input({
   className,
-  'aria-describedby': ariaDescribedBy,
-  type = 'text',
+  inputClassName,
+  label,
+  helperText,
   error,
+  variant = 'outlined',
+  tone = 'primary',
+  size = 'normal',
   iconLeft,
   iconRight,
-  variant = 'primary',
-  id,
-  label,
   outsideIconLeft,
   outsideIconRight,
   handleActions,
+  id,
+  type = 'text',
+  'aria-describedby': ariaDescribedBy,
+  onFocus,
+  onBlur,
+  onChange,
+  value,
+  defaultValue,
+  disabled,
+  required,
   ...props
-}) => {
-  const generatedId = useId()
-  const inputId = id ?? generatedId
-  const errorId = `${inputId}-error`
-  const describedBy = [ariaDescribedBy, error ? errorId : undefined].filter(Boolean).join(' ') || undefined
-  const outsideIconProps = handleActions
-    ? {
-        $interactive: true,
-        role: 'button' as const,
-        tabIndex: 0,
-        onClick: handleActions,
-        onKeyDown: (event: React.KeyboardEvent<HTMLSpanElement>) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault()
-            handleActions()
-          }
-        },
-      }
-    : { $interactive: false }
+}: InputProps) {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+  const [focused, setFocused] = useState(false);
+  const [localValue, setLocalValue] = useState(defaultValue ?? '');
+  const labelRef = useRef<HTMLLabelElement>(null);
+  const [notchWidth, setNotchWidth] = useState<number>();
+  const floating = String(value ?? localValue).length > 0;
+  const showLabel = floating || !props.placeholder;
+  const { appearance, accent } = resolveFieldVariant(variant, tone, error);
+  const outlinedFloating = Boolean(label && floating && appearance === 'outlined');
+  const notched = Boolean(label && floating && appearance === 'outlined' && notchWidth !== undefined);
+  const labelTone = disabled
+    ? 'text-text-disabled'
+    : error
+      ? toneTextClasses.error
+      : focused
+        ? toneTextClasses[accent]
+        : 'text-text-secondary';
+  const message = error ?? helperText;
+  const messageId = `${inputId}-${error ? 'error' : 'helper'}`;
+  const describedBy = [ariaDescribedBy, message ? messageId : undefined].filter(Boolean).join(' ') || undefined;
+  useEffect(() => {
+    if (!label || !floating || appearance !== 'outlined') return;
+    const width = labelRef.current?.offsetWidth;
+    if (width) setNotchWidth(width);
+  }, [appearance, floating, label, required]);
 
+  const outsideIcon = (icon: ReactNode) =>
+    handleActions ? (
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={handleActions}
+        className={cn(
+          'inline-flex min-w-[26px] items-center justify-center self-stretch disabled:opacity-45 [&_svg]:size-[26px]',
+          toneTextClasses[accent],
+        )}
+        aria-label={`${label ?? 'Input'} action`}
+      >
+        {icon}
+      </button>
+    ) : (
+      <span
+        aria-hidden="true"
+        className={cn(
+          'inline-flex min-w-[26px] items-center justify-center self-stretch [&_svg]:size-[26px]',
+          toneTextClasses[accent],
+        )}
+      >
+        {icon}
+      </span>
+    );
   return (
-    <Field className={className}>
-      {label ? (
-        <Label $hasOutsideLeftIcon={Boolean(outsideIconLeft)} htmlFor={inputId}>
-          {label}
-          {props.required ? <RequiredIndicator aria-hidden='true'>*</RequiredIndicator> : null}
-        </Label>
-      ) : null}
-      <InputRow>
-        {outsideIconLeft ? (
-          <OutsideIcon {...outsideIconProps} $variant={variant} aria-hidden={handleActions ? undefined : 'true'}>
-            {outsideIconLeft}
-          </OutsideIcon>
-        ) : null}
-        <InputWrapper>
-          {iconLeft ? (
-            <Icon $side='left' $variant={variant} aria-hidden='true'>
-              {iconLeft}
-            </Icon>
-          ) : null}
-          <StyledInput
-            aria-describedby={describedBy}
-            id={inputId}
-            type={type}
-            aria-invalid={error ? true : undefined}
-            $hasError={Boolean(error)}
-            $hasLeftIcon={Boolean(iconLeft)}
-            $hasRightIcon={Boolean(iconRight)}
-            $variant={variant}
-            {...props}
-          />
-          {iconRight ? (
-            <Icon $side='right' $variant={variant} aria-hidden='true'>
-              {iconRight}
-            </Icon>
-          ) : null}
-        </InputWrapper>
-        {outsideIconRight ? (
-          <OutsideIcon {...outsideIconProps} $variant={variant} aria-hidden={handleActions ? undefined : 'true'}>
-            {outsideIconRight}
-          </OutsideIcon>
-        ) : null}
-      </InputRow>
-      {error ? (
-        <ErrorMessage $hasOutsideLeftIcon={Boolean(outsideIconLeft)} aria-live='polite' id={errorId} role='alert'>
-          {error}
-        </ErrorMessage>
-      ) : null}
-    </Field>
-  )
+    <div className={cn('w-full max-w-sm font-sans', className)}>
+      <div className="flex items-stretch gap-2">
+        {outsideIconLeft && outsideIcon(outsideIconLeft)}
+        <div className="relative min-w-0 flex-1">
+          {label && appearance === 'standard' && floating && showLabel && (
+            <LabelText
+              ref={labelRef}
+              htmlFor={inputId}
+              required={required}
+              className={cn('absolute left-0 top-0 z-10 mb-0 pl-4', labelTone)}
+            >
+              {label}
+            </LabelText>
+          )}
+          <div
+            className={cn(
+              fieldStyles({
+                variant: appearance,
+                size,
+                disabled,
+                iconLeft: Boolean(iconLeft),
+                iconRight: Boolean(iconRight),
+                notched,
+              }),
+              'group',
+              outlinedFloating && 'mt-2 bg-background-surface',
+              label && floating && appearance === 'standard' && 'mt-2',
+              !disabled && toneClasses[accent],
+            )}
+          >
+            {notched && (
+              <>
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute bottom-0 left-0 top-0 w-3 rounded-l-md border-b border-l border-t group-focus-within:border-b-2 group-focus-within:border-l-2 group-focus-within:border-t-2',
+                    disabled ? 'border-text-disabled' : notchToneClasses[accent],
+                  )}
+                />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute bottom-0 left-3 right-3 border-b group-focus-within:border-b-2',
+                    disabled ? 'border-text-disabled' : notchToneClasses[accent],
+                  )}
+                />
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'absolute bottom-0 right-0 top-0 rounded-r-md border-b border-r border-t group-focus-within:border-b-2 group-focus-within:border-r-2 group-focus-within:border-t-2',
+                    disabled ? 'border-text-disabled' : notchToneClasses[accent],
+                  )}
+                  style={{ left: 12 + (notchWidth ?? 0) }}
+                />
+              </>
+            )}
+            {label && !(appearance === 'standard' && floating && showLabel) && (
+              <LabelText
+                ref={labelRef}
+                htmlFor={inputId}
+                required={required}
+                className={cn(
+                  'pointer-events-none absolute z-10 mb-0 transition-all',
+                  !showLabel
+                    ? 'sr-only'
+                    : floating && appearance === 'outlined'
+                      ? 'left-3 -top-2 px-1 text-13'
+                      : floating && appearance === 'filled'
+                        ? 'left-4 top-1 text-13'
+                        : cn(
+                            'top-1/2 -translate-y-1/2 text-inherit',
+                            iconLeft ? (size === 'small' ? 'left-9' : 'left-[42px]') : 'left-4',
+                          ),
+                  !floating && appearance !== 'outlined' && 'mt-[0.5px] group-focus-within:mt-px',
+                  floating && appearance === 'outlined' && 'bg-background-surface',
+                  floating && appearance === 'filled' && 'leading-14',
+                  labelTone,
+                )}
+              >
+                {label}
+              </LabelText>
+            )}
+            {iconLeft && (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'inline-flex size-5 shrink-0 items-center justify-center text-text-secondary [&_svg]:size-5',
+                  fieldCenterAlignmentClasses[appearance],
+                )}
+              >
+                {iconLeft}
+              </span>
+            )}
+            <input
+              {...props}
+              id={inputId}
+              type={type}
+              disabled={disabled}
+              required={required}
+              value={value}
+              defaultValue={defaultValue}
+              aria-describedby={describedBy}
+              aria-invalid={error ? true : props['aria-invalid']}
+              className={cn(
+                fieldInputClasses,
+                !floating && fieldCenterAlignmentClasses[appearance],
+                appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+                inputClassName,
+              )}
+              onFocus={(event) => {
+                setFocused(true);
+                onFocus?.(event);
+              }}
+              onBlur={(event) => {
+                setFocused(false);
+                onBlur?.(event);
+              }}
+              onChange={(event) => {
+                setLocalValue(event.target.value);
+                onChange?.(event);
+              }}
+            />
+            {iconRight && (
+              <span
+                aria-hidden="true"
+                className={cn(
+                  'inline-flex size-5 shrink-0 items-center justify-center text-text-secondary [&_svg]:size-5',
+                  fieldCenterAlignmentClasses[appearance],
+                )}
+              >
+                {iconRight}
+              </span>
+            )}
+          </div>
+        </div>
+        {outsideIconRight && outsideIcon(outsideIconRight)}
+      </div>
+      {message && (
+        <p
+          id={messageId}
+          role={error ? 'alert' : undefined}
+          aria-live="polite"
+          className={cn(error ? errorClasses : 'mt-1 text-13 text-text-secondary')}
+        >
+          {message}
+        </p>
+      )}
+    </div>
+  );
 }
-
-export default Input

@@ -1,14 +1,13 @@
-import React from 'react'
-import { ArrowRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid'
-import { brandTheme } from '../../../styles'
-import Autocomplete from '../Autocomplete'
+import React from 'react';
+import { fn } from 'storybook/test';
+import { ArrowRightIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
+import Autocomplete from '../Autocomplete';
 
-const themeStyles = {
-  Brand: brandTheme,
-}
+const tones = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+const Frame = ({ children }) => <div className="grid max-w-80 gap-6">{children}</div>;
 
 const meta = {
-  title: 'Forms/Autocomplete',
+  title: 'Inputs/Autocomplete',
   component: Autocomplete,
   tags: ['autodocs'],
   parameters: {
@@ -16,23 +15,32 @@ const meta = {
     docs: {
       description: {
         component:
-          'A themed autocomplete input with labels, validation feedback, and optional left and right icon slots. Type to filter options and select a value via click.',
+          'A themed autocomplete with floating labels, filterable options, and a shared 16px text inset. Empty placeholders, inside icons, and the clear button align to the full field midpoint, including border thickness. Filled values reserve space below the inside label.',
       },
     },
   },
   args: {
+    onChange: fn(),
+    onSelect: fn(),
+    onFocus: fn(),
+    onBlur: fn(),
     label: 'Fruit',
     options: ['Apple', 'Banana', 'Cherry', 'Date', 'Fig', 'Grape', 'Kiwi', 'Lemon', 'Mango', 'Orange'],
-    placeholder: 'Search fruit...',
+    placeholder: '',
+    helperText: '',
     required: false,
-    variant: 'primary',
+    variant: 'outlined',
+    tone: 'primary',
+    size: 'normal',
     showLeftIcon: false,
     showRightIcon: false,
   },
   argTypes: {
+    onFocus: { control: false, table: { category: 'Events' } },
+    onBlur: { control: false, table: { category: 'Events' } },
     label: {
       control: 'text',
-      description: 'Visible label for the autocomplete input.',
+      description: 'Label aligned to the outlined text inset; empty labels clear any left icon.',
       table: { category: 'Content' },
     },
     placeholder: {
@@ -55,18 +63,25 @@ const meta = {
       description: 'Validation message shown below the input.',
       table: { category: 'Validation' },
     },
+    helperText: {
+      control: 'text',
+      description: 'Hint below the field; turns error-toned when error is set.',
+      table: { category: 'Content' },
+    },
     variant: {
       control: 'select',
-      options: ['primary', 'secondary'],
-      description: 'Selects the focus and action icon color treatment.',
+      options: ['outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment.',
       table: { category: 'Appearance' },
     },
     onChange: {
       description: 'Called when the input value changes.',
       table: { category: 'Events' },
     },
+    tone: { control: 'select', options: tones },
+    size: { control: 'select', options: ['small', 'normal'] },
     onSelect: {
-      action: 'selected',
+      control: false,
       description: 'Called when an option is selected from the list.',
       table: { category: 'Events' },
     },
@@ -92,124 +107,52 @@ const meta = {
       table: { disable: true },
     },
   },
-  decorators: [
-    (Story, context) => {
-      const activeTheme = themeStyles[context.globals.theme] || themeStyles.Brand
+};
 
-      return (
-        <div
-          style={{
-            backgroundColor: activeTheme.colors.surface,
-            color: activeTheme.colors.text,
-            border: `1px solid ${activeTheme.colors.border}`,
-            padding: activeTheme.spaces.lg,
-            maxWidth: '600px',
-          }}
-        >
-          <Story />
-        </div>
-      )
-    },
-  ],
-}
-
-export default meta
+export default meta;
 
 const renderAutocomplete = ({ showLeftIcon, showRightIcon, ...args }) => (
-  <Autocomplete
-    {...args}
-    iconLeft={showLeftIcon ? <MagnifyingGlassIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-    iconRight={showRightIcon ? <ArrowRightIcon width='1em' height='1em' aria-hidden='true' /> : undefined}
-  />
-)
+  <Frame>
+    <Autocomplete
+      {...args}
+      iconLeft={showLeftIcon ? <MagnifyingGlassIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+      iconRight={showRightIcon ? <ArrowRightIcon width="1em" height="1em" aria-hidden="true" /> : undefined}
+    />
+  </Frame>
+);
 
-export const Default = {
-  render: renderAutocomplete,
-}
-
-export const WithLabel = {
-  render: renderAutocomplete,
-  args: {
-    label: 'Fruit',
-  },
-}
-
-export const WithError = {
-  render: renderAutocomplete,
-  args: {
-    label: 'Fruit',
-    error: 'Please select a fruit.',
-  },
-}
-
-export const Required = {
-  render: renderAutocomplete,
-  args: {
-    label: 'Fruit',
-    required: true,
-  },
-}
-
-export const WithLeftIcon = {
-  render: renderAutocomplete,
-  args: {
-    showLeftIcon: true,
-  },
-}
-
-export const WithRightIcon = {
-  render: renderAutocomplete,
-  args: {
-    showRightIcon: true,
-  },
-}
-
-export const WithBothIcons = {
-  render: renderAutocomplete,
-  args: {
-    showLeftIcon: true,
-    showRightIcon: true,
-  },
-}
-
-export const AllStates = {
-  name: 'All states',
-  render: () => (
-    <div style={{ display: 'grid', gap: '2rem' }}>
-      <Autocomplete
-        label='Default state'
-        onSelect={() => {}}
-        options={['Apple', 'Banana', 'Cherry']}
-        placeholder='Search fruit'
-      />
-      <Autocomplete
-        label='Focused state'
-        onSelect={() => {}}
-        options={['Apple', 'Banana', 'Cherry']}
-        placeholder='Search fruit'
-        autoFocus
-      />
-      <Autocomplete
-        label='Error state'
-        onSelect={() => {}}
-        options={['Apple', 'Banana', 'Cherry']}
-        placeholder='Search fruit'
-        error='Please select a fruit.'
-      />
-      <Autocomplete
-        label='Disabled state'
-        onSelect={() => {}}
-        options={['Apple', 'Banana', 'Cherry']}
-        placeholder='Search fruit'
-        disabled
-      />
-      <Autocomplete
-        label='Required field'
-        onSelect={() => {}}
-        options={['Apple', 'Banana', 'Cherry']}
-        placeholder='Search fruit'
-        required
-      />
-    </div>
+export const Playground = { render: renderAutocomplete };
+export const Variants = {
+  render: (args) => (
+    <Frame>
+      <Autocomplete {...args} label="Outlined" variant="outlined" helperText="Default variant" />
+      <Autocomplete {...args} label="Filled" variant="filled" helperText="Filled background" />
+      <Autocomplete {...args} label="Standard" variant="standard" helperText="Underline only" />
+    </Frame>
   ),
-}
+};
+export const Tones = {
+  render: (args) => (
+    <Frame>
+      {tones.map((tone) => (
+        <Autocomplete key={tone} {...args} label={tone} tone={tone} defaultValue="Apple" />
+      ))}
+    </Frame>
+  ),
+};
+export const WithIcons = {
+  render: renderAutocomplete,
+  args: {
+    showLeftIcon: true,
+    showRightIcon: true,
+  },
+};
+export const States = {
+  render: (args) => (
+    <Frame>
+      <Autocomplete {...args} label="Error" error="Please choose a fruit." defaultValue="Invalid" />
+      <Autocomplete {...args} label="Disabled" disabled placeholder="Cannot edit" />
+      <Autocomplete {...args} label="Required" required helperText="Marked with an asterisk" />
+    </Frame>
+  ),
+};

@@ -1,72 +1,88 @@
-# UI Component Library
+# Web UI Component Library
 
-This repository is configured as a UI component library, not a standalone React app.
-
-## Available Scripts
-
-In the project directory, run:
-
-### `npm run storybook`
-
-Launches Storybook at [http://localhost:6006](http://localhost:6006).
-
-### `npm run build`
-
-Builds the library bundles into `dist/` using Rollup.
-
-### `npm run test`
-
-Runs the Jest test suite.
-
-### Chromatic deployment
-
-Chromatic publishes the Storybook build publicly. The project token is kept in the local, ignored `.env` file and must be loaded into the PowerShell session before running npm; npm does not load `.env` automatically:
-
-```powershell
-$env:CHROMATIC_PROJECT_TOKEN = (Get-Content .env | Where-Object { $_ -match '^CHROMATIC_PROJECT_TOKEN=' } | ForEach-Object { $_ -replace '^CHROMATIC_PROJECT_TOKEN=', '' })
-npm run chromatic
-```
-
-The project token is available in Chromatic under the project's Manage screen. Do not use the deployment URL or build ID as the token, and never commit `.env` or the token to the repository.
-
-## Using Storybook from React and Angular
-
-This Storybook is built with React, but its published static site can be opened or embedded by any web application, including React and Angular projects. Use the public Chromatic URL as an iframe source:
-
-```tsx
-<iframe
-  title="Component Storybook"
-  src="https://your-public-chromatic-url.chromatic.com/"
-  style={{ width: '100%', minHeight: '800px', border: 0 }}
-/>
-```
-
-In Angular, the same iframe can be placed in a template:
-
-```html
-<iframe
-  title="Component Storybook"
-  src="https://your-public-chromatic-url.chromatic.com/"
-  width="100%"
-  height="800"
-  style="border: 0"
-></iframe>
-```
-
-The published Storybook is a documentation and preview site. The exported package components are React components and cannot be imported directly into an Angular template. Angular support requires a separate Angular component implementation or a web-component adapter.
-
-## Package Exports
-
-The package exports:
-
-- `main`: `dist/index.cjs.js`
-- `module`: `dist/index.esm.js`
-- `types`: `dist/index.d.ts`
+React DOM components using the Figma tokens, Tailwind CSS 3, CVA variants, and token-generation architecture shared with [ui-mob-components](https://github.com/taty1977/ui-mob-components).
 
 ## Usage
 
-Import components from the package entry point:
+React and React DOM 19 are peer dependencies. Import the compiled stylesheet once in your application:
 
-```ts
-import { Button, Accordion } from '@taty1977/my-component-library';
+```tsx
+import '@taty1977/my-component-library/styles.css';
+import { Button, Input } from '@taty1977/my-component-library';
+
+export function Example() {
+  return (
+    <main className="light">
+      <Input label="Email" type="email" helperText="Use your work address." />
+      <Button tone="primary" variant="default" size="md">
+        Continue
+      </Button>
+    </main>
+  );
+}
 ```
+
+No theme provider is needed. Set `light`, `dark`, or `teal` on the root or a subtree to switch CSS variables. Without an explicit root class, the system color scheme selects Light or Dark. Nested themed sections are supported.
+
+The stylesheet includes Tailwind's base reset; applications with their own Tailwind build can use the preset instead (avoid loading both copies of the utilities). Font names come from the tokens: load Inter and Roboto in the host application if you want those exact typefaces.
+
+### Optional Tailwind integration
+
+For applications using Tailwind CSS 3:
+
+```js
+// tailwind.config.cjs
+module.exports = {
+  presets: [require('@taty1977/my-component-library/tailwind-preset')],
+  content: ['./src/**/*.{js,jsx,ts,tsx}', './node_modules/@taty1977/my-component-library/dist/**/*.{js,cjs}'],
+};
+```
+
+Include Tailwind's `base`, `components`, and `utilities` directives in your application CSS. Adaptive classes such as `bg-background-surface`, `text-text-primary`, `bg-palette-primary-main`, `rounded-md`, and `text-15` follow the active theme.
+
+### Tokens and variants
+
+- Raw Figma exports live in [tokens/figma](tokens/figma/). Generate the typed snapshot with `npm run generate-tokens`; do not edit the snapshot manually.
+- `themeTokens.core` exposes the default palette, numeric spacing/radii, and typography. `themeTokens.themes`, `themeModes`, and `getThemeTokens('dark')` expose each mode.
+- Button appearances: `default`, `label`, `outline`, `text`; tones: `primary`, `secondary`, `error`, `warning`, `info`, `success`; sizes: `sm` (36px), `md` (44px), `lg` (48px).
+- Table headers support `label` (tinted), `outline` (initial variant), and `text` with six tones; the outer card remains neutral. Headerless tables always use `label`, regardless of the requested variant, tinting the first-column row headers without a table outline or individual cell boxes. Table sizes remain `small` / `normal`. Legacy `outlined`, `filled`, and `standard` values remain supported for tables with headers; `filled` retains its solid treatment. The `default` variant is no longer supported.
+- Sticky first table columns use a soft right-side shadow instead of an adjacent column border; sticky last columns use a matching left-side shadow instead of their left border. At the mobile breakpoint, stickiness and shadows are disabled and normal column borders apply.
+- In headerless tables, a sticky first column shows a right divider at the left edge and replaces it with a shadow while horizontally scrolled.
+- Table `stickyHeader` enables a scrolling region capped at 320px with pinned headers and a matching soft bottom shadow. The `label` variant keeps its header bottom divider and adds the shadow while scrolled down. Header stickiness works at all breakpoints and can be combined with sticky columns.
+- Accordion headers use the same Button-style variants and six tones, with `small` / `normal` sizes. Previous `outlined`, `filled`, and `standard` variants map to `outline`, `default`, and `text`; expansion behavior and custom icons are unchanged.
+- Chart has no `variant` prop. It keeps a neutral surface and supports six `tone` values for the leading default series color; custom palettes and series colors still take precedence. Stories include Playground, Types (line, bar, area, pie, and donut), Tones, and States.
+- Carousel supports Button-style `label` (tinted), `outline` (initial variant), and `text` appearances with six `tone` values; the `default` variant is not supported. It applies the appearance to its frame and controls and the tone to active thumbnails, indicators, and badges, including in the modal. Legacy `primary` and `secondary` variants preserve their original neutral frames and control treatment. Stories include Playground, Variants, and Tones alongside the existing examples.
+- Input, Select, Autocomplete, and Textarea share `outlined`, `filled`, and `standard` appearances, `small` / `normal` sizes, and the same six tones. Single-line fields are 44px / 48px; Textarea height still follows `rows` and native resizing. Focus doubles the outlined or bottom border, matching the shared field styling. Numeric native `size` values remain supported on Select and Autocomplete.
+- Heading variants `h1`–`h6` use the shared 46/38/28/24/18/15px scale. Paragraph (also exported as `BodyText`) provides `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, and `overline`.
+- Typography supports `default`, `muted`, the six palette tones, and `inverse`; weights are `regular`, `medium`, `semibold`, and `bold`.
+- Storybook includes button variant/tone matrices and typography scales. Fields use a compact mobile-style set: Playground, Variants, Tones, With Icons (where supported), and States. Every example follows the Light/Dark/Teal toolbar.
+
+Legacy primary/secondary control variants remain aliases. The previous theme-provider API and custom font-family props are no longer supported; use theme classes and token-driven `font-sans` instead.
+
+## Development
+
+```sh
+npm install
+npm run storybook
+```
+
+- `npm run generate-tokens` / `npm run check-tokens`: regenerate or verify the typed token snapshot.
+- `npm run typecheck`: TypeScript validation.
+- `npm test` / `npm run test:watch`: Vitest unit tests and headless Chromium Storybook tests, matching the mobile project structure.
+- `npm test -- --project=unit`: Testing Library unit tests with cleanup and DOM matchers from [vitest.setup.ts](vitest.setup.ts).
+- `npm test -- --project=storybook`: render every story in Chromium, including any play-function checks. Run `npx playwright install chromium` once before running browser tests.
+- `npm run lint`: ESLint.
+- `npm run build`: token generation, Vite library build, TypeScript declarations.
+- `npm run build-storybook`: static Vite-backed component catalog.
+
+Storybook follows the mobile catalog organization: **All Components** first, **Inputs** for buttons and fields, and **Data Display** for typography and display components. Web-only components use the same categories; the responsive web preview toolbar is retained. Moving stories into these groups changes their Storybook URLs.
+
+The pre-commit hook runs lint-staged, token consistency, type checking, and tests.
+
+[global.css](global.css) is the root Tailwind stylesheet shared by Storybook and the library build. The published stylesheet remains `styles.css`, so existing consumer imports do not change.
+
+## Package exports
+
+- Package root: ESM, CommonJS, and TypeScript declarations.
+- `@taty1977/my-component-library/styles.css`: compiled web stylesheet.
+- `@taty1977/my-component-library/tailwind-preset`: optional Tailwind 3 preset.
