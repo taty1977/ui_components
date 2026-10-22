@@ -83,6 +83,8 @@ export interface ChartProps {
   showTooltip?: boolean;
   /** Show series legend */
   showLegend?: boolean;
+  /** Animate chart series and tooltip transitions */
+  isAnimationActive?: boolean;
   /** Optional custom CSS class name */
   className?: string;
 }
@@ -116,6 +118,7 @@ export const Chart: React.FC<ChartProps> = ({
   showGrid = true,
   showTooltip = true,
   showLegend = true,
+  isAnimationActive = true,
   className,
 }) => {
   const chartId = useId();
@@ -194,6 +197,7 @@ export const Chart: React.FC<ChartProps> = ({
     <YAxis key="yaxis" stroke={textColor} tick={axisTickStyle} />,
     showTooltip ? (
       <Tooltip
+        isAnimationActive={isAnimationActive}
         key="tooltip"
         contentStyle={customTooltipStyle}
         itemStyle={tooltipItemStyle}
@@ -219,10 +223,16 @@ export const Chart: React.FC<ChartProps> = ({
         return (
           <PieChart>
             {showTooltip && (
-              <Tooltip contentStyle={customTooltipStyle} itemStyle={tooltipItemStyle} labelStyle={tooltipLabelStyle} />
+              <Tooltip
+                isAnimationActive={isAnimationActive}
+                contentStyle={customTooltipStyle}
+                itemStyle={tooltipItemStyle}
+                labelStyle={tooltipLabelStyle}
+              />
             )}
             {showLegend && <Legend wrapperStyle={legendStyle} formatter={renderLegendFormatter} />}
             <Pie
+              isAnimationActive={isAnimationActive}
               data={pieData}
               dataKey={dataKey}
               nameKey={nameKey}
@@ -242,6 +252,7 @@ export const Chart: React.FC<ChartProps> = ({
             {renderCartesianElements()}
             {series.map((s, i) => (
               <Bar
+                isAnimationActive={isAnimationActive}
                 key={s.dataKey}
                 dataKey={s.dataKey}
                 name={s.name || s.dataKey}
@@ -260,6 +271,7 @@ export const Chart: React.FC<ChartProps> = ({
               const color = getColor(s, i);
               return (
                 <Area
+                  isAnimationActive={isAnimationActive}
                   key={s.dataKey}
                   type="monotone"
                   dataKey={s.dataKey}
@@ -281,6 +293,7 @@ export const Chart: React.FC<ChartProps> = ({
             {renderCartesianElements()}
             {series.map((s, i) => (
               <Line
+                isAnimationActive={isAnimationActive}
                 key={s.dataKey}
                 type="monotone"
                 dataKey={s.dataKey}

@@ -2,18 +2,23 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Chart from '../Chart';
 
+const captureChart = vi.hoisted(() => vi.fn());
+
 // Mock recharts ResponsiveContainer so it renders children in JSDOM where dimensions are 0
 vi.mock('recharts', async () => {
   const original = await vi.importActual<typeof import('recharts')>('recharts');
   return {
     ...original,
-    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
-      <div data-testid="responsive-container" style={{ width: 500, height: 300 }}>
-        {React.isValidElement<{ width?: number; height?: number }>(children)
-          ? React.cloneElement(children, { width: 500, height: 300 })
-          : children}
-      </div>
-    ),
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => {
+      captureChart(children);
+      return (
+        <div data-testid="responsive-container" style={{ width: 500, height: 300 }}>
+          {React.isValidElement<{ width?: number; height?: number }>(children)
+            ? React.cloneElement(children, { width: 500, height: 300 })
+            : children}
+        </div>
+      );
+    },
   };
 });
 
@@ -29,6 +34,31 @@ const sampleSeries = [
 ];
 
 describe('Chart', () => {
+  test.each(['line', 'bar', 'area', 'pie'] as const)(
+    'can disable %s series and tooltip animations while preserving the animated default',
+    (type) => {
+      const { rerender } = render(
+        <Chart data={sampleData} series={sampleSeries} type={type} isAnimationActive={false} />,
+      );
+      const animationValues = () => {
+        const chart = captureChart.mock.lastCall?.[0];
+        if (!React.isValidElement<{ children: React.ReactNode }>(chart)) {
+          throw new Error('Expected a chart element');
+        }
+        return React.Children.toArray(chart.props.children)
+          .filter(
+            (child): child is React.ReactElement<{ isAnimationActive: boolean }> =>
+              React.isValidElement<{ isAnimationActive?: boolean }>(child) &&
+              child.props.isAnimationActive !== undefined,
+          )
+          .map((child) => child.props.isAnimationActive);
+      };
+      expect(animationValues()).toEqual(type === 'pie' ? [false, false] : [false, false, false]);
+      rerender(<Chart data={sampleData} series={sampleSeries} type={type} />);
+      expect(animationValues()).toEqual(type === 'pie' ? [true, true] : [true, true, true]);
+    },
+  );
+
   test.each(['primary', 'secondary', 'error', 'warning', 'info', 'success'] as const)(
     'supports the %s tone',
     (tone) => {

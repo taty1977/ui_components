@@ -58,8 +58,14 @@ const meta = {
     showGrid: true,
     showTooltip: true,
     showLegend: true,
+    isAnimationActive: false,
   },
   argTypes: {
+    isAnimationActive: {
+      control: 'boolean',
+      description: 'Animate chart series and tooltips. Disabled in stories for stable visual snapshots.',
+      table: { category: 'Display', defaultValue: { summary: true } },
+    },
     type: {
       control: { type: 'select' },
       options: ['line', 'bar', 'area', 'pie'],
