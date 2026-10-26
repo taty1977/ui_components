@@ -40,16 +40,20 @@ export const transformClasses = {
   uppercase: 'uppercase',
   lowercase: 'lowercase',
 };
-export const resolveTextTone = (color: HeadingColor): TextTone =>
-  color === 'title'
-    ? 'default'
-    : color === 'Primary'
-      ? 'primary'
-      : color === 'Secondary'
-        ? 'secondary'
-        : color === 'danger'
-          ? 'error'
-          : color;
+export function resolveTextTone(color: HeadingColor): TextTone {
+  switch (color) {
+    case 'title':
+      return 'default';
+    case 'Primary':
+      return 'primary';
+    case 'Secondary':
+      return 'secondary';
+    case 'danger':
+      return 'error';
+    default:
+      return color;
+  }
+}
 
 export default function Heading({
   level,

@@ -1,6 +1,6 @@
 import { type InputHTMLAttributes, type ReactNode } from 'react';
-import { type InputSize, type InputTone, type InputVariant } from './input.styles';
-export type { InputSize, InputTone, InputVariant } from './input.styles';
+import { type InputSize, type InputTone, type InputVariant } from '../shared/fields/field.styles';
+export type { InputSize, InputTone, InputVariant } from '../shared/fields/field.styles';
 export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
     label?: string;
     helperText?: string;

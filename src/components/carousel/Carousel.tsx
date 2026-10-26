@@ -8,9 +8,11 @@ import {
 } from '@heroicons/react/24/solid';
 import { cn } from '../../utils/cn';
 import type { Breakpoint } from '../../utils/breakpoints';
+import type { PaletteTone } from '../../themes/paletteTones';
+import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
 import Heading from '../heading/Heading';
-import { toneClasses, type ButtonTone, type ButtonVariant } from '../button/button.styles';
-import { toneTextClasses } from '../input/input.styles';
+import { toneClasses } from '../button/button.styles';
+import { toneTextClasses } from '../shared/fields/field.styles';
 
 export interface CarouselImageItem {
   id?: string;
@@ -20,14 +22,14 @@ export interface CarouselImageItem {
   badge?: string;
   likeButton?: boolean;
 }
-export type CarouselVariant = Exclude<ButtonVariant, 'default'>;
+export type CarouselVariant = Exclude<ComponentVariant, 'default'>;
 export interface CarouselProps {
   images: CarouselImageItem[];
   className?: string;
   likeButton?: boolean;
   breakpoint?: Breakpoint;
   variant?: CarouselVariant;
-  tone?: ButtonTone;
+  tone?: PaletteTone;
   initialIndex?: number;
   onImageChange?: (index: number, image: CarouselImageItem) => void;
   showThumbnails?: boolean;
@@ -41,6 +43,13 @@ const imageKey = (image: CarouselImageItem) => image.id || image.src;
 const imageAlt = (image: CarouselImageItem, index: number) => image.alt.trim() || `Product image ${index + 1}`;
 const controlClasses =
   'inline-flex size-8 shrink-0 items-center justify-center rounded-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-45';
+
+function initialImageIndex(index: number, count: number): number {
+  if (!Number.isInteger(index)) {
+    throw new RangeError('Carousel initialIndex must be a finite integer.');
+  }
+  return Math.min(Math.max(index, 0), Math.max(count - 1, 0));
+}
 
 export function Carousel({
   images,
@@ -59,12 +68,12 @@ export function Carousel({
   openOnClick = true,
 }: CarouselProps) {
   const titleId = useId();
-  const [activeIndex, setActiveIndex] = useState(Math.min(Math.max(initialIndex, 0), Math.max(images.length - 1, 0)));
+  const [activeIndex, setActiveIndex] = useState(() => initialImageIndex(initialIndex, images.length));
   const [open, setOpen] = useState(false);
   const [thumbStart, setThumbStart] = useState(0);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
   const closeRef = useRef<HTMLButtonElement>(null);
-  const triggerRef = useRef<HTMLImageElement>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const index = Math.min(activeIndex, Math.max(0, images.length - 1));
   const image = images[index];
@@ -72,8 +81,8 @@ export function Carousel({
   const mobile = breakpoint === 'mobile';
   const stageHeight = mobile ? '10rem' : breakpoint === 'tablet' ? '15rem' : '25rem';
   const legacy = variant === 'primary' || variant === 'secondary';
-  const accent = legacy ? variant : tone;
-  const appearance = legacy ? 'solid' : variant;
+  const accent = resolveVariantTone(variant, tone);
+  const appearance = componentVariantAppearances[variant];
   const accentClasses = cn(toneTextClasses[accent], 'focus-visible:outline-current');
   const controlAppearance = legacy
     ? cn('bg-background-surface hover:bg-action-hover', accentClasses)
@@ -90,7 +99,7 @@ export function Carousel({
 
   useEffect(() => {
     if (!open) return;
-    const trigger = triggerRef.current;
+    const trigger = openerRef.current;
     closeRef.current?.focus();
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
@@ -133,7 +142,8 @@ export function Carousel({
     ensureVisible(selected);
     onImageChange?.(selected, images[selected]);
   };
-  const openGallery = () => {
+  const openGallery = (opener: HTMLElement) => {
+    openerRef.current = opener;
     ensureVisible(index);
     setOpen(true);
   };
@@ -153,7 +163,7 @@ export function Carousel({
   const thumbnails = (position: 'left' | 'right' | 'bottom', dialog = false) => {
     if (!showThumbnails || mobile || thumbnailsPosition !== position) return null;
     const start = dialog ? thumbStart : 0;
-    const more = images.length - slots;
+    const more = images.length - slots + 1;
     const list = (
       <div
         className={cn('grid gap-2.5 overflow-hidden p-1', position === 'bottom' ? 'justify-center' : 'content-start')}
@@ -161,7 +171,7 @@ export function Carousel({
       >
         {images.slice(start, start + slots).map((item, offset) => {
           const actual = start + offset;
-          const overflow = !dialog && more > 0 && offset === slots - 1;
+          const overflow = !dialog && openOnClick && images.length > slots && offset === slots - 1;
           return (
             <button
               key={`${imageKey(item)}-${actual}`}
@@ -173,16 +183,11 @@ export function Carousel({
                   index === actual &&
                   'border-current ring-2 ring-current ring-offset-2 ring-offset-background-surface',
               )}
-              aria-label={
-                overflow
-                  ? openOnClick
-                    ? `Open image gallery (${more} more)`
-                    : `${more} additional images`
-                  : `Select ${imageAlt(item, actual)}`
-              }
-              onClick={() => {
+              aria-label={overflow ? `Open image gallery (${more} more)` : `Select ${imageAlt(item, actual)}`}
+              aria-current={!overflow && index === actual ? 'true' : undefined}
+              onClick={(event) => {
                 if (overflow) {
-                  if (openOnClick) openGallery();
+                  openGallery(event.currentTarget);
                 } else selectIndex(actual);
               }}
             >
@@ -263,7 +268,6 @@ export function Carousel({
         </button>
       )}
       <img
-        ref={!dialog && openOnClick ? triggerRef : undefined}
         src={image.src}
         alt={imageAlt(image, index)}
         className={cn('block size-full object-cover', !dialog && openOnClick && 'cursor-zoom-in')}
@@ -272,11 +276,11 @@ export function Carousel({
               role: 'button',
               'aria-label': `Open image gallery: ${imageAlt(image, index)}`,
               tabIndex: 0,
-              onClick: openGallery,
+              onClick: (event: React.MouseEvent<HTMLImageElement>) => openGallery(event.currentTarget),
               onKeyDown: (event: React.KeyboardEvent<HTMLImageElement>) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault();
-                  openGallery();
+                  openGallery(event.currentTarget);
                 }
               },
             }
@@ -326,6 +330,7 @@ export function Carousel({
                   type="button"
                   key={`${imageKey(item)}-${offset}`}
                   aria-label={`Go to image ${offset + 1}`}
+                  aria-current={index === offset ? 'true' : undefined}
                   className={cn(
                     'size-2.5 rounded-full border border-border-subtle p-0',
                     index === offset ? toneClasses[accent].solid : 'bg-background-surface',

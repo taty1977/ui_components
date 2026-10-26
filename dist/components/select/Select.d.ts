@@ -1,5 +1,5 @@
 import { type SelectHTMLAttributes, type ReactNode } from 'react';
-import { type InputVariant, type InputTone, type InputSize } from '../input/input.styles';
+import { type InputVariant, type InputTone, type InputSize } from '../shared/fields/field.styles';
 export type SelectVariant = InputVariant;
 export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
     label?: string;

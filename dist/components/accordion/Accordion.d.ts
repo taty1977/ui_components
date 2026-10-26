@@ -1,5 +1,7 @@
 import { type ReactNode } from 'react';
-export type AccordionVariant = 'default' | 'primary' | 'secondary';
+import { type ComponentVariant } from '../../types/variants';
+import { type InputSize, type InputTone, type InputVariant } from '../shared/fields/field.styles';
+export type AccordionVariant = InputVariant | ComponentVariant;
 export type AccordionIconPosition = 'left' | 'right';
 export interface AccordionProps {
     items: {
@@ -13,7 +15,9 @@ export interface AccordionProps {
     expandedIcon?: ReactNode;
     iconPosition?: AccordionIconPosition;
     variant?: AccordionVariant;
+    tone?: InputTone;
+    size?: InputSize;
     children?: ReactNode;
 }
-export declare function Accordion({ items, className, allowMultiple, collapsedIcon, expandedIcon, iconPosition, variant, children, }: AccordionProps): import("react/jsx-runtime").JSX.Element;
+export declare function Accordion({ items, className, allowMultiple, collapsedIcon, expandedIcon, iconPosition, variant, tone, size, children, }: AccordionProps): import("react/jsx-runtime").JSX.Element;
 export default Accordion;

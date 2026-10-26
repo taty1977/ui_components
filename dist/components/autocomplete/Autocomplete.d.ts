@@ -1,5 +1,5 @@
 import { type InputHTMLAttributes, type ReactNode, type ChangeEventHandler } from 'react';
-import { type InputVariant, type InputTone, type InputSize } from '../input/input.styles';
+import { type InputVariant, type InputTone, type InputSize } from '../shared/fields/field.styles';
 export type AutocompleteVariant = InputVariant;
 export interface AutocompleteProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'onChange' | 'onSelect' | 'value' | 'size'> {
     options: string[];

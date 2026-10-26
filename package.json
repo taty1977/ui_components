@@ -1,6 +1,17 @@
 {
   "name": "@taty1977/my-component-library",
   "version": "1.0.0",
+  "description": "Reusable React UI components for the web",
+  "author": "Tatiana Riestra",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/taty1977/ui_components.git"
+  },
+  "homepage": "https://github.com/taty1977/ui_components#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.esm.js",
@@ -20,6 +31,7 @@
   ],
   "files": [
     "dist",
+    "LICENSE",
     "tailwind.preset.cjs",
     "tokens/figma/*.json",
     "utils/*.cjs"
@@ -31,9 +43,13 @@
   "scripts": {
     "prepare": "husky",
     "build": "npm run generate-tokens && vite build && tsc --project tsconfig.build.json",
+    "prepack": "npm run build",
+    "check-package": "npm run build && node scripts/check-package.mjs",
+    "validate": "npm run check-tokens && npm run typecheck && npm run lint && npm test && npm run build-storybook && npm run check-package",
     "generate-tokens": "node scripts/generate-tokens.cjs",
     "check-tokens": "node scripts/generate-tokens.cjs --check",
     "typecheck": "tsc --noEmit",
+    "release": "changeset publish",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test": "vitest run",
@@ -41,7 +57,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "chromatic": "npx chromatic --build-script-name build-storybook --public"
+    "chromatic": "chromatic"
   },
   "browserslist": {
     "production": [
@@ -56,6 +72,8 @@
     ]
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
     "@chromatic-com/storybook": "^5.3.1",
     "@eslint/js": "^9.39.5",
     "@storybook/addon-a11y": "^10.6.1",
@@ -68,6 +86,7 @@
     "@types/node": "^22.12.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@vitest/browser": "^5.0.5",
     "@vitest/browser-playwright": "^5.0.5",
     "autoprefixer": "^10.4.21",
     "chromatic": "^18.7.2",

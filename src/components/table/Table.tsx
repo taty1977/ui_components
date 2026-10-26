@@ -8,11 +8,14 @@ import {
 } from 'react';
 import { cn } from '../../utils/cn';
 import type { Breakpoint } from '../../utils/breakpoints';
-import { toneTextClasses, type InputSize, type InputVariant } from '../input/input.styles';
-import { toneClasses as buttonToneClasses, type ButtonTone, type ButtonVariant } from '../button/button.styles';
+import { mapPaletteTones, toneVar, type PaletteTone } from '../../themes/paletteTones';
+import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
+import { type InputSize, type InputVariant } from '../shared/fields/field.styles';
+import { toneClasses as buttonToneClasses } from '../button/button.styles';
+import { TablePaginationControls } from './TablePaginationControls';
 export type TableAlign = 'left' | 'center' | 'right';
 export type TableFontWeight = 'normal' | 'semiBold';
-export type TableVariant = Exclude<ButtonVariant, 'default'> | InputVariant;
+export type TableVariant = Exclude<ComponentVariant, 'default'> | InputVariant;
 export interface TableColumn<T> {
   key: string;
   header: ReactNode;
@@ -37,7 +40,7 @@ export interface TableProps<T> extends TableHTMLAttributes<HTMLTableElement> {
   pagination?: TablePagination;
   emptyMessage?: ReactNode;
   variant?: TableVariant;
-  tone?: ButtonTone;
+  tone?: PaletteTone;
   size?: InputSize;
   stickyFirstColumn?: boolean;
   stickyLastColumn?: boolean;
@@ -53,14 +56,16 @@ const appearanceClasses = {
   outline: 'rounded-md border',
   text: 'rounded-none',
 };
-const toneBorderClasses: Record<ButtonTone, string> = {
-  primary: 'border-palette-primary-main',
-  secondary: 'border-palette-secondary-main',
-  error: 'border-palette-error-main',
-  warning: 'border-palette-warning-main',
-  info: 'border-palette-info-main',
-  success: 'border-palette-success-main',
-};
+const toneBorderClasses = mapPaletteTones((s) => s.outline);
+
+function stickySurfaceStyle(overlay: string): CSSProperties {
+  const layer = `var(--table-cell-overlay, ${overlay})`;
+  return {
+    backgroundColor: 'var(--background-surface)',
+    backgroundImage: `linear-gradient(${layer}, ${layer})`,
+  };
+}
+
 function sortIcon(icon: ReactNode) {
   if (!icon) return null;
   if (isValidElement<{ onClick?: unknown }>(icon) && typeof icon.props.onClick === 'function') return icon;
@@ -70,6 +75,7 @@ function sortIcon(icon: ReactNode) {
     </span>
   );
 }
+
 export default function Table<T>({
   className,
   columns,
@@ -90,41 +96,28 @@ export default function Table<T>({
 }: TableProps<T>) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isScrolledHorizontally, setIsScrolledHorizontally] = useState(false);
-  const accent = variant === 'primary' || variant === 'secondary' ? variant : tone;
+  const accent = resolveVariantTone(variant, tone);
   const hasHeader = columns.some((column) => column.header != null && column.header !== '');
-  const appearance = !hasHeader
-    ? 'label'
-    : variant === 'outlined'
-      ? 'outline'
-      : variant === 'filled' || variant === 'primary' || variant === 'secondary'
-        ? 'solid'
-        : variant === 'standard'
-          ? 'text'
-          : variant;
+  const appearance = hasHeader ? componentVariantAppearances[variant] : 'label';
   const headerClasses = buttonToneClasses[accent][appearance];
-  const pageCount = pagination
-    ? Math.max(1, Math.ceil(Math.max(0, pagination.total) / Math.max(1, pagination.pageSize)))
-    : 0;
-  const page = pagination ? Math.min(Math.max(pagination.page, 1), pageCount) : 0;
   const sticky = breakpoint !== 'mobile';
   const tableSurface = 'bg-background-surface';
-  const isStickyColumn = (index: number) =>
-    sticky && ((stickyFirstColumn && index === 0) || (stickyLastColumn && index === columns.length - 1));
+  const isStickyFirstColumn = (index: number) => sticky && stickyFirstColumn && index === 0;
+  const isStickyLastColumn = (index: number) => sticky && stickyLastColumn && index === columns.length - 1;
+  const isStickyColumn = (index: number) => isStickyFirstColumn(index) || isStickyLastColumn(index);
+  const headerOverlays = {
+    label: toneVar(accent, 'opacity-light'),
+    solid: toneVar(accent),
+    outline: 'transparent',
+    text: 'transparent',
+  };
+  const headerSurface = stickySurfaceStyle(headerOverlays[appearance]);
+  const bodySurface = stickySurfaceStyle('transparent');
+  const stripedSurface = stickySurfaceStyle('var(--action-hover)');
   const stickySurface = (index: number, header: boolean, rowIndex = 0): CSSProperties | undefined => {
     if (!isStickyColumn(index) && !(header && stickyHeader)) return undefined;
-    const overlay = header
-      ? appearance === 'label'
-        ? `var(--palette-${accent}-opacity-light)`
-        : appearance === 'solid'
-          ? `var(--palette-${accent}-main)`
-          : 'transparent'
-      : striped && rowIndex % 2 === 1
-        ? 'var(--action-hover)'
-        : 'transparent';
-    return {
-      backgroundColor: 'var(--background-surface)',
-      backgroundImage: `linear-gradient(var(--table-cell-overlay, ${overlay}), var(--table-cell-overlay, ${overlay}))`,
-    };
+    if (header) return headerSurface;
+    return striped && rowIndex % 2 === 1 ? stripedSurface : bodySurface;
   };
   const cellClasses = (column: TableColumn<T>, index: number) =>
     cn(
@@ -136,15 +129,10 @@ export default function Table<T>({
         !(sticky && stickyFirstColumn && index === 1) &&
         !(sticky && stickyLastColumn && index === columns.length - 1) &&
         'border-l',
-      sticky &&
-        stickyFirstColumn &&
-        index === 0 &&
+      isStickyFirstColumn(index) &&
         "sticky left-0 z-10 after:pointer-events-none after:absolute after:inset-y-0 after:-right-1.5 after:w-1.5 after:bg-gradient-to-r after:from-action-focus after:to-transparent after:content-['']",
-      !hasHeader && sticky && stickyFirstColumn && index === 0 && !isScrolledHorizontally && 'border-r border-divider',
-      !hasHeader && sticky && stickyFirstColumn && index === 0 && !isScrolledHorizontally && 'after:hidden',
-      sticky &&
-        stickyLastColumn &&
-        index === columns.length - 1 &&
+      !hasHeader && isStickyFirstColumn(index) && !isScrolledHorizontally && 'border-r border-divider after:hidden',
+      isStickyLastColumn(index) &&
         "sticky right-0 z-10 before:pointer-events-none before:absolute before:inset-y-0 before:-left-1.5 before:w-1.5 before:bg-gradient-to-l before:from-action-focus before:to-transparent before:content-['']",
     );
   return (
@@ -226,6 +214,9 @@ export default function Table<T>({
                       const weight =
                         column.fontWeight ??
                         ((!hasHeader || (sticky && stickyFirstColumn)) && index === 0 ? 'semiBold' : 'normal');
+                      const surfaceClasses = rowHeader
+                        ? headerClasses
+                        : cn(tableSurface, striped && rowIndex % 2 === 1 && 'bg-action-hover');
                       return (
                         <Tag
                           key={column.key}
@@ -234,11 +225,7 @@ export default function Table<T>({
                           className={cn(
                             cellClasses(column, index),
                             'border-b border-divider align-middle',
-                            rowHeader
-                              ? headerClasses
-                              : striped && rowIndex % 2 === 1
-                                ? cn(tableSurface, 'bg-action-hover')
-                                : tableSurface,
+                            surfaceClasses,
                             !rowHeader && 'group-hover:bg-action-hover',
                             !rowHeader &&
                               isStickyColumn(index) &&
@@ -283,55 +270,7 @@ export default function Table<T>({
           />
         )}
       </div>
-      {pagination && (
-        <nav
-          aria-label="Table pagination"
-          className={cn(
-            'flex items-center justify-end gap-2 border-t border-divider',
-            size === 'small' ? 'px-4 py-3' : 'px-4 py-4',
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => pagination.onPageChange(page - 1)}
-            disabled={page <= 1}
-            className={cn(
-              'inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-13 font-semibold disabled:cursor-not-allowed disabled:opacity-45',
-              toneTextClasses[accent],
-              'hover:enabled:bg-action-hover',
-            )}
-          >
-            {pagination.previousIcon && (
-              <span className="inline-flex size-4" aria-hidden="true">
-                {pagination.previousIcon}
-              </span>
-            )}
-            <span>Previous</span>
-          </button>
-          {pagination.pageStatus && (
-            <span aria-live="polite" className="text-13 text-text-secondary">
-              {pagination.pageStatus}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={() => pagination.onPageChange(page + 1)}
-            disabled={page >= pageCount}
-            className={cn(
-              'inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-13 font-semibold disabled:cursor-not-allowed disabled:opacity-45',
-              toneTextClasses[accent],
-              'hover:enabled:bg-action-hover',
-            )}
-          >
-            <span>Next</span>
-            {pagination.nextIcon && (
-              <span className="inline-flex size-4" aria-hidden="true">
-                {pagination.nextIcon}
-              </span>
-            )}
-          </button>
-        </nav>
-      )}
+      {pagination && <TablePaginationControls pagination={pagination} size={size} tone={accent} />}
     </div>
   );
 }

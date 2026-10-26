@@ -1,0 +1,59 @@
+name: Release
+
+# Pushes only maintain the version PR. Publishing requires an explicit dispatch.
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish unreleased versions to npm
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+      pull-requests: write
+      # OIDC token for npm provenance attestations (requires a public repo).
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run validate
+      - name: Require npm credentials for an explicit publish
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::Set NPM_TOKEN before requesting a release."
+            exit 1
+          fi
+      - uses: changesets/action@v1
+        with:
+          publish: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && 'npm run release' || '' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ github.event_name == 'workflow_dispatch' && inputs.publish && secrets.NPM_TOKEN || '' }}
+          # Sign each published version with a link to this CI run/commit.
+          NPM_CONFIG_PROVENANCE: true

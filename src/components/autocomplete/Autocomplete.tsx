@@ -11,19 +11,20 @@ import { XMarkIcon } from '@heroicons/react/24/solid';
 import { cn } from '../../utils/cn';
 import {
   fieldStyles,
+  floatingLabelClasses,
   resolveFieldVariant,
   fieldInputClasses,
   fieldCenterAlignmentClasses,
   toneClasses,
-  toneTextClasses,
-  notchToneClasses,
+  resolveFieldLabelTone,
   errorClasses,
   optionListClasses,
   type InputVariant,
   type InputTone,
   type InputSize,
-} from '../input/input.styles';
-import { LabelText } from '../input/LabelText';
+} from '../shared/fields/field.styles';
+import { LabelText } from '../shared/fields/LabelText';
+import { FieldNotch } from '../shared/fields/FieldNotch';
 export type AutocompleteVariant = InputVariant;
 export interface AutocompleteProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
@@ -82,13 +83,7 @@ export default function Autocomplete({
   const showLabel = floating || !props.placeholder;
   const outlinedFloating = Boolean(label && floating && appearance === 'outlined');
   const notched = Boolean(outlinedFloating && notchWidth !== undefined);
-  const labelTone = props.disabled
-    ? 'text-text-disabled'
-    : error
-      ? toneTextClasses.error
-      : focused
-        ? toneTextClasses[accent]
-        : 'text-text-secondary';
+  const labelTone = resolveFieldLabelTone({ disabled: props.disabled, error, active: focused, accent });
   const filtered =
     open && currentValue.trim()
       ? options.filter((option) => option.toLowerCase().includes(currentValue.toLowerCase()))
@@ -137,31 +132,8 @@ export default function Autocomplete({
           !props.disabled && toneClasses[accent],
         )}
       >
-        {notched && (
-          <>
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 left-0 top-0 w-3 rounded-l-md border-b border-l border-t group-focus-within:border-b-2 group-focus-within:border-l-2 group-focus-within:border-t-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-            />
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 left-3 right-3 border-b group-focus-within:border-b-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-            />
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 right-0 top-0 rounded-r-md border-b border-r border-t group-focus-within:border-b-2 group-focus-within:border-r-2 group-focus-within:border-t-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-              style={{ left: 12 + (notchWidth ?? 0) }}
-            />
-          </>
+        {notched && notchWidth !== undefined && (
+          <FieldNotch width={notchWidth} accent={accent} disabled={props.disabled} />
         )}
         {label && !(appearance === 'standard' && floating && showLabel) && (
           <LabelText
@@ -169,20 +141,7 @@ export default function Autocomplete({
             htmlFor={inputId}
             required={props.required}
             className={cn(
-              'pointer-events-none absolute z-10 mb-0 transition-all',
-              !showLabel
-                ? 'sr-only'
-                : floating && appearance === 'outlined'
-                  ? 'left-3 -top-2 px-1 text-13'
-                  : floating && appearance === 'filled'
-                    ? 'left-4 top-1 text-13'
-                    : cn(
-                        'top-1/2 -translate-y-1/2 text-inherit',
-                        iconLeft ? (size === 'small' ? 'left-9' : 'left-[42px]') : 'left-4',
-                      ),
-              !floating && appearance !== 'outlined' && 'mt-[0.5px] group-focus-within:mt-px',
-              floating && appearance === 'outlined' && 'bg-background-surface',
-              floating && appearance === 'filled' && 'leading-14',
+              floatingLabelClasses({ appearance, floating, visible: showLabel, iconLeft: Boolean(iconLeft), size }),
               labelTone,
             )}
           >

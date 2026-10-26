@@ -1,7 +1,8 @@
 import React, { useCallback, useId, useMemo } from 'react';
 import { cn } from '../../utils/cn';
+import { a11yProps } from '../../utils/a11yProps';
+import { paletteTones, toneVar, type PaletteTone } from '../../themes/paletteTones';
 import Heading from '../heading/Heading';
-import type { ButtonTone } from '../button/button.styles';
 import {
   ResponsiveContainer,
   LineChart,
@@ -35,63 +36,44 @@ export interface ChartDataItem {
 }
 
 export interface ChartProps {
-  /** Chart type to display */
   type?: 'line' | 'bar' | 'area' | 'pie';
   /** Leading default series color */
-  tone?: ButtonTone;
-  /** Data points for the chart */
+  tone?: PaletteTone;
   data: ChartDataItem[];
   /** Series configuration for lines/bars/areas or pie dataKey */
   series: ChartSeries[];
   /** Custom color palette for series/slices (overrides theme palette) */
   colors?: string[];
-  /** Custom stroke color for grid lines (overrides theme border color) */
   gridColor?: string;
-  /** Custom text color for axes and legend (overrides theme mutedText color) */
   textColor?: string;
-  /** Custom background color for tooltips (overrides theme surface color) */
   tooltipBgColor?: string;
-  /** Custom border color for tooltips (overrides theme border color) */
   tooltipBorderColor?: string;
   /** Key for the X-axis (category axis) */
   xAxisKey?: string;
-  /** Title shown above the chart */
   title?: string;
-  /** Short description shown below the title */
   description?: string;
-  /** Accessible ARIA label for screen readers */
   ariaLabel?: string;
   /** Height of the chart container (e.g., 300 or "100%") */
   height?: number | string;
-  /** Stroke width for lines and area borders */
   strokeWidth?: number;
   /** Dot config or boolean for line chart data points */
   dot?: boolean | object;
   /** Active dot config or boolean for hovered line data points */
   activeDot?: boolean | object;
-  /** Fill opacity for area chart areas */
   fillOpacity?: number;
-  /** Border radius for bar chart bars */
   barRadius?: [number, number, number, number] | number;
-  /** Outer radius for pie chart */
   outerRadius?: number | string;
   /** Inner radius for pie chart (e.g. for donut charts) */
   innerRadius?: number | string;
-  /** Show background grid lines */
   showGrid?: boolean;
-  /** Show hover tooltip */
   showTooltip?: boolean;
-  /** Show series legend */
   showLegend?: boolean;
-  /** Animate chart series and tooltip transitions */
   isAnimationActive?: boolean;
-  /** Optional custom CSS class name */
   className?: string;
 }
 
-const paletteTones: ButtonTone[] = ['primary', 'secondary', 'success', 'info', 'warning', 'error'];
-const getTonePalette = (tone: ButtonTone) =>
-  [tone, ...paletteTones.filter((entry) => entry !== tone)].map((entry) => `var(--palette-${entry}-main)`);
+const getTonePalette = (tone: PaletteTone) =>
+  [tone, ...paletteTones.filter((entry) => entry !== tone)].map((entry) => toneVar(entry));
 
 export const Chart: React.FC<ChartProps> = ({
   type = 'line',
@@ -124,7 +106,6 @@ export const Chart: React.FC<ChartProps> = ({
   const chartId = useId();
   const titleId = `${chartId}-title`;
   const descriptionId = `${chartId}-desc`;
-  // Explicit palettes take precedence; tone sets the leading series color.
   const palette = useMemo(() => {
     if (colors && colors.length > 0) {
       return colors;
@@ -132,7 +113,6 @@ export const Chart: React.FC<ChartProps> = ({
     return getTonePalette(tone);
   }, [colors, tone]);
 
-  // Resolve series color
   const getColor = useCallback(
     (seriesItem: ChartSeries, index: number) => {
       return seriesItem.color || palette[index % palette.length];
@@ -140,7 +120,6 @@ export const Chart: React.FC<ChartProps> = ({
     [palette],
   );
 
-  // Resolve theme styles
   const { gridColor, textColor, customTooltipStyle, tooltipItemStyle, tooltipLabelStyle, axisTickStyle, legendStyle } =
     useMemo(() => {
       const grid = customGridColor || 'var(--border-subtle)';
@@ -167,7 +146,7 @@ export const Chart: React.FC<ChartProps> = ({
           fontFamily,
         },
         tooltipLabelStyle: {
-          color: `var(--palette-${tone}-main)`,
+          color: toneVar(tone),
           fontSize,
           fontFamily,
           fontWeight: 600,
@@ -190,7 +169,6 @@ export const Chart: React.FC<ChartProps> = ({
     [textColor],
   );
 
-  // Shared Cartesian elements
   const renderCartesianElements = () => [
     showGrid ? <CartesianGrid key="grid" strokeDasharray="3 3" stroke={gridColor} /> : null,
     <XAxis key="xaxis" dataKey={xAxisKey} stroke={textColor} tick={axisTickStyle} />,
@@ -207,7 +185,6 @@ export const Chart: React.FC<ChartProps> = ({
     showLegend ? <Legend key="legend" wrapperStyle={legendStyle} formatter={renderLegendFormatter} /> : null,
   ];
 
-  // Render chart by type
   const renderChartContent = () => {
     switch (type) {
       case 'pie': {
@@ -362,8 +339,7 @@ export const Chart: React.FC<ChartProps> = ({
       <div
         className="min-h-48 w-full rounded-md bg-background-surface text-text-primary"
         style={{ height }}
-        role="img"
-        aria-label={`${title || ariaLabel || 'Chart'} visualization`}
+        {...a11yProps(false, `${title || ariaLabel || 'Chart'} visualization`)}
       >
         <ResponsiveContainer width="100%" height="100%">
           {renderChartContent()}

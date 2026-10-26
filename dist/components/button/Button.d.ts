@@ -1,6 +1,8 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { type ButtonSize, type ButtonTone, type ButtonVariant } from './button.styles';
-export type { ButtonSize, ButtonTone, ButtonVariant } from './button.styles';
+import { type ComponentVariant } from '../../types/variants';
+import { type ButtonSize, type ButtonTone } from './button.styles';
+export type { ButtonSize, ButtonTone } from './button.styles';
+export type { ComponentVariant as ButtonVariant } from '../../types/variants';
 export type ButtonWidth = 'default' | 'auto' | 'sm' | 'md' | 'lg' | 'full';
 export type ButtonShape = 'rectangle' | 'pill';
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -9,7 +11,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     iconRight?: ReactNode;
     size?: ButtonSize;
     width?: ButtonWidth;
-    variant?: ButtonVariant;
+    variant?: ComponentVariant;
     tone?: ButtonTone;
     outline?: boolean;
     shape?: ButtonShape;

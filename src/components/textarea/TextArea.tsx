@@ -1,18 +1,19 @@
 import { useEffect, useId, useRef, useState, type TextareaHTMLAttributes } from 'react';
 import { cn } from '../../utils/cn';
-import { LabelText } from '../input/LabelText';
+import { LabelText } from '../shared/fields/LabelText';
+import { FieldNotch } from '../shared/fields/FieldNotch';
 import {
   fieldStyles,
+  floatingLabelClasses,
   resolveFieldVariant,
   fieldInputClasses,
   toneClasses,
-  toneTextClasses,
-  notchToneClasses,
+  resolveFieldLabelTone,
   errorClasses,
   type InputVariant,
   type InputTone,
   type InputSize,
-} from '../input/input.styles';
+} from '../shared/fields/field.styles';
 
 export type TextareaVariant = InputVariant;
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -48,13 +49,7 @@ export default function Textarea({
   const showLabel = filled || !props.placeholder;
   const outlinedFloating = Boolean(label && filled && appearance === 'outlined');
   const notched = Boolean(outlinedFloating && notchWidth !== undefined);
-  const labelTone = props.disabled
-    ? 'text-text-disabled'
-    : error
-      ? toneTextClasses.error
-      : focused
-        ? toneTextClasses[accent]
-        : 'text-text-secondary';
+  const labelTone = resolveFieldLabelTone({ disabled: props.disabled, error, active: focused, accent });
   useEffect(() => {
     if (!label || !filled || appearance !== 'outlined') return;
     const width = labelRef.current?.offsetWidth;
@@ -82,31 +77,8 @@ export default function Textarea({
           !props.disabled && toneClasses[accent],
         )}
       >
-        {notched && (
-          <>
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 left-0 top-0 w-3 rounded-l-md border-b border-l border-t group-focus-within:border-b-2 group-focus-within:border-l-2 group-focus-within:border-t-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-            />
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 left-3 right-3 border-b group-focus-within:border-b-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-            />
-            <span
-              aria-hidden="true"
-              className={cn(
-                'absolute bottom-0 right-0 top-0 rounded-r-md border-b border-r border-t group-focus-within:border-b-2 group-focus-within:border-r-2 group-focus-within:border-t-2',
-                props.disabled ? 'border-text-disabled' : notchToneClasses[accent],
-              )}
-              style={{ left: 12 + (notchWidth ?? 0) }}
-            />
-          </>
+        {notched && notchWidth !== undefined && (
+          <FieldNotch width={notchWidth} accent={accent} disabled={props.disabled} />
         )}
         {label && !(appearance === 'standard' && filled && showLabel) && (
           <LabelText
@@ -114,16 +86,7 @@ export default function Textarea({
             htmlFor={fieldId}
             required={props.required}
             className={cn(
-              'pointer-events-none absolute z-10 mb-0 transition-all',
-              !showLabel
-                ? 'sr-only'
-                : filled && appearance === 'outlined'
-                  ? 'left-3 -top-2 px-1 text-13'
-                  : filled && appearance === 'filled'
-                    ? 'left-4 top-1 text-13'
-                    : 'left-4 top-2',
-              filled && appearance === 'outlined' && 'bg-background-surface',
-              filled && appearance === 'filled' && 'leading-14',
+              floatingLabelClasses({ appearance, floating: filled, visible: showLabel, multiline: true }),
               labelTone,
             )}
           >

@@ -1,7 +1,7 @@
 import figmaTokens, { themeKeys } from './generatedTokens';
 export type FigmaThemeMode = keyof typeof figmaTokens.Variables;
 export type ThemeMode = (typeof themeKeys)[FigmaThemeMode];
-export declare const themeModes: ("light" | "teal" | "dark")[];
+export declare const themeModes: ("dark" | "light" | "teal")[];
 export declare const themeTokens: {
     core: {
         color: {

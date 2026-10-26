@@ -31,5 +31,5 @@ export declare const transformClasses: {
     uppercase: string;
     lowercase: string;
 };
-export declare const resolveTextTone: (color: HeadingColor) => TextTone;
+export declare function resolveTextTone(color: HeadingColor): TextTone;
 export default function Heading({ level, variant, weight, family: _family, color, tone, textTransform, className, children, ...props }: HeadingProps): import("react/jsx-runtime").JSX.Element;

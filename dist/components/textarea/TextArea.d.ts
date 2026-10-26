@@ -1,5 +1,5 @@
 import { type TextareaHTMLAttributes } from 'react';
-import { type InputVariant, type InputTone, type InputSize } from '../input/input.styles';
+import { type InputVariant, type InputTone, type InputSize } from '../shared/fields/field.styles';
 export type TextareaVariant = InputVariant;
 export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;

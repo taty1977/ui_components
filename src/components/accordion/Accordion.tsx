@@ -1,9 +1,10 @@
 import { Children, useId, useState, type ReactNode } from 'react';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid';
 import { cn } from '../../utils/cn';
-import { type InputSize, type InputTone, type InputVariant } from '../input/input.styles';
-import { toneClasses, type ButtonVariant } from '../button/button.styles';
-export type AccordionVariant = InputVariant | ButtonVariant;
+import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
+import { type InputSize, type InputTone, type InputVariant } from '../shared/fields/field.styles';
+import { toneClasses } from '../button/button.styles';
+export type AccordionVariant = InputVariant | ComponentVariant;
 export type AccordionIconPosition = 'left' | 'right';
 export interface AccordionProps {
   items: { id: string; title: string; content?: ReactNode }[];
@@ -17,6 +18,7 @@ export interface AccordionProps {
   size?: InputSize;
   children?: ReactNode;
 }
+
 export function Accordion({
   items,
   className,
@@ -31,16 +33,9 @@ export function Accordion({
 }: AccordionProps) {
   const [expandedIds, setExpandedIds] = useState(new Set<string>());
   const prefix = useId();
-  const accent = variant === 'primary' || variant === 'secondary' ? variant : tone;
-  const appearance =
-    variant === 'outlined'
-      ? 'outline'
-      : variant === 'filled' || variant === 'primary' || variant === 'secondary'
-        ? 'default'
-        : variant === 'standard'
-          ? 'text'
-          : variant;
-  const headerClasses = toneClasses[accent][appearance === 'default' ? 'solid' : appearance];
+  const accent = resolveVariantTone(variant, tone);
+  const appearance = componentVariantAppearances[variant];
+  const headerClasses = toneClasses[accent][appearance];
   const panels = Children.toArray(children);
   return (
     <div className={cn('grid gap-2 font-sans', className)} data-variant={variant} data-tone={accent}>
