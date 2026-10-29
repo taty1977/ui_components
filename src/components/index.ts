@@ -9,3 +9,6 @@ export * from './chart';
 export * from './heading';
 export * from './paragraph';
 export * from './table';
+export * from './card';
+export * from './icon-button';
+export * from './menu';
