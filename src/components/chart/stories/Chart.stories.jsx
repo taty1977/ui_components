@@ -43,7 +43,7 @@ const meta = {
     docs: {
       description: {
         component:
-          'A responsive chart with a neutral surface and six tones. Tone sets the leading series color; custom palettes and series colors take precedence. Supports line, bar, area, and pie charts.',
+          'A responsive chart with a neutral surface and six tones. Tone sets the leading series color; custom palettes and series colors take precedence. Axis, pie, and legend labels use opaque theme surfaces for readable, measurable contrast. SVG label boxes follow their text dimensions to avoid overflow-related contrast warnings in Docs. Supports line, bar, area, and pie charts.',
       },
     },
   },
@@ -51,7 +51,7 @@ const meta = {
     className: 'border-0 bg-transparent',
     title: 'Financial Overview',
     description: 'Monthly breakdown of sales, revenue, and profit',
-    tone: 'primary',
+    tone: undefined,
     data: sampleData,
     series: sampleSeries,
     xAxisKey: 'name',

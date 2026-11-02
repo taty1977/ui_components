@@ -22,7 +22,7 @@ export interface CarouselImageItem {
   badge?: string;
   likeButton?: boolean;
 }
-export type CarouselVariant = Exclude<ComponentVariant, 'default'>;
+export type CarouselVariant = ComponentVariant;
 export interface CarouselProps {
   images: CarouselImageItem[];
   className?: string;
@@ -198,8 +198,10 @@ export function Carousel({
                 className="block size-full object-cover"
               />
               {overflow && (
-                <span className="absolute inset-0 flex items-center justify-center bg-backdrop-overlay text-13 font-semibold text-misc-bg-white">
-                  +{more}
+                <span className="absolute inset-0 flex items-center justify-center bg-backdrop-overlay">
+                  <span className="rounded-md bg-background-surface px-2 py-1 text-13 font-semibold text-text-primary">
+                    +{more}
+                  </span>
                 </span>
               )}
             </button>

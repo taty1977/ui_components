@@ -25,7 +25,7 @@ export default {
       },
     },
   },
-  args: { children: 'Continue', variant: 'default', tone: 'primary', size: 'md', disabled: false, onClick: fn() },
+  args: { children: 'Continue', variant: 'default', tone: undefined, size: 'md', disabled: false, onClick: fn() },
   argTypes: {
     onClick: { control: false, description: 'Called when the button is activated.', table: { category: 'Events' } },
     children: { control: 'text', table: { category: 'Content' } },

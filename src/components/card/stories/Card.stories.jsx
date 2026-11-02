@@ -68,7 +68,6 @@ export const Variants = {
 };
 
 export const Tones = {
-  args: { variant: 'label' },
   render: (args) => (
     <Frame>
       {paletteTones.map((tone) => (

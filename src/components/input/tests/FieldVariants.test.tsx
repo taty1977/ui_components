@@ -53,6 +53,18 @@ const chrome = {
   filled: ['rounded-t-md', 'border-b', 'bg-action-hover', 'focus-within:border-b-2'],
   standard: ['border-b', 'bg-transparent', 'focus-within:border-b-2'],
 };
+const toneBorder = (fieldName: string, tone: InputTone) => `border-palette-${tone}-graphic`;
+
+test.each(appearances)('keeps populated %s input errors readable without covering the value', (variant) => {
+  render(<Input label="Field" defaultValue="Invalid" error="Required" variant={variant} />);
+
+  const input = screen.getByRole('textbox', { name: 'Field' });
+  expect(input).toHaveAttribute('aria-invalid', 'true');
+  expect(input).toHaveAccessibleDescription('Required');
+  expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
+  if (variant === 'outlined') expect(input).toHaveClass('relative', 'z-20');
+  else expect(input).not.toHaveClass('z-20');
+});
 
 describe.each(fields)('$name shared field variants', (field) => {
   test('renders the shared notch only for a measured outlined floating label', () => {
@@ -62,7 +74,7 @@ describe.each(fields)('$name shared field variants', (field) => {
       const { rerender } = render(field.render({ ...props, defaultValue: 'one' }));
       const notch = field.frame().querySelector('span.rounded-r-md');
       expect(notch).toHaveStyle({ left: '76px' });
-      expect(notch).toHaveClass('border-palette-info-main');
+      expect(notch).toHaveClass(toneBorder(field.name, 'info'));
 
       rerender(field.render({ ...props, defaultValue: 'one', disabled: true }));
       expect(field.frame().querySelector('span.rounded-r-md')).toHaveClass('border-text-disabled');
@@ -122,7 +134,8 @@ describe.each(fields)('$name shared field variants', (field) => {
           ? field.frame().querySelector('span.flex-1')
           : field.frame().querySelector('input, textarea');
       if (field.name === 'Textarea') {
-        expect(valueElement).toHaveClass(variant === 'filled' ? 'pt-5' : 'pt-4');
+        expect(valueElement).toHaveClass(variant === 'filled' ? 'pt-5' : variant === 'outlined' ? 'pt-1' : 'pt-4');
+        if (variant === 'outlined') expect(valueElement).toHaveClass('mt-3');
         if (variant === 'standard') expect(valueElement).toHaveClass('pb-[7px]', 'focus:pb-[6px]');
         if (variant === 'filled') expect(valueElement).toHaveClass('pb-[3px]', 'focus:pb-[2px]');
       } else if (variant === 'filled') {
@@ -136,7 +149,7 @@ describe.each(fields)('$name shared field variants', (field) => {
 
   test.each(combinations)('$variant / $tone / $size', (props) => {
     render(field.render(props));
-    expect(field.frame()).toHaveClass(...chrome[props.variant], `border-palette-${props.tone}-main`);
+    expect(field.frame()).toHaveClass(...chrome[props.variant], toneBorder(field.name, props.tone));
     expect(field.frame()).toHaveClass(
       props.size === 'small' ? 'min-h-11' : 'min-h-12',
       props.size === 'small' ? 'text-15' : 'text-18',
@@ -147,22 +160,22 @@ describe.each(fields)('$name shared field variants', (field) => {
 
   test.each(appearances)('errors override the %s tone', (variant) => {
     render(field.render({ variant, tone: 'success', size: 'normal', error: 'Required' }));
-    expect(field.frame()).toHaveClass('border-palette-error-main');
-    expect(field.frame()).not.toHaveClass('border-palette-success-main');
+    expect(field.frame()).toHaveClass(toneBorder(field.name, 'error'));
+    expect(field.frame()).not.toHaveClass('border-palette-success-graphic');
     expect(screen.getByRole('alert')).toHaveTextContent('Required');
-    expect(screen.getByText('Field')).toHaveClass('text-palette-error-main');
+    expect(screen.getByText('Field')).toHaveClass('text-palette-error-text');
   });
 
   test.each(appearances)('disabled %s fields use disabled colors even with an error', (variant) => {
     render(field.render({ variant, tone: 'success', size: 'normal', error: 'Required', disabled: true }));
     expect(field.frame()).toHaveClass('border-text-disabled', 'text-text-disabled');
-    expect(field.frame()).not.toHaveClass('border-palette-error-main', 'border-palette-success-main');
+    expect(field.frame()).not.toHaveClass(toneBorder(field.name, 'error'), toneBorder(field.name, 'success'));
     expect(screen.getByText('Field')).toHaveClass('text-text-disabled');
   });
 
   test.each(['primary', 'secondary'] as const)('retains the legacy %s alias', (variant) => {
     render(field.render({ variant, tone: 'success', size: 'normal' }));
-    expect(field.frame()).toHaveClass('rounded-md', 'border', `border-palette-${variant}-main`);
+    expect(field.frame()).toHaveClass('rounded-md', 'border', toneBorder(field.name, variant));
   });
 });
 

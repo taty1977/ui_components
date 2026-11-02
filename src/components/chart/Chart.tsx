@@ -1,4 +1,4 @@
-import React, { useCallback, useId, useMemo } from 'react';
+import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
 import { a11yProps } from '../../utils/a11yProps';
 import { paletteTones, toneVar, type PaletteTone } from '../../themes/paletteTones';
@@ -18,6 +18,8 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  type BaseTickContentProps,
+  type PieLabelRenderProps,
 } from 'recharts';
 
 export interface ChartSeries {
@@ -73,7 +75,56 @@ export interface ChartProps {
 }
 
 const getTonePalette = (tone: PaletteTone) =>
-  [tone, ...paletteTones.filter((entry) => entry !== tone)].map((entry) => toneVar(entry));
+  [tone, ...paletteTones.filter((entry) => entry !== tone)].map((entry) => toneVar(entry, 'graphic'));
+
+function ChartLabel({
+  x,
+  y,
+  children,
+  horizontalOffset,
+  verticalOffset,
+  style,
+}: {
+  x: number | string;
+  y: number | string;
+  children: React.ReactNode;
+  horizontalOffset: number;
+  verticalOffset: number;
+  style: React.CSSProperties;
+}) {
+  const labelRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 1, height: 1 });
+
+  useLayoutEffect(() => {
+    const label = labelRef.current;
+    if (!label) return;
+    const measure = (width: number, height: number) => {
+      width = Math.ceil(width);
+      height = Math.ceil(height);
+      setSize((previous) => (previous.width === width && previous.height === height ? previous : { width, height }));
+    };
+    measure(label.offsetWidth, label.offsetHeight);
+    const observer = new ResizeObserver(([entry]) => {
+      measure(entry.contentRect.width + 2, entry.contentRect.height + 2);
+    });
+    observer.observe(label);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <foreignObject
+      x={Number(x) - size.width * horizontalOffset}
+      y={Number(y) - size.height * verticalOffset}
+      width={size.width}
+      height={size.height}
+      overflow="visible"
+    >
+      <div ref={labelRef} style={style}>
+        {children}
+      </div>
+    </foreignObject>
+  );
+}
 
 export const Chart: React.FC<ChartProps> = ({
   type = 'line',
@@ -146,7 +197,7 @@ export const Chart: React.FC<ChartProps> = ({
           fontFamily,
         },
         tooltipLabelStyle: {
-          color: toneVar(tone),
+          color: toneVar(tone, 'text'),
           fontSize,
           fontFamily,
           fontWeight: 600,
@@ -165,14 +216,47 @@ export const Chart: React.FC<ChartProps> = ({
     }, [customGridColor, customTextColor, customTooltipBgColor, customTooltipBorderColor, tone]);
 
   const renderLegendFormatter = useCallback(
-    (value: string) => <span style={{ color: textColor }}>{value}</span>,
+    (value: string) => <span style={{ color: textColor, backgroundColor: 'var(--background-surface)' }}>{value}</span>,
     [textColor],
   );
 
+  const renderChartLabel = (
+    x: number | string,
+    y: number | string,
+    value: React.ReactNode,
+    horizontalOffset: number,
+    verticalOffset: number,
+  ) => (
+    <ChartLabel
+      x={x}
+      y={y}
+      horizontalOffset={horizontalOffset}
+      verticalOffset={verticalOffset}
+      style={{
+        color: textColor,
+        backgroundColor: 'var(--background-surface)',
+        fontSize: axisTickStyle.fontSize,
+        fontFamily: axisTickStyle.fontFamily,
+        lineHeight: '20px',
+        padding: '1px',
+        width: 'max-content',
+        whiteSpace: 'nowrap',
+      }}
+    >
+      {value}
+    </ChartLabel>
+  );
+
+  const renderAxisTick = ({ x, y, payload }: BaseTickContentProps, axis: 'x' | 'y') =>
+    renderChartLabel(x, y, payload.value, axis === 'x' ? 0.5 : 1, axis === 'x' ? 0 : 0.5);
+
+  const renderPieLabel = ({ x, y, value, textAnchor }: PieLabelRenderProps) =>
+    renderChartLabel(x, y, value, textAnchor === 'start' ? 0 : 1, 0.5);
+
   const renderCartesianElements = () => [
     showGrid ? <CartesianGrid key="grid" strokeDasharray="3 3" stroke={gridColor} /> : null,
-    <XAxis key="xaxis" dataKey={xAxisKey} stroke={textColor} tick={axisTickStyle} />,
-    <YAxis key="yaxis" stroke={textColor} tick={axisTickStyle} />,
+    <XAxis key="xaxis" dataKey={xAxisKey} stroke={textColor} tick={(props) => renderAxisTick(props, 'x')} />,
+    <YAxis key="yaxis" stroke={textColor} tick={(props) => renderAxisTick(props, 'y')} />,
     showTooltip ? (
       <Tooltip
         isAnimationActive={isAnimationActive}
@@ -217,7 +301,7 @@ export const Chart: React.FC<ChartProps> = ({
               cy="50%"
               innerRadius={innerRadius}
               outerRadius={outerRadius}
-              label
+              label={renderPieLabel}
             />
           </PieChart>
         );

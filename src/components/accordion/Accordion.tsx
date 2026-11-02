@@ -51,22 +51,17 @@ export function Accordion({
           </span>
         );
         return (
-          <div
-            key={item.id}
-            className={cn(
-              'overflow-hidden bg-background-surface transition-colors',
-              appearance === 'text' ? 'rounded-none' : 'rounded-md',
-            )}
-          >
+          <div key={item.id} className="overflow-hidden rounded-md bg-background-surface transition-colors">
             <button
               type="button"
               id={buttonId}
               aria-expanded={expanded}
               aria-controls={panelId}
               className={cn(
-                'flex w-full items-center text-left font-medium text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-current',
+                'flex w-full items-center text-left font-medium text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current',
                 size === 'small' ? 'min-h-11 gap-2 px-4 text-15' : 'min-h-12 gap-2.5 px-4 text-18',
                 headerClasses,
+                appearance === 'solid' && 'focus-visible:outline-current',
                 appearance === 'outline' && (expanded && content != null ? 'rounded-t-md' : 'rounded-md'),
               )}
               onClick={() =>

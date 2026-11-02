@@ -7,9 +7,10 @@ interface TablePaginationControlsProps {
   pagination: TablePagination;
   size: InputSize;
   tone: PaletteTone;
+  ariaLabel: string;
 }
 
-export function TablePaginationControls({ pagination, size, tone }: TablePaginationControlsProps) {
+export function TablePaginationControls({ pagination, size, tone, ariaLabel }: TablePaginationControlsProps) {
   const { onPageChange, previousIcon, nextIcon, pageStatus } = pagination;
   const pageCount = Math.max(1, Math.ceil(Math.max(0, pagination.total) / Math.max(1, pagination.pageSize)));
   const page = Math.min(Math.max(pagination.page, 1), pageCount);
@@ -21,9 +22,9 @@ export function TablePaginationControls({ pagination, size, tone }: TablePaginat
 
   return (
     <nav
-      aria-label="Table pagination"
+      aria-label={ariaLabel}
       className={cn(
-        'flex items-center justify-end gap-2 border-t border-divider',
+        'flex items-center justify-end gap-2 border-t border-table-divider',
         size === 'small' ? 'px-4 py-3' : 'px-4 py-4',
       )}
     >

@@ -2,8 +2,31 @@ import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Select from '../Select';
+import { paletteTones } from '../../../themes/paletteTones';
 
 describe('Select', () => {
+  test.each(paletteTones)('matches omitted, default, and outlined variants for the %s tone', (tone) => {
+    const renderSelect = (variant?: 'default' | 'outlined') => (
+      <Select label="Country" variant={variant} tone={tone} defaultValue="ca">
+        <option value="ca">Canada</option>
+      </Select>
+    );
+    const { rerender } = render(renderSelect());
+    const trigger = screen.getByRole('button', { name: 'Country' });
+    const classes = trigger.className;
+    expect(trigger).toHaveClass('bg-background-surface', 'rounded-md');
+    for (const variant of ['default', 'outlined'] as const) {
+      rerender(renderSelect(variant));
+      expect(screen.getByRole('button', { name: 'Country' }).className).toBe(classes);
+    }
+    fireEvent.click(trigger);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    expect(within(screen.getByRole('listbox')).getByRole('option', { name: 'Canada' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
   test.each(['outlined', 'filled', 'standard'] as const)(
     'visually centers the %s chevron including the bottom border',
     (variant) => {
@@ -84,6 +107,51 @@ describe('Select', () => {
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(select).toHaveAttribute('aria-describedby', 'country-error');
     expect(screen.getByRole('alert')).toHaveTextContent('Country is required');
+    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
+  });
+
+  test('only references the listbox while it exists', () => {
+    render(
+      <Select label="Country">
+        <option value="us">United States</option>
+      </Select>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Country' });
+    expect(trigger).not.toHaveAttribute('aria-controls');
+    fireEvent.click(trigger);
+    const listbox = screen.getByRole('listbox');
+    expect(trigger).toHaveAttribute('aria-controls', listbox.id);
+    fireEvent.click(trigger);
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(trigger).not.toHaveAttribute('aria-controls');
+  });
+
+  test.each(paletteTones)('uses the accessible %s border color', (tone) => {
+    render(
+      <Select label="Country" tone={tone}>
+        <option value="us">United States</option>
+      </Select>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Country' })).toHaveClass(`border-palette-${tone}-graphic`);
+  });
+
+  test.each(paletteTones)('keeps the selected %s value above the decorative notch', (tone) => {
+    const measurement = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(64);
+    try {
+      render(
+        <Select label="Country" tone={tone} defaultValue="ca">
+          <option value="ca">Canada</option>
+        </Select>,
+      );
+
+      const trigger = screen.getByRole('button', { name: 'Country' });
+      expect(trigger.querySelector('span.rounded-r-md')).toHaveStyle({ left: '76px' });
+      expect(within(trigger).getByText('Canada')).toHaveClass('relative', 'z-20');
+    } finally {
+      measurement.mockRestore();
+    }
   });
 
   test('does not show a check icon for the default option', () => {
@@ -146,6 +214,9 @@ describe('Select', () => {
     await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: 'Canada' }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByRole('combobox')).toHaveValue('us');
+    expect(within(screen.getByRole('listbox')).getByRole('option', { name: 'Canada' })).toHaveClass(
+      'text-text-secondary',
+    );
   });
 
   test.each(['outlined', 'filled', 'standard'] as const)('uses the shared %s floating-label placement', (variant) => {

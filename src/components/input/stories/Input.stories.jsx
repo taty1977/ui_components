@@ -30,7 +30,7 @@ const meta = {
     helperText: '',
     required: false,
     variant: 'outlined',
-    tone: 'primary',
+    tone: undefined,
     showLeftIcon: false,
     showRightIcon: false,
     showOutsideLeftIcon: false,

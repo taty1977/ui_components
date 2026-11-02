@@ -8,12 +8,14 @@ describe('TablePaginationControls', () => {
     const onPageChange = vi.fn();
     render(
       <TablePaginationControls
+        ariaLabel="Table pagination"
         pagination={{ page: 2, pageSize: 2, total: 6, onPageChange }}
         size="normal"
         tone="info"
       />,
     );
     const previous = screen.getByRole('button', { name: 'Previous' });
+    expect(screen.getByRole('navigation', { name: 'Table pagination' })).toBeInTheDocument();
     const next = screen.getByRole('button', { name: 'Next' });
     for (const button of [previous, next]) {
       expect(button).toHaveClass(
@@ -36,6 +38,7 @@ describe('TablePaginationControls', () => {
   test('renders a numeric zero page status inside the live announcement', () => {
     render(
       <TablePaginationControls
+        ariaLabel="Table pagination"
         pagination={{ page: 1, pageSize: 2, total: 0, pageStatus: 0, onPageChange: vi.fn() }}
         size="small"
         tone="primary"
@@ -49,6 +52,7 @@ describe('TablePaginationControls', () => {
     const onPageChange = vi.fn();
     const { container } = render(
       <TablePaginationControls
+        ariaLabel="Table pagination"
         pagination={{ page: 1, pageSize: 2, total: 0, onPageChange }}
         size="normal"
         tone="primary"

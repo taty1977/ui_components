@@ -7,7 +7,7 @@ export const parameters = {
   layout: 'padded',
   options: { storySort: { order: ['All Components'] } },
 };
-export const initialGlobals = { theme: 'light', responsiveFrame: 'fluid' };
+export const initialGlobals = { theme: 'pulse', responsiveFrame: 'fluid' };
 export const globalTypes = {
   theme: {
     description: 'Figma theme mode',
@@ -23,7 +23,7 @@ export const decorators = [
     React.createElement(
       'div',
       {
-        className: `${context.globals.theme ?? 'light'} min-h-screen bg-background-canvas p-4 font-sans text-text-primary`,
+        className: `${context.globals.theme ?? 'pulse'} min-h-screen bg-background-canvas p-4 font-sans text-text-primary`,
       },
       React.createElement(
         'div',

@@ -27,7 +27,7 @@ const openMenu = async ({ canvasElement, args }) => {
 };
 
 export default {
-  title: 'Inputs/Menu',
+  title: 'Navigation/Menu',
   component: Menu,
   tags: ['autodocs'],
   parameters: {
@@ -35,7 +35,7 @@ export default {
     docs: {
       description: {
         component:
-          'An action menu with its own trigger, icons, separators, and disabled items. Arrow keys, Home, and End move focus; Enter selects; Escape dismisses and restores trigger focus. Clicking outside dismisses the menu. The default popup is neutral paper; label and outline use the selected tone. Menus are positioned inline, so allow space below the trigger and avoid clipping ancestors.',
+          'An action menu with its own trigger, icons, separators, and disabled items. The trigger announces its menu popup and expanded state; opening moves focus into the named menu. Arrow keys, Home, and End move focus; Enter selects; Escape dismisses and restores trigger focus. Clicking outside dismisses the menu. The default popup is neutral paper; label and outline use the selected tone. Menus are positioned inline, so allow space below the trigger and avoid clipping ancestors.',
       },
     },
   },
@@ -44,7 +44,7 @@ export default {
     triggerIcon: <ChevronDownIcon className="size-4" />,
     items,
     variant: 'default',
-    tone: 'primary',
+    tone: undefined,
     disabled: false,
   },
   argTypes: {
@@ -91,7 +91,6 @@ export const Variants = {
 };
 
 export const Tones = {
-  args: { variant: 'label' },
   render: (args) => (
     <Frame>
       {paletteTones.map((tone) => (
@@ -119,7 +118,6 @@ export const IconOnly = {
     label: undefined,
     triggerAriaLabel: 'Account options',
     triggerIcon: <EllipsisHorizontalIcon className="size-4" />,
-    variant: 'text',
   },
   play: openMenu,
 };

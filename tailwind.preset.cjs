@@ -10,7 +10,7 @@ const {
 
 const tokens = loadFigmaTokens(path.join(__dirname, 'tokens/figma'));
 const modes = Object.keys(tokens.Variables);
-const defaultMode = modes.includes('Light') ? 'Light' : modes[0];
+const defaultMode = modes.includes('Pulse') ? 'Pulse' : modes[0];
 
 module.exports = {
   darkMode: 'class',
@@ -32,17 +32,20 @@ module.exports = {
       const noMode = modes.map((mode) => `:not(.${themeKey(mode)})`).join('');
       addBase({
         ':root': variablesForMode(tokens, defaultMode),
-        ...(modes.includes('Dark')
+        ...(modes.includes('Pulse-Dark')
           ? {
               '@media (prefers-color-scheme: dark)': {
-                [`:root${noMode}`]: variablesForMode(tokens, 'Dark'),
+                [`:root${noMode}`]: variablesForMode(tokens, 'Pulse-Dark'),
               },
             }
           : {}),
         ...Object.fromEntries(
           modes.map((mode) => [
             `.${themeKey(mode)}`,
-            { ...variablesForMode(tokens, mode), colorScheme: mode === 'Dark' ? 'dark' : 'light' },
+            {
+              ...variablesForMode(tokens, mode),
+              colorScheme: mode === 'Dark' || mode === 'Pulse-Dark' ? 'dark' : 'light',
+            },
           ]),
         ),
       });

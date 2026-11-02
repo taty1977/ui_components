@@ -3,7 +3,7 @@ import { fn } from 'storybook/test';
 import { paletteTones } from '../../../themes/paletteTones';
 import { Carousel } from '../Carousel';
 
-const appearances = ['label', 'outline', 'text'];
+const appearances = ['default', 'label', 'outline', 'text'];
 const tones = paletteTones;
 const Frame = ({ children }) => <div className="grid w-full min-w-0 gap-6">{children}</div>;
 
@@ -76,18 +76,18 @@ const meta = {
     docs: {
       description: {
         component:
-          'A product image carousel with Button-style label (tinted), outline, and text frames and controls in six tones. Includes responsive thumbnails, indicators, favorites, keyboard navigation, and an accessible modal gallery. Legacy primary and secondary variants retain their original neutral frames and accented controls.',
+          'A product image carousel with Button-style default (solid), label (tinted), outline, and text frames and controls in six tones. Stories use transparent outer frames with readable theme text while preserving styled controls. Stories start with default and no tone selected; the component itself defaults to outline and primary. Includes responsive thumbnails, indicators, favorites, keyboard navigation, and an accessible modal gallery. Legacy primary and secondary variants retain their original neutral frames and accented controls.',
       },
     },
   },
   render: renderCarousel,
   args: {
     onImageChange: fn(),
-    className: 'border-0 bg-transparent',
+    className: 'border-0 bg-transparent text-text-primary',
     images: imageSet,
     likeButton: true,
-    variant: 'outline',
-    tone: 'primary',
+    variant: 'default',
+    tone: undefined,
     showThumbnails: true,
     thumbnailsPosition: 'bottom',
     showIndicators: true,
@@ -190,7 +190,6 @@ export const Variants = {
 };
 
 export const Tones = {
-  args: { variant: 'label' },
   render: (args) => (
     <Frame>
       {tones.map((tone) => (

@@ -1,14 +1,16 @@
 import { cn } from '../../../utils/cn';
 import { notchToneClasses, type InputTone } from './field.styles';
+import type { PaletteToneStyles } from '../../../themes/paletteTones';
 
 interface FieldNotchProps {
   width: number;
   accent: InputTone;
   disabled?: boolean;
+  borderClass?: PaletteToneStyles['outline'];
 }
 
-export function FieldNotch({ width, accent, disabled }: FieldNotchProps) {
-  const borderTone = disabled ? 'border-text-disabled' : notchToneClasses[accent];
+export function FieldNotch({ width, accent, disabled, borderClass }: FieldNotchProps) {
+  const borderTone = disabled ? 'border-text-disabled' : (borderClass ?? notchToneClasses[accent]);
 
   return (
     <>

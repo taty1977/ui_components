@@ -4,6 +4,21 @@ import Heading, { resolveTextTone } from '../Heading';
 import { textTones } from '../../../utils/text.styles';
 
 describe('Heading', () => {
+  test('uses h4 for both the omitted and explicit default variant', () => {
+    const { rerender } = render(<Heading>Title</Heading>);
+    const heading = screen.getByRole('heading', { level: 4 });
+    const classes = heading.className;
+    rerender(<Heading variant="default">Title</Heading>);
+    expect(screen.getByRole('heading', { level: 4 })).toHaveClass('text-24', 'leading-28');
+    expect(screen.getByRole('heading').className).toBe(classes);
+    rerender(
+      <Heading variant="default" level="h2">
+        Title
+      </Heading>,
+    );
+    expect(screen.getByRole('heading', { level: 2 })).toHaveClass('text-38');
+  });
+
   test.each([
     ['title', 'default'],
     ['Primary', 'primary'],
@@ -53,7 +68,7 @@ describe('Heading', () => {
       </Heading>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-main');
+    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-text');
   });
 
   test('supports selectable text transform', () => {

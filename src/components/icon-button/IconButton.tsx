@@ -21,7 +21,7 @@ const sizeClasses: Record<IconButtonSize, string> = {
 };
 
 const neutralAppearanceClasses: Record<ComponentVariant, string> = {
-  default: 'bg-text-primary text-background-surface enabled:hover:opacity-85',
+  default: 'bg-text-primary text-background-surface enabled:hover:opacity-85 focus-visible:outline-text-primary',
   primary: '',
   secondary: '',
   label: 'bg-action-hover text-text-primary enabled:hover:opacity-80',
@@ -42,9 +42,7 @@ export default function IconButton({
   const appearance = componentVariantAppearances[variant];
   const accent = resolveVariantTone(variant, tone ?? 'primary');
   const useToneAppearance = tone !== undefined || variant === 'primary' || variant === 'secondary';
-  const toneClass = useToneAppearance
-    ? toneClasses[accent][appearance]
-    : neutralAppearanceClasses[variant];
+  const toneClass = useToneAppearance ? toneClasses[accent][appearance] : neutralAppearanceClasses[variant];
   return (
     <button
       {...props}

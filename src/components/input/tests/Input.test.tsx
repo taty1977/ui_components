@@ -17,7 +17,7 @@ describe('Input', () => {
     );
 
     const input = screen.getByPlaceholderText('Email address');
-    expect(input.parentElement).toHaveClass('border-palette-primary-main', 'rounded-md');
+    expect(input.parentElement).toHaveClass('border-palette-primary-graphic', 'rounded-md');
     expect(input).toHaveClass('bg-transparent', 'font-sans');
     expect(screen.getByTestId('left-icon')).toBeInTheDocument();
     expect(screen.getByTestId('right-icon')).toBeInTheDocument();

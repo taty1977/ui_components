@@ -12,7 +12,7 @@ import { Button, Input } from '@taty1977/my-component-library';
 
 export function Example() {
   return (
-    <main className="light">
+    <main className="pulse">
       <Input label="Email" type="email" helperText="Use your work address." />
       <Button tone="primary" variant="default" size="md">
         Continue
@@ -22,7 +22,7 @@ export function Example() {
 }
 ```
 
-No theme provider is needed. Set `light`, `dark`, or `teal` on the root or a subtree to switch CSS variables. Without an explicit root class, the system color scheme selects Light or Dark. Nested themed sections are supported.
+No theme provider is needed. Pulse is the default theme. Set `light`, `dark`, `pulse-dark`, `teal`, `teal-dark`, or `pulse` on the root or a subtree to switch CSS variables. Without an explicit root class, the system color scheme selects Pulse or Pulse Dark. The original Dark theme remains available by setting `dark` explicitly. Teal Dark pairs dark teal surfaces with bright teal accents. Nested themed sections are supported.
 
 The stylesheet includes Tailwind's base reset; applications with their own Tailwind build can use the preset instead (avoid loading both copies of the utilities). Font names come from the tokens: load Inter and Roboto in the host application if you want those exact typefaces.
 
@@ -43,24 +43,26 @@ Include Tailwind's `base`, `components`, and `utilities` directives in your appl
 ### Tokens and variants
 
 - Raw Figma exports live in [tokens/figma](tokens/figma/). Generate the typed snapshot with `npm run generate-tokens`; do not edit the snapshot manually.
-- `themeTokens.core` exposes the default palette, numeric spacing/radii, and typography. `themeTokens.themes`, `themeModes`, and `getThemeTokens('dark')` expose each mode.
+- `themeTokens.core` exposes the default Pulse palette, numeric spacing/radii, and typography. `themeTokens.themes`, `themeModes`, and `getThemeTokens('dark')` / `getThemeTokens('pulse-dark')` expose each mode.
 - Button appearances: `default`, `label`, `outline`, `text`; tones: `primary`, `secondary`, `error`, `warning`, `info`, `success`; sizes: `sm` (36px), `md` (44px), `lg` (48px).
 - `ComponentVariant` is the shared appearance type in [src/types/variants.ts](src/types/variants.ts), exported from the package root. Button, Accordion, Carousel, and Table build on it while preserving their existing variant restrictions and legacy aliases. `ButtonVariant` remains a compatibility alias; use `ComponentVariant` in new shared code.
 - `componentVariantAppearances` maps shared variants and legacy field aliases to `ComponentAppearance` (`solid`, `label`, `outline`, or `text`). Button, Accordion, Carousel, and Table reuse this mapping. `resolveVariantTone` applies legacy primary/secondary tone aliases across these components and fields. Component-specific rules remain local: headerless tables use `label`, Carousel retains legacy neutral surfaces, and fields retain their own appearances and error-tone override.
-- Table headers support `label` (tinted), `outline` (initial variant), and `text` with six tones; the outer card remains neutral. Headerless tables always use `label`, regardless of the requested variant, tinting the first-column row headers without a table outline or individual cell boxes. Table sizes remain `small` / `normal`. Legacy `outlined`, `filled`, and `standard` values remain supported for tables with headers; `filled` retains its solid treatment. The `default` variant is no longer supported.
+- Table headers support `default` (solid), `label` (tinted), `outline` (initial variant), and `text` with six tones; the outer card remains neutral. Headerless tables always use `label`, regardless of the requested variant, tinting the first-column row headers without a table outline or individual cell boxes. Table sizes are `default` (initial, alias for `normal`), `small`, and `normal`. Legacy `outlined`, `filled`, and `standard` values remain supported for tables with headers; `filled` retains its solid treatment.
 - Sticky first table columns use a soft right-side shadow instead of an adjacent column border; sticky last columns use a matching left-side shadow instead of their left border. At the mobile breakpoint, stickiness and shadows are disabled and normal column borders apply.
 - In headerless tables, a sticky first column shows a right divider at the left edge and replaces it with a shadow while horizontally scrolled.
 - Table `stickyHeader` enables a scrolling region capped at 320px with pinned headers and a matching soft bottom shadow. The `label` variant keeps its header bottom divider and adds the shadow while scrolled down. Header stickiness works at all breakpoints and can be combined with sticky columns.
 - Accordion headers use the same Button-style variants and six tones, with `small` / `normal` sizes. Previous `outlined`, `filled`, and `standard` variants map to `outline`, `default`, and `text`; expansion behavior and custom icons are unchanged.
 - Chart has no `variant` prop. It keeps a neutral surface and supports six `tone` values for the leading default series color; custom palettes and series colors still take precedence. Stories include Playground, Types (line, bar, area, pie, and donut), Tones, and States. `isAnimationActive` defaults to true for consumers and is disabled in stories for stable visual snapshots.
-- Carousel supports Button-style `label` (tinted), `outline` (initial variant), and `text` appearances with six `tone` values; the `default` variant is not supported. It applies the appearance to its frame and controls and the tone to active thumbnails, indicators, and badges, including in the modal. Legacy `primary` and `secondary` variants preserve their original neutral frames and control treatment. Stories include Playground, Variants, and Tones alongside the existing examples.
+- Carousel supports Button-style `default` (solid), `label` (tinted), `outline` (initial variant), and `text` appearances with six `tone` values. It applies the appearance to its frame and controls and the tone to active thumbnails, indicators, and badges, including in the modal. Legacy `primary` and `secondary` variants preserve their original neutral frames and control treatment. Stories include Playground, Variants, and Tones alongside the existing examples.
 - Carousel `initialIndex` must be a finite integer (invalid values throw a `RangeError`); out-of-range integers are clamped to the available images. Active thumbnails and indicators expose `aria-current`. Closing the gallery restores focus to the actual opener. The `+N` tile counts all images it represents, including the covered thumbnail; with `openOnClick={false}`, that slot is a regular selectable thumbnail instead.
 - Input, Select, Autocomplete, and Textarea share `outlined`, `filled`, and `standard` appearances, `small` / `normal` sizes, and the same six tones. Single-line fields are 44px / 48px; Textarea height still follows `rows` and native resizing. Focus doubles the outlined or bottom border, matching the shared field styling. Numeric native `size` values remain supported on Select and Autocomplete.
-- Heading variants `h1`–`h6` use the shared 46/38/28/24/18/15px scale. Paragraph (also exported as `BodyText`) provides `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, and `overline`.
+- Autocomplete and Select use `default` as their initial variant and an alias for `outlined`, in both the component APIs and stories.
+- Heading variants `h1`–`h6` use the shared 46/38/28/24/18/15px scale; the initial `default` variant is an alias for `h4`, and `level` still takes precedence. Paragraph (also exported as `BodyText`) provides `subtitle1`, `subtitle2`, `body1`, `body2`, `caption`, and `overline`.
 - Typography supports `default`, `muted`, the six palette tones, and `inverse`; weights are `regular`, `medium`, `semibold`, and `bold`.
 - Card, IconButton, and Menu support the shared `default`, `label`, `outline`, and `text` variants and six tones. Card provides optional title, description, and actions; IconButton supports small/medium/large sizes and circular/square shapes; Menu provides an accessible trigger, keyboard-navigable items, outside-click dismissal, and Escape handling.
 - Storybook groups Card under **Data Display** and IconButton/Menu under **Inputs**, with categorized controls and variant/tone examples. Card includes header-only, content-only, and action examples; IconButton covers sizes, shapes, disabled and keyboard states; Menu covers icons, separators, disabled items, icon-only triggers, keyboard selection, and outside-click dismissal. Interaction stories run in the existing browser test project. Card's previous `Surfaces/Card` Storybook URLs move to `Data Display/Card`.
-- Storybook includes button variant/tone matrices and typography scales. Fields use a compact mobile-style set: Playground, Variants, Tones, With Icons (where supported), and States. Every example follows the Light/Dark/Teal toolbar.
+- Storybook includes button variant/tone matrices and typography scales. Fields use a compact mobile-style set: Playground, Variants, Tones, With Icons (where supported), and States. Every example follows the alphabetically sorted theme toolbar, including Teal Dark.
+- Story controls start with `default` where that variant is supported and no tone selected ("Choose option"); omitted tones use each component's built-in fallback. Fields and typography retain their own initial variant names, and headerless tables retain their required `label` appearance. Variant and tone matrices still render their complete ranges. These story defaults do not change component API defaults.
 
 Legacy primary/secondary control variants remain aliases. The previous theme-provider API and custom font-family props are no longer supported; use theme classes and token-driven `font-sans` instead.
 

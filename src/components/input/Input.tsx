@@ -177,6 +177,7 @@ export default function Input({
                 fieldInputClasses,
                 !floating && fieldCenterAlignmentClasses[appearance],
                 appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+                outlinedFloating && 'relative z-20',
                 inputClassName,
               )}
               onFocus={(event) => {

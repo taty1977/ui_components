@@ -2,9 +2,39 @@ import React from 'react';
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Autocomplete from '../Autocomplete';
+import { paletteTones } from '../../../themes/paletteTones';
 
 describe('Autocomplete Component', () => {
   const options = ['Apple', 'Banana', 'Cherry'];
+
+  test.each(paletteTones)('uses the outlined default appearance in the %s tone', (tone) => {
+    const onSelect = vi.fn();
+    const { rerender } = render(
+      <Autocomplete label="Fruit" variant="default" tone={tone} options={options} onSelect={onSelect} />,
+    );
+    const input = screen.getByRole('combobox', { name: 'Fruit' });
+    expect(input.parentElement).toHaveClass('bg-background-surface', 'border', 'rounded-md');
+    const frameClasses = input.parentElement?.className;
+    rerender(<Autocomplete label="Fruit" tone={tone} options={options} onSelect={onSelect} />);
+    expect(input.parentElement?.className).toBe(frameClasses);
+    rerender(<Autocomplete label="Fruit" variant="outlined" tone={tone} options={options} onSelect={onSelect} />);
+    expect(input.parentElement?.className).toBe(frameClasses);
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Ap' } });
+    expect(input).toHaveClass('relative', 'z-20');
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('Apple');
+  });
+
+  test('preserves error accessibility in the default variant', () => {
+    render(
+      <Autocomplete label="Fruit" variant="default" error="Choose a fruit." options={options} onSelect={vi.fn()} />,
+    );
+    const input = screen.getByRole('combobox');
+    expect(input.parentElement).toHaveClass('bg-background-surface');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByText('Choose a fruit.')).toHaveClass('text-palette-error-text');
+  });
 
   test('renders without crashing', () => {
     const { getByPlaceholderText } = render(
@@ -58,6 +88,23 @@ describe('Autocomplete Component', () => {
     expect(queryByText('Banana')).not.toBeInTheDocument();
   });
 
+  test('keeps suggestions in document flow so they do not obscure nearby content', () => {
+    const { getByRole } = render(
+      <>
+        <Autocomplete label="Fruit" onSelect={() => {}} options={options} helperText="Choose a fruit." />
+        <p>Following content</p>
+      </>,
+    );
+    const input = getByRole('combobox', { name: 'Fruit' });
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Ap' } });
+
+    expect(input).toHaveClass('relative', 'z-20');
+    expect(screen.getByRole('listbox')).toHaveClass('relative', 'z-20');
+    expect(screen.getByRole('listbox').className).not.toContain('absolute');
+    expect(screen.getByText('Following content')).toBeInTheDocument();
+  });
+
   test('shows clear button on focus with value and clears input when clicked', () => {
     render(<Autocomplete options={options} onSelect={() => {}} placeholder="Search..." />);
 
@@ -98,6 +145,7 @@ describe('Autocomplete Component', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAttribute('aria-describedby');
     expect(screen.getByRole('alert')).toHaveTextContent('Fruit is required');
+    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
   });
 
   test('applies custom className to the container', () => {

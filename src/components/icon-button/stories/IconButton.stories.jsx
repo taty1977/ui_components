@@ -28,7 +28,7 @@ export default {
   args: {
     size: 'medium',
     shape: 'circular',
-    variant: 'text',
+    variant: 'default',
     tone: undefined,
     disabled: false,
     'aria-label': 'More actions',
@@ -68,7 +68,6 @@ export const Variants = {
 };
 
 export const Tones = {
-  args: { variant: 'label' },
   render: (args) => (
     <Frame>
       {paletteTones.map((tone) => (

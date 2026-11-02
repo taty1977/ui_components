@@ -21,9 +21,9 @@ describe('Accordion', () => {
     async (variant) => {
       const { user } = renderWithUser(<Accordion items={testItems} variant={variant} tone="info" />);
       const button = screen.getByRole('button', { name: /panel one/i });
-      expect(button).toHaveClass('border', 'border-palette-info-main', 'rounded-md');
+      expect(button).toHaveClass('border', 'border-palette-info-graphic', 'rounded-md');
       await user.click(button);
-      expect(button).toHaveClass('border-palette-info-main', 'rounded-t-md');
+      expect(button).toHaveClass('border-palette-info-graphic', 'rounded-t-md');
       expect(button).not.toHaveClass('rounded-md');
       await user.click(button);
       expect(button).toHaveClass('rounded-md');
@@ -34,7 +34,8 @@ describe('Accordion', () => {
     render(<Accordion items={testItems} />);
     const button = screen.getByRole('button', { name: /panel one/i });
 
-    expect(button).toHaveClass('bg-palette-primary-main', 'text-misc-bg-white');
+    expect(button).toHaveClass('bg-palette-primary-main', 'text-palette-primary-contrast');
+    expect(button).toHaveClass('focus-visible:-outline-offset-2', 'focus-visible:outline-current');
   });
 
   test('supports field appearances and tone variants', () => {
@@ -49,7 +50,7 @@ describe('Accordion', () => {
     expect(screen.getAllByRole('button')[0]).toHaveClass('min-h-11', 'text-15', 'bg-palette-success-main');
 
     rerender(<Accordion items={testItems} variant="standard" />);
-    expect(screen.getAllByRole('button')[0]).toHaveClass('bg-transparent', 'text-palette-primary-main');
+    expect(screen.getAllByRole('button')[0]).toHaveClass('bg-transparent', 'text-palette-primary-text');
   });
 
   test('defaults to solid and preserves legacy variant values', () => {
@@ -70,15 +71,16 @@ describe('Accordion', () => {
   });
 
   test.each([
-    ['default', 'bg-palette-info-main', 'text-misc-bg-white'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
-    ['outline', 'bg-transparent', 'text-palette-info-main'],
-    ['text', 'bg-transparent', 'text-palette-info-main'],
+    ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
+    ['outline', 'bg-transparent', 'text-palette-info-text'],
+    ['text', 'bg-transparent', 'text-palette-info-text'],
   ] as const)('matches the Button %s treatment', (variant, background, text) => {
     render(<Accordion items={testItems} variant={variant} tone="info" />);
     const button = screen.getByRole('button', { name: /panel one/i });
     expect(button).toHaveClass(background, text);
-    if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-main');
+    expect(button.parentElement).toHaveClass('rounded-md');
+    if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-graphic');
   });
 
   test.each([

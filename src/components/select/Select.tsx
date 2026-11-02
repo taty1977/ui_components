@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 import { cn } from '../../utils/cn';
+import { mapPaletteTones } from '../../themes/paletteTones';
 import { LabelText } from '../shared/fields/LabelText';
 import { FieldNotch } from '../shared/fields/FieldNotch';
 import {
@@ -18,16 +19,15 @@ import {
   floatingLabelClasses,
   fieldCenterAlignmentClasses,
   resolveFieldVariant,
-  toneClasses,
   toneTextClasses,
   resolveFieldLabelTone,
-  errorClasses,
   optionListClasses,
   type InputVariant,
   type InputTone,
   type InputSize,
 } from '../shared/fields/field.styles';
-export type SelectVariant = InputVariant;
+export type SelectVariant = InputVariant | 'default';
+const selectToneClasses = mapPaletteTones((styles) => styles.outline);
 export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
   label?: string;
   placeholder?: string;
@@ -45,7 +45,7 @@ export default function Select({
   placeholder,
   helperText,
   error,
-  variant = 'outlined',
+  variant = 'default',
   tone = 'primary',
   size = 'normal',
   iconLeft,
@@ -59,7 +59,7 @@ export default function Select({
   ...props
 }: SelectProps) {
   const generatedId = useId();
-  const { appearance, accent } = resolveFieldVariant(variant, tone, error);
+  const { appearance, accent } = resolveFieldVariant(variant === 'default' ? 'outlined' : variant, tone, error);
   const selectId = id ?? generatedId;
   const nativeSelect = useRef<HTMLSelectElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -138,7 +138,7 @@ export default function Select({
         aria-describedby={description}
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={`${selectId}-options`}
+        aria-controls={open ? `${selectId}-options` : undefined}
         aria-invalid={error ? true : undefined}
         className={cn(
           fieldStyles({
@@ -152,7 +152,7 @@ export default function Select({
           'group text-left',
           outlinedFloating && 'group mt-2 bg-background-surface',
           label && floating && appearance === 'standard' && 'mt-2',
-          !props.disabled && toneClasses[accent],
+          !props.disabled && selectToneClasses[accent],
         )}
         onClick={() => setOpen((previous) => !previous)}
         onKeyDown={(event) => {
@@ -167,7 +167,12 @@ export default function Select({
         }}
       >
         {notched && notchWidth !== undefined && (
-          <FieldNotch width={notchWidth} accent={accent} disabled={props.disabled} />
+          <FieldNotch
+            width={notchWidth}
+            accent={accent}
+            disabled={props.disabled}
+            borderClass={selectToneClasses[accent]}
+          />
         )}
         {label && !(appearance === 'standard' && floating && showLabel) && (
           <LabelText
@@ -199,6 +204,7 @@ export default function Select({
             'flex flex-1 items-center py-2 leading-5',
             !floating && fieldCenterAlignmentClasses[appearance],
             appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+            outlinedFloating && 'relative z-20',
           )}
         >
           {selected?.props.children ?? placeholder ?? 'Select an option'}
@@ -228,7 +234,7 @@ export default function Select({
                 className={cn(
                   'flex cursor-pointer items-center justify-between px-4 py-2 hover:bg-action-hover focus:bg-action-hover focus:outline-none',
                   selected && 'bg-action-selected',
-                  option.props.disabled && 'cursor-not-allowed text-text-disabled',
+                  option.props.disabled && 'cursor-not-allowed text-text-secondary',
                 )}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => {
@@ -259,7 +265,7 @@ export default function Select({
           id={messageId}
           role={error ? 'alert' : undefined}
           aria-live="polite"
-          className={error ? errorClasses : 'mt-1 text-13 text-text-secondary'}
+          className={error ? cn('mt-1 font-sans text-13', toneTextClasses.error) : 'mt-1 text-13 text-text-secondary'}
         >
           {message}
         </p>

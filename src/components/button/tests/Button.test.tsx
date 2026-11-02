@@ -77,10 +77,11 @@ describe('Button Component', () => {
     test.each(['default', 'label', 'outline', 'text'] as const)('%s appearance and interaction states', (variant) => {
       render(<Button variant={variant} tone={tone} label="Continue" />);
       const button = screen.getByRole('button', { name: 'Continue' });
-      expect(button).toHaveClass(variant === 'default' ? 'text-misc-bg-white' : `text-palette-${tone}-main`);
+      expect(button).toHaveClass(variant === 'default' ? `text-palette-${tone}-contrast` : `text-palette-${tone}-text`);
       if (variant === 'default') expect(button).toHaveClass(`bg-palette-${tone}-main`);
       if (variant === 'label') expect(button).toHaveClass(`bg-palette-${tone}-opacity-light`);
-      if (variant === 'outline') expect(button).toHaveClass('border', 'bg-transparent', `border-palette-${tone}-main`);
+      if (variant === 'outline')
+        expect(button).toHaveClass('border', 'bg-transparent', `border-palette-${tone}-graphic`);
       if (variant === 'text') expect(button).toHaveClass('bg-transparent');
       const stateColor = variant === 'default' ? 'dark' : variant === 'label' ? 'opacity-main' : 'opacity-lighter';
       for (const state of ['hover', 'active', 'focus']) {

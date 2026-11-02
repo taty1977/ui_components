@@ -1,5 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { paletteTones } from '../../../themes/paletteTones';
 import Table from '../Table';
 
 interface User {
@@ -19,7 +20,27 @@ const columns = [
 ];
 
 describe('Table', () => {
+  test('uses normal spacing for omitted and explicit default sizes, including pagination and empty rows', () => {
+    const pagination = { page: 1, pageSize: 2, total: 4, onPageChange: vi.fn() };
+    const { container, rerender } = render(<Table columns={columns} data={rows} pagination={pagination} />);
+    expect(container.firstChild).toHaveAttribute('data-size', 'default');
+    const headerClasses = screen.getByRole('columnheader', { name: 'Name' }).className;
+    const cellClasses = screen.getByRole('cell', { name: 'Ada Lovelace' }).className;
+    const paginationClasses = screen.getByRole('navigation').className;
+    for (const size of ['default', 'normal'] as const) {
+      rerender(<Table columns={columns} data={rows} pagination={pagination} size={size} />);
+      expect(screen.getByRole('columnheader', { name: 'Name' }).className).toBe(headerClasses);
+      expect(screen.getByRole('cell', { name: 'Ada Lovelace' }).className).toBe(cellClasses);
+      expect(screen.getByRole('navigation').className).toBe(paginationClasses);
+    }
+    rerender(<Table columns={columns} data={[]} size="default" />);
+    const emptyClasses = screen.getByRole('cell').className;
+    rerender(<Table columns={columns} data={[]} size="normal" />);
+    expect(screen.getByRole('cell').className).toBe(emptyClasses);
+  });
+
   test.each([
+    ['default', 'filled'],
     ['outlined', 'outline'],
     ['standard', 'text'],
     ['primary', 'filled'],
@@ -35,7 +56,7 @@ describe('Table', () => {
     expect(screen.getByRole('region').className).toBe(frameClasses);
   });
 
-  test.each(['label', 'outline', 'text', 'outlined', 'filled', 'standard', 'primary', 'secondary'] as const)(
+  test.each(['default', 'label', 'outline', 'text', 'outlined', 'filled', 'standard', 'primary', 'secondary'] as const)(
     'uses label styling instead of %s when column headers are absent',
     (variant) => {
       const { rerender } = render(
@@ -54,15 +75,33 @@ describe('Table', () => {
       expect(screen.getByRole('rowheader', { name: 'Ada Lovelace' })).toHaveClass(
         'border-b',
         `bg-palette-${variant === 'secondary' ? 'secondary' : 'primary'}-opacity-light`,
-        `text-palette-${variant === 'secondary' ? 'secondary' : 'primary'}-main`,
+        `text-palette-${variant === 'secondary' ? 'secondary' : 'primary'}-text`,
       );
       expect(region.parentElement?.parentElement).toHaveAttribute('data-variant', 'label');
       expect(screen.getByRole('rowheader', { name: 'Ada Lovelace' })).toHaveClass('border-r');
       rerender(<Table columns={columns} data={rows} variant="outline" />);
       expect(region).toHaveClass('border');
-      expect(region.nextElementSibling).toHaveClass('border');
+      expect(region.nextElementSibling).toBeNull();
     },
   );
+
+  test.each(paletteTones)('draws the %s outline without an overlay covering table text', (tone) => {
+    render(<Table columns={columns} data={rows} variant="outline" tone={tone} />);
+
+    const region = screen.getByRole('region');
+    expect(region).toHaveClass('rounded-md', 'border', `border-palette-${tone}-graphic`);
+    expect(region.parentElement?.children).toHaveLength(1);
+    expect(screen.getByRole('cell', { name: 'Ada Lovelace' })).toBeVisible();
+  });
+
+  test.each(paletteTones)('uses the accessible foreground for %s solid header separators', (tone) => {
+    render(<Table columns={columns} data={rows} variant="filled" tone={tone} showColumnBorders />);
+
+    for (const header of screen.getAllByRole('columnheader')) {
+      expect(header).toHaveClass(`text-palette-${tone}-contrast`);
+      expect(header.style.borderColor).toBe(`var(--palette-${tone}-contrast)`);
+    }
+  });
 
   test('replaces the sticky row-header right divider with a shadow after horizontal scrolling', () => {
     const { rerender } = render(
@@ -75,16 +114,17 @@ describe('Table', () => {
     );
     const region = screen.getByRole('region');
     const first = screen.getByRole('rowheader', { name: 'Ada Lovelace' });
-    expect(first).toHaveClass('border-r', 'border-divider', 'after:hidden');
+    expect(first).toHaveClass('border-r', 'border-table-divider');
+    expect(first.style.boxShadow).toBe('');
     expect(screen.getByRole('cell', { name: 'Active' })).not.toHaveClass('border-l');
     fireEvent.scroll(region, { target: { scrollTop: 50, scrollLeft: 0 } });
-    expect(first).toHaveClass('after:hidden');
+    expect(first.style.boxShadow).toBe('');
     fireEvent.scroll(region, { target: { scrollLeft: 100 } });
-    expect(first).toHaveClass('after:from-action-focus');
+    expect(first.style.boxShadow).toBe('6px 0 6px -6px var(--action-focus)');
     expect(first).not.toHaveClass('border-r');
-    expect(first).not.toHaveClass('after:hidden');
     fireEvent.scroll(region, { target: { scrollLeft: 0 } });
-    expect(first).toHaveClass('border-r', 'after:hidden');
+    expect(first).toHaveClass('border-r');
+    expect(first.style.boxShadow).toBe('');
     rerender(
       <Table
         columns={columns.map((column) => ({ ...column, header: null }))}
@@ -93,7 +133,8 @@ describe('Table', () => {
         breakpoint="mobile"
       />,
     );
-    expect(first).not.toHaveClass('border-r', 'after:from-action-focus', 'sticky');
+    expect(first).not.toHaveClass('border-r', 'sticky');
+    expect(first.style.boxShadow).toBe('');
   });
 
   test('pins opaque headers with a soft bottom shadow above sticky body columns', () => {
@@ -106,10 +147,10 @@ describe('Table', () => {
     expect(first).toHaveClass('sticky', 'top-0', 'left-0', 'z-30');
     expect(last).toHaveClass('sticky', 'top-0', 'z-20');
     for (const header of [first, last]) {
-      expect(header).toHaveClass('border-b', 'border-divider');
+      expect(header).toHaveClass('border-b', 'border-table-divider');
       expect(header).not.toHaveClass('border-b-0');
-      expect(header.style.backgroundColor).toBe('var(--background-surface)');
-      expect(header.style.backgroundImage).toContain('var(--palette-info-opacity-light)');
+      expect(header.style.backgroundColor).toBe('var(--table-cell-overlay, var(--palette-info-surface))');
+      expect(header.style.backgroundImage).toBe('');
       expect(header.lastElementChild).toHaveClass('-bottom-1.5', 'h-1.5', 'from-action-focus', 'to-transparent');
       expect(header.lastElementChild).toHaveAttribute('aria-hidden', 'true');
       expect(header.lastElementChild).toHaveClass('hidden');
@@ -143,20 +184,14 @@ describe('Table', () => {
     });
   });
 
-  test.each(['primary', 'secondary', 'info'] as const)('paints the rounded %s outline above sticky cells', (tone) => {
+  test.each(['primary', 'secondary', 'info'] as const)('keeps the rounded %s outline around sticky cells', (tone) => {
     render(<Table columns={columns} data={rows} tone={tone} stickyFirstColumn stickyLastColumn />);
-    const region = screen.getByRole('region', { name: 'Scrollable table' });
+    const region = screen.getByRole('region', { name: /^Scrollable Data table/ });
     expect(region.parentElement).toHaveClass('relative', 'isolate');
-    expect(region.nextElementSibling).toHaveClass(
-      'absolute',
-      'inset-0',
-      'z-40',
-      'rounded-md',
-      'border',
-      'pointer-events-none',
-      `border-palette-${tone}-main`,
-    );
-    expect(region.nextElementSibling).toHaveAttribute('aria-hidden', 'true');
+    expect(region).toHaveClass('rounded-md', 'border', `border-palette-${tone}-graphic`);
+    expect(region.nextElementSibling).toBeNull();
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass('sticky', 'left-0');
+    expect(screen.getByRole('columnheader', { name: 'Status' })).toHaveClass('sticky', 'right-0');
   });
 
   test.each(['outline', 'outlined'] as const)('keeps only the header bottom divider for %s', (variant) => {
@@ -167,7 +202,7 @@ describe('Table', () => {
       expect(header).not.toHaveClass('border', 'border-0', 'border-l');
     });
     expect(screen.getByRole('cell', { name: 'Active' })).toHaveClass('border-l');
-    expect(screen.getByRole('region', { name: 'Scrollable table' })).toHaveClass('border');
+    expect(screen.getByRole('region', { name: /^Scrollable Data table/ })).toHaveClass('border');
   });
 
   test('renders data', () => {
@@ -199,7 +234,7 @@ describe('Table', () => {
     expect(screen.getByRole('rowheader', { name: 'Ada Lovelace' })).toHaveClass('font-semibold');
     expect(screen.getByRole('rowheader', { name: 'Ada Lovelace' })).toHaveClass(
       'bg-palette-primary-opacity-light',
-      'text-palette-primary-main',
+      'text-palette-primary-text',
     );
     expect(screen.getAllByRole('rowheader', { name: 'Ada Lovelace' })[0]).toHaveClass('rounded-tl-md');
     expect(screen.getAllByRole('cell', { name: 'Active' })[0]).toHaveClass('rounded-tr-md');
@@ -210,10 +245,29 @@ describe('Table', () => {
     const onPageChange = vi.fn();
     render(<Table columns={columns} data={rows} pagination={{ page: 2, pageSize: 2, total: 5, onPageChange }} />);
 
-    expect(screen.getByRole('navigation', { name: 'Table pagination' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: /^Pagination for Data table/ })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
     expect(onPageChange).toHaveBeenCalledWith(1);
     expect(screen.getByRole('button', { name: 'Next' })).not.toBeDisabled();
+  });
+
+  test('gives each table landmark and pagination navigation a unique name', () => {
+    const pagination = { page: 1, pageSize: 2, total: 5, onPageChange: vi.fn() };
+    render(
+      <>
+        <Table columns={columns} data={rows} pagination={pagination} aria-label="Orders" />
+        <Table columns={columns} data={rows} pagination={pagination} aria-label="Orders" />
+      </>,
+    );
+
+    const regionNames = screen.getAllByRole('region').map((region) => region.getAttribute('aria-label'));
+    const navigationNames = screen
+      .getAllByRole('navigation')
+      .map((navigation) => navigation.getAttribute('aria-label'));
+    expect(new Set(regionNames).size).toBe(2);
+    expect(new Set(navigationNames).size).toBe(2);
+    expect(regionNames.every((name) => name?.startsWith('Scrollable Orders'))).toBe(true);
+    expect(navigationNames.every((name) => name?.startsWith('Pagination for Orders'))).toBe(true);
   });
 
   test.each([
@@ -242,7 +296,7 @@ describe('Table', () => {
     );
 
     expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass('rounded-md');
-    expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass('text-palette-primary-main');
+    expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass('text-palette-primary-text');
     expect(screen.getByRole('button', { name: 'Previous' })).not.toHaveClass('border');
     expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass('font-semibold');
   });
@@ -254,10 +308,10 @@ describe('Table', () => {
     expect(container.firstChild).toHaveAttribute('data-tone', 'primary');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'bg-transparent',
-      'text-palette-primary-main',
+      'text-palette-primary-text',
     );
-    expect(container.firstChild).toHaveClass('rounded-lg', 'border-border-subtle', 'p-4', 'shadow-sm');
-    expect(screen.getByRole('region')).toHaveClass('border-palette-primary-main');
+    expect(container.firstChild).toHaveClass('rounded-lg', 'border-table-divider', 'p-4', 'shadow-sm');
+    expect(screen.getByRole('region')).toHaveClass('border-palette-primary-graphic');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'px-4',
       'py-4',
@@ -271,14 +325,14 @@ describe('Table', () => {
     expect(container.firstChild).toHaveAttribute('data-tone', 'success');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'bg-palette-success-main',
-      'text-misc-bg-white',
+      'text-palette-success-contrast',
       'px-4',
       'py-3',
       'text-13',
     );
 
     rerender(<Table columns={columns} data={rows} variant="standard" tone="warning" />);
-    expect(screen.getByRole('region')).toHaveClass('rounded-none');
+    expect(screen.getByRole('region')).toHaveClass('rounded-md');
     expect(container.firstChild).toHaveAttribute('data-tone', 'warning');
   });
 
@@ -288,45 +342,69 @@ describe('Table', () => {
     expect(container.firstChild).toHaveAttribute('data-tone', 'primary');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'bg-palette-primary-main',
-      'text-misc-bg-white',
+      'text-palette-primary-contrast',
     );
-    expect(screen.getByRole('region')).toHaveClass('border-palette-primary-main');
+    expect(screen.getByRole('region')).toHaveClass('border-palette-primary-graphic');
 
     rerender(<Table columns={columns} data={rows} variant="secondary" />);
     expect(container.firstChild).toHaveAttribute('data-tone', 'secondary');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'bg-palette-secondary-main',
-      'text-misc-bg-white',
+      'text-palette-secondary-contrast',
     );
-    expect(screen.getByRole('region')).toHaveClass('border-palette-secondary-main');
+    expect(screen.getByRole('region')).toHaveClass('border-palette-secondary-graphic');
   });
 
   test.each([
-    ['primary', 'border-palette-primary-main', 'bg-palette-primary-main', 'text-palette-primary-main'],
-    ['secondary', 'border-palette-secondary-main', 'bg-palette-secondary-main', 'text-palette-secondary-main'],
-    ['info', 'border-palette-info-main', 'bg-palette-info-main', 'text-palette-info-main'],
+    [
+      'primary',
+      'border-palette-primary-graphic',
+      'bg-palette-primary-main',
+      'text-palette-primary-contrast',
+      'text-palette-primary-text',
+    ],
+    [
+      'secondary',
+      'border-palette-secondary-graphic',
+      'bg-palette-secondary-main',
+      'text-palette-secondary-contrast',
+      'text-palette-secondary-text',
+    ],
+    [
+      'info',
+      'border-palette-info-graphic',
+      'bg-palette-info-main',
+      'text-palette-info-contrast',
+      'text-palette-info-text',
+    ],
   ] as const)(
     'applies the %s tone to the table frame, header, and pagination controls',
-    (tone, borderClass, surfaceClass, textClass) => {
+    (tone, borderClass, surfaceClass, contrastClass, textClass) => {
       const pagination = { page: 2, pageSize: 1, total: 2, onPageChange: vi.fn() };
       const { container } = render(
         <Table columns={columns} data={rows} variant="filled" tone={tone} pagination={pagination} />,
       );
 
-      expect(container.firstChild).toHaveClass('border-border-subtle');
+      expect(container.firstChild).toHaveClass('border-table-divider');
       expect(screen.getByRole('region')).toHaveClass(borderClass);
-      expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(surfaceClass, 'text-misc-bg-white');
+      expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(surfaceClass, contrastClass);
+      expect(screen.getByRole('columnheader', { name: 'Name' }).style.borderColor).toBe(
+        `var(--palette-${tone}-contrast)`,
+      );
       expect(screen.getByRole('button', { name: 'Previous' })).toHaveClass(textClass);
     },
   );
 
   test.each([
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
-    ['outline', 'bg-transparent', 'text-palette-info-main'],
-    ['text', 'bg-transparent', 'text-palette-info-main'],
+    ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
+    ['outline', 'bg-transparent', 'text-palette-info-text'],
+    ['text', 'bg-transparent', 'text-palette-info-text'],
   ] as const)('matches the Button %s header treatment', (variant, background, text) => {
     render(<Table columns={columns} data={rows} variant={variant} tone="info" />);
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(background, text);
+    expect(screen.getByRole('region')).toHaveClass('rounded-md');
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass('first:rounded-tl-md', 'last:rounded-tr-md');
   });
 
   test('renders page status supplied as a React node', () => {
@@ -379,7 +457,7 @@ describe('Table', () => {
       screen.getByRole('columnheader', { name: 'Name' }),
       screen.getByRole('cell', { name: 'Ada Lovelace' }),
     ]) {
-      expect(cell).toHaveClass('after:-right-1.5', 'after:w-1.5', 'after:from-action-focus', 'after:to-transparent');
+      expect(cell.style.boxShadow).toBe('6px 0 6px -6px var(--action-focus)');
     }
     expect(screen.getByRole('columnheader', { name: 'Status' })).not.toHaveClass('border-l');
     expect(screen.getByRole('cell', { name: 'Active' })).not.toHaveClass('border-l');
@@ -387,7 +465,7 @@ describe('Table', () => {
     rerender(
       <Table columns={columns} data={rows} variant="label" stickyFirstColumn showColumnBorders breakpoint="mobile" />,
     );
-    expect(screen.getByRole('columnheader', { name: 'Name' })).not.toHaveClass('after:from-action-focus');
+    expect(screen.getByRole('columnheader', { name: 'Name' }).style.boxShadow).toBe('');
     expect(screen.getByRole('columnheader', { name: 'Status' })).toHaveClass('border-l');
   });
 
@@ -399,19 +477,13 @@ describe('Table', () => {
       screen.getByRole('columnheader', { name: 'Status' }),
       screen.getByRole('cell', { name: 'Active' }),
     ]) {
-      expect(cell).toHaveClass(
-        'before:-left-1.5',
-        'before:w-1.5',
-        'before:bg-gradient-to-l',
-        'before:from-action-focus',
-        'before:to-transparent',
-      );
+      expect(cell.style.boxShadow).toBe('-6px 0 6px -6px var(--action-focus)');
       expect(cell).not.toHaveClass('border-l');
     }
     rerender(
       <Table columns={columns} data={rows} variant="label" stickyLastColumn showColumnBorders breakpoint="mobile" />,
     );
-    expect(screen.getByRole('columnheader', { name: 'Status' })).not.toHaveClass('before:from-action-focus');
+    expect(screen.getByRole('columnheader', { name: 'Status' }).style.boxShadow).toBe('');
     expect(screen.getByRole('columnheader', { name: 'Status' })).toHaveClass('border-l');
   });
 
@@ -423,13 +495,13 @@ describe('Table', () => {
       );
       for (const header of screen.getAllByRole('columnheader')) {
         expect(header).toHaveClass('z-20');
-        expect(header.style.backgroundColor).toBe('var(--background-surface)');
-        expect(header.style.backgroundImage).toContain(`var(--palette-${tone}-opacity-light)`);
+        expect(header.style.backgroundColor).toBe(`var(--table-cell-overlay, var(--palette-${tone}-surface))`);
+        expect(header.style.backgroundImage).toBe('');
       }
       const stripedCell = screen.getByRole('cell', { name: 'Grace Hopper' });
-      expect(stripedCell.style.backgroundColor).toBe('var(--background-surface)');
-      expect(stripedCell.style.backgroundImage).toContain('var(--action-hover)');
-      expect(stripedCell).toHaveClass('group-hover:[--table-cell-overlay:var(--action-hover)]');
+      expect(stripedCell.style.backgroundColor).toBe('var(--table-cell-overlay, var(--action-hover-surface))');
+      expect(stripedCell.style.backgroundImage).toBe('');
+      expect(stripedCell).toHaveClass('group-hover:[--table-cell-overlay:var(--action-hover-surface)]');
     },
   );
 
@@ -442,7 +514,7 @@ describe('Table', () => {
   test('conditionally renders column borders', () => {
     render(<Table columns={columns} data={rows} variant="label" showColumnBorders />);
 
-    expect(screen.getByRole('columnheader', { name: 'Status' })).toHaveClass('border-l', 'border-divider');
+    expect(screen.getByRole('columnheader', { name: 'Status' })).toHaveClass('border-l', 'border-table-divider');
   });
 
   test('conditionally renders striped rows', () => {

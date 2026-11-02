@@ -12,7 +12,7 @@ export function LabelText({ required, className, children, ref, ...props }: Labe
     <label ref={ref} className={cn(labelClasses, className)} {...props}>
       {children}
       {required && (
-        <span className="ml-1 text-palette-error-main" {...a11yProps(true)}>
+        <span className="ml-1 text-palette-error-text" {...a11yProps(true)}>
           *
         </span>
       )}

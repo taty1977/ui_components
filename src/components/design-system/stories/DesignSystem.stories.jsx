@@ -21,7 +21,7 @@ export const Introduction = {
       <Heading level="h1">Web design system</Heading>
       <Paragraph>
         React DOM components styled with Tailwind CSS and CVA. Figma JSON files drive the palette, spacing, corners,
-        typography, and Light, Dark, and Teal themes.
+        typography, and Light, Dark, Pulse Dark, Teal, and Pulse themes.
       </Paragraph>
       <Heading level="h2">Shared foundations</Heading>
       <div className="flex flex-wrap gap-4">

@@ -29,7 +29,7 @@ const meta = {
     rows: 5,
     required: false,
     variant: 'outlined',
-    tone: 'primary',
+    tone: undefined,
     size: 'normal',
   },
   argTypes: {
@@ -80,8 +80,18 @@ const meta = {
       description: 'Disables the textarea field.',
       table: { category: 'State' },
     },
-    tone: { control: 'select', options: tones },
-    size: { control: 'select', options: ['small', 'normal'] },
+    tone: {
+      control: 'select',
+      options: tones,
+      description: 'Sets the field accent tone. Leave unset to use the component default.',
+      table: { category: 'Appearance' },
+    },
+    size: {
+      control: 'select',
+      options: ['small', 'normal'],
+      description: 'Sets field spacing; rows controls the visible text height.',
+      table: { category: 'Layout' },
+    },
     rows: {
       control: 'number',
       description: 'Number of visible text rows.',

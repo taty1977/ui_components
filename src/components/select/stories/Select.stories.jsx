@@ -42,8 +42,8 @@ const meta = {
     defaultValue: 'ca',
     placeholder: 'Choose a country',
     helperText: '',
-    variant: 'outlined',
-    tone: 'primary',
+    variant: 'default',
+    tone: undefined,
     size: 'normal',
     showLeftIcon: false,
     showSelectionCheck: false,
@@ -95,8 +95,8 @@ const meta = {
     },
     variant: {
       control: 'select',
-      options: ['outlined', 'filled', 'standard'],
-      description: 'Selects the field frame treatment.',
+      options: ['default', 'outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment. Default is an alias for outlined.',
       table: { category: 'Appearance' },
     },
     disabled: {
@@ -104,7 +104,12 @@ const meta = {
       description: 'Disables the select field.',
       table: { category: 'State' },
     },
-    tone: { control: 'select', options: tones },
+    tone: {
+      control: 'select',
+      options: tones,
+      description: 'Sets the field accent tone. Leave unset to use the component default.',
+      table: { category: 'Appearance' },
+    },
     size: {
       control: 'select',
       options: ['small', 'normal'],
@@ -145,7 +150,10 @@ export const Playground = { render: renderSelect };
 export const Variants = {
   render: (args) => (
     <Frame>
-      <Select {...args} label="Outlined" variant="outlined" defaultValue="ca" helperText="Default variant">
+      <Select {...args} label="Default" variant="default" defaultValue="ca" helperText="Outlined default appearance">
+        {renderOptions()}
+      </Select>
+      <Select {...args} label="Outlined" variant="outlined" defaultValue="ca" helperText="Outlined border">
         {renderOptions()}
       </Select>
       <Select {...args} label="Filled" variant="filled" defaultValue="ca" helperText="Filled background">

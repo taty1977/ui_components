@@ -106,6 +106,7 @@ export default function Textarea({
             filled && appearance === 'filled' && label && 'pt-5 pb-[3px] focus:pb-[2px]',
             filled && appearance !== 'filled' && label && 'pt-4',
             filled && appearance === 'standard' && label && 'pb-[7px] focus:pb-[6px]',
+            outlinedFloating && 'relative z-20 mt-3 pt-1',
           )}
           onFocus={(event) => {
             setFocused(true);

@@ -25,7 +25,7 @@ import {
 } from '../shared/fields/field.styles';
 import { LabelText } from '../shared/fields/LabelText';
 import { FieldNotch } from '../shared/fields/FieldNotch';
-export type AutocompleteVariant = InputVariant;
+export type AutocompleteVariant = InputVariant | 'default';
 export interface AutocompleteProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
   'onChange' | 'onSelect' | 'value' | 'size'
@@ -50,7 +50,7 @@ export default function Autocomplete({
   iconLeft,
   iconRight,
   label,
-  variant = 'outlined',
+  variant = 'default',
   tone = 'primary',
   size = 'normal',
   onChange,
@@ -69,7 +69,7 @@ export default function Autocomplete({
   const inputRef = useRef<HTMLInputElement>(null);
   const labelRef = useRef<HTMLLabelElement>(null);
   const [notchWidth, setNotchWidth] = useState<number>();
-  const { appearance, accent } = resolveFieldVariant(variant, tone, error);
+  const { appearance, accent } = resolveFieldVariant(variant === 'default' ? 'outlined' : variant, tone, error);
   const inputId = id ?? generatedId;
   const listId = `${inputId}-options`;
   const message = error ?? helperText;
@@ -177,6 +177,7 @@ export default function Autocomplete({
             fieldInputClasses,
             !floating && fieldCenterAlignmentClasses[appearance],
             appearance === 'filled' && floating && label && 'self-stretch py-0 pt-[18px]',
+            outlinedFloating && 'relative z-20',
           )}
           onChange={(event) => {
             setLocalValue(event.target.value);
@@ -242,7 +243,7 @@ export default function Autocomplete({
         ) : null}
       </div>
       {filtered.length > 0 && (
-        <ul id={listId} role="listbox" className={optionListClasses}>
+        <ul id={listId} role="listbox" className={cn(optionListClasses, 'relative')}>
           {filtered.map((option, index) => (
             <li
               key={option}

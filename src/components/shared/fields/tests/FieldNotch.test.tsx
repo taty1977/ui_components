@@ -9,7 +9,7 @@ describe('FieldNotch', () => {
     expect(spans).toHaveLength(3);
     for (const span of spans) {
       expect(span).toHaveAttribute('aria-hidden', 'true');
-      expect(span).toHaveClass(`border-palette-${accent}-main`, 'group-focus-within:border-b-2');
+      expect(span).toHaveClass(`border-palette-${accent}-graphic`, 'group-focus-within:border-b-2');
     }
     expect(spans[0]).toHaveClass('rounded-l-md', 'border-l', 'border-t', 'group-focus-within:border-l-2');
     expect(spans[1]).toHaveClass('left-3', 'right-3', 'border-b');
@@ -21,10 +21,10 @@ describe('FieldNotch', () => {
     const { container, rerender } = render(<FieldNotch width={64} accent="error" disabled />);
     for (const span of container.querySelectorAll('span')) {
       expect(span).toHaveClass('border-text-disabled');
-      expect(span).not.toHaveClass('border-palette-error-main');
+      expect(span).not.toHaveClass('border-palette-error-graphic');
     }
     rerender(<FieldNotch width={100} accent="success" />);
     expect(container.lastElementChild).toHaveStyle({ left: '112px' });
-    expect(container.lastElementChild).toHaveClass('border-palette-success-main');
+    expect(container.lastElementChild).toHaveClass('border-palette-success-graphic');
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
 import { toneClasses, type ButtonTone } from '../button/button.styles';
@@ -47,7 +47,6 @@ export default function Menu({
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const menuId = useId();
   const appearance = componentVariantAppearances[variant];
   const accent = resolveVariantTone(variant, tone);
 
@@ -97,7 +96,6 @@ export default function Menu({
         aria-label={!label ? triggerAriaLabel || 'Open menu' : undefined}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-controls={menuId}
         onClick={() => setOpen((value) => !value)}
         className={cn(
           'inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-15 font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current disabled:cursor-not-allowed disabled:opacity-45',
@@ -116,7 +114,6 @@ export default function Menu({
       {open && (
         <div
           ref={menuRef}
-          id={menuId}
           role="menu"
           aria-label={label || triggerAriaLabel || 'Menu options'}
           onKeyDown={handleMenuKeyDown}

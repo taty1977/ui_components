@@ -13,11 +13,11 @@ const rows = [
 ];
 
 const statusStyles = {
-  Active: 'bg-palette-success-opacity-light text-palette-success-main',
-  Inactive: 'bg-palette-secondary-opacity-light text-palette-secondary-main',
-  Pending: 'bg-palette-warning-opacity-light text-palette-warning-main',
+  Active: 'bg-palette-success-opacity-light text-palette-success-text',
+  Inactive: 'bg-palette-secondary-opacity-light text-palette-secondary-text',
+  Pending: 'bg-palette-warning-opacity-light text-palette-warning-text',
 };
-const appearances = ['label', 'outline', 'text'];
+const appearances = ['default', 'label', 'outline', 'text'];
 const tones = paletteTones;
 const Frame = ({ children }) => <div className="grid w-full min-w-0 gap-6">{children}</div>;
 
@@ -49,15 +49,15 @@ const meta = {
     docs: {
       description: {
         component:
-          'A responsive, Material UI-inspired data table with label (tinted), outline, and text header variants. Outline is the initial variant. Six tones style the table headers. Stories hide the outer card border, background, and shadow to showcase the table itself. Legacy outlined, filled, and standard values remain supported.',
+          'A responsive, Material UI-inspired data table with default (solid), label (tinted), outline, and text header variants. Stories start with default and no tone selected; the component itself defaults to outline and primary. Six tones style the table headers. Stories hide the outer card border, background, and shadow to showcase the table itself. Legacy outlined, filled, and standard values remain supported.',
       },
     },
   },
   args: {
     className: 'border-0 bg-transparent shadow-none',
-    variant: 'outline',
-    tone: 'primary',
-    size: 'normal',
+    variant: 'default',
+    tone: undefined,
+    size: 'default',
     breakpoint: 'desktop',
     stickyFirstColumn: false,
     stickyLastColumn: false,
@@ -69,11 +69,16 @@ const meta = {
     variant: {
       control: 'select',
       options: appearances,
-      description: 'Tinted label, outline (initial variant), or text.',
+      description: 'Solid default, tinted label, outline, or text. Stories start with default.',
       table: { category: 'Appearance' },
     },
     tone: { control: 'select', options: tones, table: { category: 'Appearance' } },
-    size: { control: 'select', options: ['small', 'normal'], table: { category: 'Layout' } },
+    size: {
+      control: 'select',
+      options: ['default', 'small', 'normal'],
+      description: 'Default uses normal row and pagination spacing.',
+      table: { category: 'Layout' },
+    },
     breakpoint: {
       control: 'select',
       options: ['mobile', 'tablet', 'desktop'],
@@ -122,7 +127,6 @@ export const Variants = {
 };
 
 export const Tones = {
-  args: { variant: 'label' },
   render: (args) => (
     <Frame>
       {tones.map((tone) => (
@@ -135,7 +139,7 @@ export const Tones = {
 export const Sizes = {
   render: (args) => (
     <Frame>
-      {['small', 'normal'].map((size) => (
+      {['default', 'small', 'normal'].map((size) => (
         <Table key={size} {...args} size={size} columns={headerColumns} data={rows} getRowKey={(row) => row.id} />
       ))}
     </Frame>

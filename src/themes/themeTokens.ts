@@ -73,6 +73,6 @@ const themes = Object.fromEntries(
   (Object.keys(figmaTokens.Variables) as FigmaThemeMode[]).map((mode) => [themeKeys[mode], createThemeTokens(mode)]),
 ) as Record<ThemeMode, ReturnType<typeof createThemeTokens>>;
 
-export const themeModes = Object.values(themeKeys);
-export const themeTokens = { core: themes.light.core, semantic: themes.light.semantic, themes };
+export const themeModes = Object.values(themeKeys).sort((a, b) => a.localeCompare(b));
+export const themeTokens = { core: themes.pulse.core, semantic: themes.pulse.semantic, themes };
 export const getThemeTokens = (mode: ThemeMode) => themes[mode];

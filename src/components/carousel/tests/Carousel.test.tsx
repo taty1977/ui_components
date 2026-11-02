@@ -51,6 +51,7 @@ describe('Carousel', () => {
       render(<Carousel images={overflowImages} thumbnailsPosition={thumbnailsPosition} />);
       const opener = screen.getByRole('button', { name: `Open image gallery (${count} more)` });
       expect(opener).toHaveTextContent(`+${count}`);
+      expect(within(opener).getByText(`+${count}`)).toHaveClass('bg-background-surface', 'text-text-primary');
       await user.click(opener);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
       await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Next image' }));
@@ -90,9 +91,10 @@ describe('Carousel', () => {
   });
 
   test.each([
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
-    ['outline', 'border-palette-info-main', 'text-palette-info-main'],
-    ['text', 'bg-transparent', 'text-palette-info-main'],
+    ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
+    ['outline', 'border-palette-info-graphic', 'text-palette-info-text'],
+    ['text', 'bg-transparent', 'text-palette-info-text'],
   ] as const)('applies the %s appearance to the frame and inline and modal controls', async (variant, bg, text) => {
     const user = userEvent.setup();
     render(<Carousel images={images} variant={variant} tone="info" />);
@@ -113,7 +115,7 @@ describe('Carousel', () => {
     render(<Carousel images={[{ ...images[0], badge: 'New' }, images[1]]} variant="label" tone={tone} />);
     expect(screen.getByRole('button', { name: 'Next image' })).toHaveClass(`bg-palette-${tone}-opacity-light`);
     expect(screen.getByRole('button', { name: 'Select Image one' })).toHaveClass(
-      `text-palette-${tone}-main`,
+      `text-palette-${tone}-text`,
       'ring-current',
     );
     expect(screen.getByRole('button', { name: 'Go to image 1' })).toHaveClass(`bg-palette-${tone}-main`);
@@ -126,13 +128,21 @@ describe('Carousel', () => {
     expect(screen.getByRole('region')).toHaveClass('border-border-subtle', 'bg-background-surface');
     expect(screen.getByRole('button', { name: 'Next image' })).toHaveClass(
       'bg-background-surface',
-      `text-palette-${variant}-main`,
+      `text-palette-${variant}-text`,
     );
   });
 
   test('applies the selected appearance to the empty state', () => {
     render(<Carousel images={[]} variant="label" tone="success" />);
     expect(screen.getByText(/no product images available/i)).toHaveClass('bg-palette-success-opacity-light');
+  });
+
+  test.each(paletteTones)('pairs the %s solid empty-state background and foreground', (tone) => {
+    render(<Carousel images={[]} variant="default" tone={tone} />);
+    expect(screen.getByText(/no product images available/i)).toHaveClass(
+      `bg-palette-${tone}-main`,
+      `text-palette-${tone}-contrast`,
+    );
   });
 
   test('renders fallback when no images are provided', () => {

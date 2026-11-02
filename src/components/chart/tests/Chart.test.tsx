@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { paletteTones } from '../../../themes/paletteTones';
 import Chart from '../Chart';
 
@@ -35,6 +35,45 @@ const sampleSeries = [
 ];
 
 describe('Chart', () => {
+  const labelObservers: ((entries: { contentRect: { width: number; height: number } }[]) => void)[] = [];
+
+  beforeEach(() => {
+    labelObservers.length = 0;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: (entries: { contentRect: { width: number; height: number } }[]) => void) {
+          labelObservers.push(callback);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  test('sizes SVG label boxes to their text and preserves alignment when text resizes', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(36);
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(20);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 28.8, 16));
+    const { container } = render(<Chart data={sampleData} series={sampleSeries} isAnimationActive={false} />);
+    const label = Array.from(container.querySelectorAll('foreignObject > div')).find(
+      (element) => element.textContent === 'Jan',
+    );
+    const box = label?.parentElement;
+    expect(box).toHaveAttribute('width', '36');
+    expect(box).toHaveAttribute('height', '20');
+    expect(label).not.toHaveStyle({ transform: 'translateX(-50%)' });
+    const center = Number(box?.getAttribute('x')) + 36 / 2;
+
+    act(() => labelObservers.forEach((resize) => resize([{ contentRect: { width: 60.25, height: 20 } }])));
+    expect(box).toHaveAttribute('width', '63');
+    expect(box).toHaveAttribute('height', '22');
+    expect(label).toHaveStyle({ padding: '1px' });
+    expect(Number(box?.getAttribute('x')) + 63 / 2).toBe(center);
+  });
+
   test.each(['line', 'bar', 'area', 'pie'] as const)(
     'can disable %s series and tooltip animations while preserving the animated default',
     (type) => {
@@ -60,20 +99,26 @@ describe('Chart', () => {
     },
   );
 
-  test.each(paletteTones)(
-    'supports the %s tone',
-    (tone) => {
-      const { container } = render(<Chart data={sampleData} series={sampleSeries} tone={tone} />);
-      expect(screen.getByRole('region')).toHaveClass('border-border-subtle', 'bg-background-surface');
-      expect(screen.getByRole('region')).toHaveAttribute('data-tone', tone);
-      expect(screen.getByRole('region')).not.toHaveAttribute('data-variant');
-      expect(container.querySelector(`[stroke="var(--palette-${tone}-main)"]`)).toBeInTheDocument();
-    },
-  );
+  test.each(paletteTones)('supports the %s tone', (tone) => {
+    const { container } = render(<Chart data={sampleData} series={sampleSeries} tone={tone} />);
+    expect(screen.getByRole('region')).toHaveClass('border-border-subtle', 'bg-background-surface');
+    expect(screen.getByRole('region')).toHaveAttribute('data-tone', tone);
+    expect(screen.getByRole('region')).not.toHaveAttribute('data-variant');
+    expect(container.querySelector(`[stroke="var(--palette-${tone}-graphic)"]`)).toBeInTheDocument();
+  });
 
   test('uses tone for the series palette while preserving custom palette and per-series overrides', () => {
     const { container, rerender } = render(<Chart data={sampleData} series={sampleSeries} tone="success" />);
-    expect(container.querySelector('[stroke="var(--palette-success-main)"]')).toBeInTheDocument();
+    expect(container.querySelector('[stroke="var(--palette-success-graphic)"]')).toBeInTheDocument();
+    const chart = captureChart.mock.lastCall?.[0];
+    if (!React.isValidElement<{ children: React.ReactNode }>(chart)) {
+      throw new Error('Expected a chart element');
+    }
+    const tooltip = React.Children.toArray(chart.props.children).find(
+      (child): child is React.ReactElement<{ labelStyle?: { color?: string } }> =>
+        React.isValidElement<{ labelStyle?: { color?: string } }>(child) && 'labelStyle' in child.props,
+    );
+    expect(tooltip?.props.labelStyle?.color).toBe('var(--palette-success-text)');
     rerender(
       <Chart
         data={sampleData}
@@ -84,7 +129,7 @@ describe('Chart', () => {
     );
     expect(container.querySelector('[stroke="#123456"]')).toBeInTheDocument();
     expect(container.querySelector('[stroke="#00ff00"]')).toBeInTheDocument();
-    expect(container.querySelector('[stroke="var(--palette-success-main)"]')).not.toBeInTheDocument();
+    expect(container.querySelector('[stroke="var(--palette-success-graphic)"]')).not.toBeInTheDocument();
   });
 
   test('renders title and description when provided', () => {
@@ -120,9 +165,38 @@ describe('Chart', () => {
   });
 
   test('renders pie chart type', () => {
-    render(<Chart data={sampleData} series={[{ dataKey: 'sales', name: 'Sales' }]} type="pie" />);
+    render(
+      <Chart data={sampleData} series={[{ dataKey: 'sales', name: 'Sales' }]} type="pie" isAnimationActive={false} />,
+    );
 
     expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    const chart = captureChart.mock.lastCall?.[0];
+    if (!React.isValidElement<{ children: React.ReactNode }>(chart)) {
+      throw new Error('Expected a chart element');
+    }
+    const pie = React.Children.toArray(chart.props.children).find(
+      (child): child is React.ReactElement<{ label?: unknown }> =>
+        React.isValidElement<{ label?: unknown }>(child) && 'label' in child.props,
+    );
+    expect(pie?.props.label).toBeTypeOf('function');
+    const pieLabels = document.querySelectorAll('foreignObject > div');
+    expect(pieLabels.length).toBeGreaterThan(0);
+    for (const label of pieLabels) {
+      expect(label).toHaveStyle({ color: 'var(--text-primary)', backgroundColor: 'var(--background-surface)' });
+    }
+  });
+
+  test.each(['line', 'bar', 'area'] as const)('renders %s axis and legend text on opaque theme surfaces', (type) => {
+    const { container } = render(
+      <Chart data={sampleData} series={sampleSeries} type={type} isAnimationActive={false} />,
+    );
+    const labels = container.querySelectorAll('foreignObject > div, .recharts-legend-item-text > span');
+    expect(labels.length).toBeGreaterThan(sampleSeries.length);
+    for (const label of labels) {
+      expect(label).toHaveStyle({ color: 'var(--text-primary)', backgroundColor: 'var(--background-surface)' });
+    }
+    expect(container.querySelector('foreignObject')).toHaveTextContent('Jan');
+    expect(screen.getByRole('table', { name: 'Chart data' })).toBeInTheDocument();
   });
 
   test('accepts custom color props to override theme palette', () => {

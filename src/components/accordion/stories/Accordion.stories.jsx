@@ -17,7 +17,7 @@ const baseArgs = {
   items: accordionItems,
   allowMultiple: false,
   variant: 'default',
-  tone: 'primary',
+  tone: undefined,
   size: 'normal',
   iconPosition: 'right',
 };

@@ -38,9 +38,9 @@ describe('shared component variants', () => {
     expectTypeOf<ButtonProps['variant']>().toEqualTypeOf<ComponentVariant | undefined>();
   });
 
-  test('preserves component-specific legacy variants and restrictions', () => {
+  test('supports shared variants while preserving component-specific legacy aliases', () => {
     expectTypeOf<AccordionVariant>().toEqualTypeOf<ComponentVariant | InputVariant>();
-    expectTypeOf<CarouselProps['variant']>().toEqualTypeOf<Exclude<ComponentVariant, 'default'> | undefined>();
-    expectTypeOf<TableVariant>().toEqualTypeOf<Exclude<ComponentVariant, 'default'> | InputVariant>();
+    expectTypeOf<CarouselProps['variant']>().toEqualTypeOf<ComponentVariant | undefined>();
+    expectTypeOf<TableVariant>().toEqualTypeOf<ComponentVariant | InputVariant>();
   });
 });

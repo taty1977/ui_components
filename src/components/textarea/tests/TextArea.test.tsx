@@ -1,6 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Textarea from '../TextArea';
+import { paletteTones } from '../../../themes/paletteTones';
 
 describe('Textarea', () => {
   test('renders a labeled textarea and forwards changes', () => {
@@ -65,6 +66,18 @@ describe('Textarea', () => {
       render(<Textarea defaultValue="Hello" label="Message" />);
       const textarea = screen.getByRole('textbox', { name: 'Message' });
       await waitFor(() => expect(textarea.parentElement).toHaveClass('border-0'));
+      expect(textarea.parentElement?.querySelectorAll('[aria-hidden="true"]')).toHaveLength(3);
+    } finally {
+      width.mockRestore();
+    }
+  });
+
+  test.each(paletteTones)('keeps the populated %s textarea above the decorative notch', (tone) => {
+    const width = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(48);
+    try {
+      render(<Textarea defaultValue="Example" label="Message" tone={tone} />);
+      const textarea = screen.getByRole('textbox', { name: 'Message' });
+      expect(textarea).toHaveClass('relative', 'z-20', 'mt-3', 'pt-1');
       expect(textarea.parentElement?.querySelectorAll('[aria-hidden="true"]')).toHaveLength(3);
     } finally {
       width.mockRestore();

@@ -3,7 +3,7 @@ import { cn } from '../../utils/cn';
 import { textToneClasses, textWeightClasses, type TextTone, type TextWeight } from '../../utils/text.styles';
 
 export type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-export type HeadingVariant = HeadingLevel;
+export type HeadingVariant = HeadingLevel | 'default';
 export type HeadingTone = TextTone;
 export type HeadingWeight = TextWeight | 'normal' | 'semiBold' | 'light' | 'extraBold';
 export type HeadingFamily = 'sans';
@@ -11,7 +11,7 @@ export type HeadingColor = TextTone | 'title' | 'Primary' | 'Secondary' | 'dange
 export type HeadingTextTransform = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
 export interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
   level?: HeadingLevel;
-  variant?: HeadingLevel;
+  variant?: HeadingVariant;
   tone?: TextTone;
   weight?: HeadingWeight;
   family?: HeadingFamily;
@@ -57,7 +57,7 @@ export function resolveTextTone(color: HeadingColor): TextTone {
 
 export default function Heading({
   level,
-  variant = 'h4',
+  variant = 'default',
   weight = 'bold',
   family: _family,
   color,
@@ -67,7 +67,7 @@ export default function Heading({
   children,
   ...props
 }: HeadingProps) {
-  const Tag = level ?? variant;
+  const Tag = level ?? (variant === 'default' ? 'h4' : variant);
   return (
     <Tag
       className={cn(

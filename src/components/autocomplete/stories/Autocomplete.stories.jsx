@@ -30,8 +30,8 @@ const meta = {
     placeholder: '',
     helperText: '',
     required: false,
-    variant: 'outlined',
-    tone: 'primary',
+    variant: 'default',
+    tone: undefined,
     size: 'normal',
     showLeftIcon: false,
     showRightIcon: false,
@@ -71,16 +71,24 @@ const meta = {
     },
     variant: {
       control: 'select',
-      options: ['outlined', 'filled', 'standard'],
-      description: 'Selects the field frame treatment.',
+      options: ['default', 'outlined', 'filled', 'standard'],
+      description: 'Selects the field frame treatment. Default is an alias for outlined.',
       table: { category: 'Appearance' },
     },
     onChange: {
       description: 'Called when the input value changes.',
       table: { category: 'Events' },
     },
-    tone: { control: 'select', options: tones },
-    size: { control: 'select', options: ['small', 'normal'] },
+    tone: {
+      control: 'select',
+      options: tones,
+      table: { category: 'Appearance' },
+    },
+    size: {
+      control: 'select',
+      options: ['small', 'normal'],
+      table: { category: 'Layout' },
+    },
     onSelect: {
       control: false,
       description: 'Called when an option is selected from the list.',
@@ -126,7 +134,8 @@ export const Playground = { render: renderAutocomplete };
 export const Variants = {
   render: (args) => (
     <Frame>
-      <Autocomplete {...args} label="Outlined" variant="outlined" helperText="Default variant" />
+      <Autocomplete {...args} label="Default" variant="default" helperText="Outlined default appearance" />
+      <Autocomplete {...args} label="Outlined" variant="outlined" helperText="Outlined border" />
       <Autocomplete {...args} label="Filled" variant="filled" helperText="Filled background" />
       <Autocomplete {...args} label="Standard" variant="standard" helperText="Underline only" />
     </Frame>
