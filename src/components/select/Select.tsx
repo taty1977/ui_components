@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
 import { cn } from '../../utils/cn';
+import Paragraph from '../paragraph/Paragraph';
 import { mapPaletteTones } from '../../themes/paletteTones';
 import { LabelText } from '../shared/fields/LabelText';
 import { FieldNotch } from '../shared/fields/FieldNotch';
@@ -261,14 +262,16 @@ export default function Select({
         </ul>
       )}
       {message && (
-        <p
+        <Paragraph
+          variant="body2"
+          tone={error ? 'error' : 'muted'}
           id={messageId}
           role={error ? 'alert' : undefined}
           aria-live="polite"
-          className={error ? cn('mt-1 font-sans text-13', toneTextClasses.error) : 'mt-1 text-13 text-text-secondary'}
+          className="mt-1 leading-[inherit]"
         >
           {message}
-        </p>
+        </Paragraph>
       )}
     </div>
   );

@@ -1,5 +1,8 @@
 import React from 'react';
 import Paragraph from '../Paragraph';
+import Button from '../../button/Button';
+import { expect, within } from 'storybook/test';
+import { paletteTones } from '../../../themes/paletteTones';
 import { textTones, textWeights } from '../../../utils/text.styles';
 const variants = ['subtitle1', 'subtitle2', 'body1', 'body2', 'caption', 'overline'];
 const tones = textTones;
@@ -13,7 +16,7 @@ export default {
     layout: 'padded',
     docs: {
       description: {
-        component: 'Themed paragraph text with six typography variants, theme tones, and configurable weights.',
+        component: 'Themed paragraph text with six typography variants, theme tones, and configurable weights. Palette tones match label Button foregrounds. Text and outline buttons receive selective foreground contrast correction; solid buttons keep white where readable and otherwise use darker tone-matched text.',
       },
     },
   },
@@ -104,4 +107,38 @@ export const Weights = {
       ))}
     </Frame>
   ),
+};
+
+export const ButtonToneAlignment = {
+  render: (args) => (
+    <div className="grid gap-6">
+      {paletteTones.map((tone) => (
+        <div key={tone} data-tone-comparison={tone} className="grid gap-3">
+          <Paragraph {...args} tone={tone}>
+            {tone === 'error' ? 'Error: Please check your information.' : `${tone} message`}
+          </Paragraph>
+          <div className="flex flex-wrap gap-2">
+            {['label', 'outline', 'text', 'default'].map((variant) => (
+              <Button key={variant} tone={tone} variant={variant}>
+                {variant}
+              </Button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  ),
+  play: async ({ canvasElement }) => {
+    for (const tone of paletteTones) {
+      const row = canvasElement.querySelector(`[data-tone-comparison="${tone}"]`);
+      const canvas = within(row);
+      const paragraphColor = getComputedStyle(row.querySelector('p')).color;
+      for (const variant of ['label']) {
+        await expect(getComputedStyle(canvas.getByRole('button', { name: variant })).color).toBe(paragraphColor);
+      }
+      if (['error', 'warning', 'info', 'success'].includes(tone)) {
+        await expect(paragraphColor).toBe(getComputedStyle(canvas.getByRole('button', { name: 'default' })).backgroundColor);
+      }
+    }
+  },
 };

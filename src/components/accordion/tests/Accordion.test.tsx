@@ -21,9 +21,9 @@ describe('Accordion', () => {
     async (variant) => {
       const { user } = renderWithUser(<Accordion items={testItems} variant={variant} tone="info" />);
       const button = screen.getByRole('button', { name: /panel one/i });
-      expect(button).toHaveClass('border', 'border-palette-info-graphic', 'rounded-md');
+      expect(button).toHaveClass('border', 'border-palette-info-main', 'text-palette-info-outline-text', 'rounded-md');
       await user.click(button);
-      expect(button).toHaveClass('border-palette-info-graphic', 'rounded-t-md');
+      expect(button).toHaveClass('border-palette-info-main', 'rounded-t-md');
       expect(button).not.toHaveClass('rounded-md');
       await user.click(button);
       expect(button).toHaveClass('rounded-md');
@@ -50,7 +50,7 @@ describe('Accordion', () => {
     expect(screen.getAllByRole('button')[0]).toHaveClass('min-h-11', 'text-15', 'bg-palette-success-main');
 
     rerender(<Accordion items={testItems} variant="standard" />);
-    expect(screen.getAllByRole('button')[0]).toHaveClass('bg-transparent', 'text-palette-primary-text');
+    expect(screen.getAllByRole('button')[0]).toHaveClass('bg-transparent', 'text-palette-primary-button-text');
   });
 
   test('defaults to solid and preserves legacy variant values', () => {
@@ -72,15 +72,15 @@ describe('Accordion', () => {
 
   test.each([
     ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
-    ['outline', 'bg-transparent', 'text-palette-info-text'],
-    ['text', 'bg-transparent', 'text-palette-info-text'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
+    ['outline', 'bg-transparent', 'text-palette-info-outline-text'],
+    ['text', 'bg-transparent', 'text-palette-info-button-text'],
   ] as const)('matches the Button %s treatment', (variant, background, text) => {
     render(<Accordion items={testItems} variant={variant} tone="info" />);
     const button = screen.getByRole('button', { name: /panel one/i });
     expect(button).toHaveClass(background, text);
     expect(button.parentElement).toHaveClass('rounded-md');
-    if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-graphic');
+    if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-main');
   });
 
   test.each([

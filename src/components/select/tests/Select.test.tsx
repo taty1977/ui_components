@@ -107,7 +107,7 @@ describe('Select', () => {
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(select).toHaveAttribute('aria-describedby', 'country-error');
     expect(screen.getByRole('alert')).toHaveTextContent('Country is required');
-    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
+    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-main');
   });
 
   test('only references the listbox while it exists', () => {

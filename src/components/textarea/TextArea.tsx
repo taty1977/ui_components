@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type TextareaHTMLAttributes } from 'react';
 import { cn } from '../../utils/cn';
+import Paragraph from '../paragraph/Paragraph';
 import { LabelText } from '../shared/fields/LabelText';
 import { FieldNotch } from '../shared/fields/FieldNotch';
 import {
@@ -123,14 +124,16 @@ export default function Textarea({
         />
       </div>
       {message && (
-        <p
+        <Paragraph
+          variant="body2"
+          tone={error ? 'error' : 'muted'}
           id={messageId}
           role={error ? 'alert' : undefined}
           aria-live="polite"
-          className={error ? errorClasses : 'mt-1 text-13 text-text-secondary'}
+          className={cn('leading-[inherit]', error ? errorClasses : 'mt-1')}
         >
           {message}
-        </p>
+        </Paragraph>
       )}
     </div>
   );

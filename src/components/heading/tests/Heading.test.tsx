@@ -1,13 +1,26 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import Heading, { resolveTextTone } from '../Heading';
-import { textTones } from '../../../utils/text.styles';
+import { headingTextClasses, resolveHeadingLevel, textTones } from '../../../utils/text.styles';
+import Button from '../../button/Button';
 
 describe('Heading', () => {
+  test.each(['error', 'warning', 'info', 'success'] as const)('uses the solid %s Button fill for status headings', (tone) => {
+    render(
+      <>
+        <Heading tone={tone}>Status</Heading>
+        <Button tone={tone}>Action</Button>
+      </>,
+    );
+    expect(screen.getByRole('heading', { name: 'Status' })).toHaveClass(`text-palette-${tone}-main`);
+    expect(screen.getByRole('button', { name: 'Action' })).toHaveClass(`bg-palette-${tone}-main`);
+  });
   test('uses h4 for both the omitted and explicit default variant', () => {
     const { rerender } = render(<Heading>Title</Heading>);
     const heading = screen.getByRole('heading', { level: 4 });
     const classes = heading.className;
+    expect(classes).toBe(`m-0 ${headingTextClasses()}`);
+    expect(resolveHeadingLevel()).toBe('h4');
     rerender(<Heading variant="default">Title</Heading>);
     expect(screen.getByRole('heading', { level: 4 })).toHaveClass('text-24', 'leading-28');
     expect(screen.getByRole('heading').className).toBe(classes);
@@ -42,6 +55,25 @@ describe('Heading', () => {
   ] as const)('%s variant sets the web heading level and token size', (variant, size) => {
     render(<Heading variant={variant}>Title</Heading>);
     expect(screen.getByRole('heading', { level: Number(variant.slice(1)) })).toHaveClass(size, 'font-bold');
+    expect(screen.getByRole('heading').className).toBe(`m-0 ${headingTextClasses({ variant })}`);
+  });
+  test('shares level precedence and typography overrides through the central helper', () => {
+    const options = {
+      level: 'h2',
+      variant: 'h6',
+      weight: 'semiBold',
+      color: 'danger',
+      tone: 'success',
+      textTransform: 'capitalize',
+    } as const;
+    render(<Heading {...options} className="text-15">Title</Heading>);
+    expect(resolveHeadingLevel(options)).toBe('h2');
+    expect(headingTextClasses(options).split(' ')).toEqual([
+      'font-sans', 'text-38', 'leading-42', 'font-semibold', 'text-palette-error-main', 'capitalize',
+    ]);
+    const heading = screen.getByRole('heading', { level: 2 });
+    expect(heading).toHaveClass('text-15', 'font-semibold', 'capitalize', 'text-palette-error-main');
+    expect(heading).not.toHaveClass('text-38');
   });
   test('uses theme tokens for size, weight, and family', () => {
     render(
@@ -68,7 +100,7 @@ describe('Heading', () => {
       </Heading>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-text');
+    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-main');
   });
 
   test('supports selectable text transform', () => {

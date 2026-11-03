@@ -308,7 +308,7 @@ describe('Table', () => {
     expect(container.firstChild).toHaveAttribute('data-tone', 'primary');
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(
       'bg-transparent',
-      'text-palette-primary-text',
+      'text-palette-primary-outline-text',
     );
     expect(container.firstChild).toHaveClass('rounded-lg', 'border-table-divider', 'p-4', 'shadow-sm');
     expect(screen.getByRole('region')).toHaveClass('border-palette-primary-graphic');
@@ -375,7 +375,7 @@ describe('Table', () => {
       'border-palette-info-graphic',
       'bg-palette-info-main',
       'text-palette-info-contrast',
-      'text-palette-info-text',
+      'text-palette-info-main',
     ],
   ] as const)(
     'applies the %s tone to the table frame, header, and pagination controls',
@@ -397,9 +397,9 @@ describe('Table', () => {
 
   test.each([
     ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
-    ['outline', 'bg-transparent', 'text-palette-info-text'],
-    ['text', 'bg-transparent', 'text-palette-info-text'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
+    ['outline', 'bg-transparent', 'text-palette-info-outline-text'],
+    ['text', 'bg-transparent', 'text-palette-info-button-text'],
   ] as const)('matches the Button %s header treatment', (variant, background, text) => {
     render(<Table columns={columns} data={rows} variant={variant} tone="info" />);
     expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveClass(background, text);

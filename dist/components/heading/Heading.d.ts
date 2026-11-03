@@ -1,35 +1,13 @@
 import type { HTMLAttributes } from 'react';
-import { type TextTone, type TextWeight } from '../../utils/text.styles';
-export type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
-export type HeadingVariant = HeadingLevel | 'default';
+import { type HeadingStyleOptions, type TextTone, type TypographyWeight, type TextColor, type TextTransform } from '../../utils/text.styles';
+export { headingSizeClasses, weightClasses, transformClasses, resolveTextTone } from '../../utils/text.styles';
+export type { HeadingLevel, HeadingVariant } from '../../utils/text.styles';
 export type HeadingTone = TextTone;
-export type HeadingWeight = TextWeight | 'normal' | 'semiBold' | 'light' | 'extraBold';
+export type HeadingWeight = TypographyWeight;
 export type HeadingFamily = 'sans';
-export type HeadingColor = TextTone | 'title' | 'Primary' | 'Secondary' | 'danger';
-export type HeadingTextTransform = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
-export interface HeadingProps extends HTMLAttributes<HTMLHeadingElement> {
-    level?: HeadingLevel;
-    variant?: HeadingVariant;
-    tone?: TextTone;
-    weight?: HeadingWeight;
+export type HeadingColor = TextColor;
+export type HeadingTextTransform = TextTransform;
+export interface HeadingProps extends Omit<HTMLAttributes<HTMLHeadingElement>, 'color'>, HeadingStyleOptions {
     family?: HeadingFamily;
-    color?: HeadingColor;
-    textTransform?: HeadingTextTransform;
 }
-export declare const headingSizeClasses: {
-    h1: string;
-    h2: string;
-    h3: string;
-    h4: string;
-    h5: string;
-    h6: string;
-};
-export declare const weightClasses: Record<HeadingWeight, string>;
-export declare const transformClasses: {
-    none: string;
-    capitalize: string;
-    uppercase: string;
-    lowercase: string;
-};
-export declare function resolveTextTone(color: HeadingColor): TextTone;
 export default function Heading({ level, variant, weight, family: _family, color, tone, textTransform, className, children, ...props }: HeadingProps): import("react/jsx-runtime").JSX.Element;

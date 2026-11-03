@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type InputHTMLAttributes, type ReactNode } from 'react';
 import { cn } from '../../utils/cn';
+import Paragraph from '../paragraph/Paragraph';
 import {
   fieldStyles,
   floatingLabelClasses,
@@ -209,14 +210,16 @@ export default function Input({
         {outsideIconRight && outsideIcon(outsideIconRight)}
       </div>
       {message && (
-        <p
+        <Paragraph
+          variant="body2"
+          tone={error ? 'error' : 'muted'}
           id={messageId}
           role={error ? 'alert' : undefined}
           aria-live="polite"
-          className={cn(error ? errorClasses : 'mt-1 text-13 text-text-secondary')}
+          className={cn('leading-[inherit]', error ? errorClasses : 'mt-1')}
         >
           {message}
-        </p>
+        </Paragraph>
       )}
     </div>
   );

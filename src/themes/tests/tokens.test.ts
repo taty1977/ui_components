@@ -40,6 +40,22 @@ const contrastRatio = (foreground: string, background: string) => {
 };
 
 describe('shared design tokens', () => {
+  test.each(themeModes)('%s preserves original button fills and text colors', (theme) => {
+    const mode = Object.keys(figmaTokens.Variables).find((name) => name.toLowerCase() === theme);
+    if (!mode) throw new Error(`Missing Figma theme: ${theme}`);
+    const colors = themeColors(figmaTokens, mode);
+    const originalPalette = getThemeTokens(theme).core.color.palette;
+    for (const tone of paletteTones) {
+      for (const shade of ['main', 'dark']) {
+        expect(colors.palette[`${tone}-${shade}`]).toBe(originalPalette[`${tone}-${shade}`]);
+      }
+    }
+    for (const tone of paletteTones) {
+      expect(colors.palette[`${tone}-outline-text`]).toBe(originalPalette[`${tone}-main`]);
+      expect(colors.palette[`${tone}-button-text`]).toBe(originalPalette[`${tone}-main`]);
+    }
+  });
+
   test.each(paletteTones)('%s controls use accessible border and focus colors', (tone) => {
     const styles = paletteToneStyles[tone];
     expect(styles.fieldBorder).toContain(`border-palette-${tone}-graphic`);
@@ -47,14 +63,11 @@ describe('shared design tokens', () => {
     expect(styles.defaultState).toContain(`focus-visible:outline-palette-${tone}-graphic`);
   });
 
-  test.each(['Light', 'Dark', 'Teal'] as const)('%s keeps light text on accessible primary solid fills', (mode) => {
+  test.each(['Light', 'Dark', 'Teal'] as const)('%s keeps readable text on original primary solid fills', (mode) => {
     const colors = themeColors(figmaTokens, mode);
-    expect(colors.palette['primary-contrast']).toBe(figmaTokens.Variables[mode].Misc['bg-white'].$value);
-    expect(luminance(colors.palette['primary-dark'])).toBeLessThan(luminance(colors.palette['primary-main']));
-    expect(contrastRatio(colors.palette['primary-main'], colors.palette['primary-dark'])).toBeGreaterThanOrEqual(1.2);
     for (const shade of ['main', 'dark']) {
       expect(
-        contrastRatio(colors.palette['primary-contrast'], colors.palette[`primary-${shade}`]),
+        contrastRatio(colors.palette[shade === 'main' ? 'primary-contrast' : 'primary-contrast-dark'], colors.palette[`primary-${shade}`]),
       ).toBeGreaterThanOrEqual(4.5);
     }
   });
@@ -98,8 +111,11 @@ describe('shared design tokens', () => {
     for (const tone of ['primary', 'secondary', 'error', 'warning', 'info', 'success']) {
       const palette = colors.palette as Record<string, string>;
       const solidText = palette[`${tone}-contrast`];
+      const whitePasses = contrastRatio('#ffffff', palette[`${tone}-main`]) >= 4.5;
+      if (whitePasses) expect(solidText).toBe('#ffffff');
+      else expect(luminance(solidText)).toBeLessThan(luminance(palette[`${tone}-main`]));
       for (const shade of ['main', 'dark']) {
-        expect(contrastRatio(solidText, palette[`${tone}-${shade}`])).toBeGreaterThanOrEqual(4.5);
+        expect(contrastRatio(shade === 'main' ? solidText : palette[`${tone}-contrast-dark`], palette[`${tone}-${shade}`])).toBeGreaterThanOrEqual(4.5);
       }
 
       const graphic = palette[`${tone}-graphic`];

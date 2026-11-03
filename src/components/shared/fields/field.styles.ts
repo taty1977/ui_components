@@ -1,5 +1,5 @@
 ﻿import { cva } from 'class-variance-authority';
-import { mapPaletteTones, type PaletteTone } from '../../../themes/paletteTones';
+import { mapPaletteTones, paletteToneStyles, type PaletteTone } from '../../../themes/paletteTones';
 import { cn } from '../../../utils/cn';
 import { resolveVariantTone } from '../../../types/variants';
 
@@ -105,6 +105,6 @@ export const fieldCenterAlignmentClasses: Record<InputAppearance, string> = {
   standard: 'relative top-[0.5px] group-focus-within:top-px',
 };
 export const labelClasses = 'mb-1 block font-sans text-13 font-medium text-text-secondary';
-export const errorClasses = 'mt-1 font-sans text-13 text-palette-error-text';
+export const errorClasses = cn('mt-1 font-sans text-13', paletteToneStyles.error.text);
 export const optionListClasses =
   'absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg';

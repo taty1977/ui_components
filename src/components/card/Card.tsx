@@ -2,6 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
 import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
 import { toneClasses, type ButtonTone } from '../button/button.styles';
+import { bodyTextClasses } from '../../utils/text.styles';
 
 export interface CardProps extends Omit<HTMLAttributes<HTMLElement>, 'title'> {
   title?: ReactNode;
@@ -62,8 +63,8 @@ export default function Card({
           )}
         >
           <div className="min-w-0">
-            {title != null && <div className="text-18 font-medium">{title}</div>}
-            {description != null && <div className="mt-1 text-15 text-text-secondary">{description}</div>}
+            {title != null && <div className={cn(bodyTextClasses({ variant: 'subtitle1' }), 'text-inherit leading-[inherit]')}>{title}</div>}
+            {description != null && <div className={cn(bodyTextClasses({ tone: 'muted' }), 'mt-1 leading-[inherit]')}>{description}</div>}
           </div>
           {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </header>

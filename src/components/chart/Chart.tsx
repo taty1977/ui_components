@@ -1,5 +1,6 @@
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { cn } from '../../utils/cn';
+import Paragraph from '../paragraph/Paragraph';
 import { a11yProps } from '../../utils/a11yProps';
 import { paletteTones, toneVar, type PaletteTone } from '../../themes/paletteTones';
 import Heading from '../heading/Heading';
@@ -390,9 +391,9 @@ export const Chart: React.FC<ChartProps> = ({
             </Heading>
           )}
           {description && (
-            <p className="mt-1 text-13 text-text-secondary" id={descriptionId}>
+            <Paragraph variant="body2" tone="muted" className="mt-1 leading-[inherit]" id={descriptionId}>
               {description}
-            </p>
+            </Paragraph>
           )}
         </div>
       )}

@@ -35,5 +35,5 @@ export declare const fieldStyles: (props?: ({
 export declare const fieldInputClasses = "w-full min-w-0 flex-1 border-0 bg-transparent py-2 font-sans text-inherit leading-5 outline-none placeholder:text-text-secondary disabled:cursor-not-allowed disabled:text-text-disabled";
 export declare const fieldCenterAlignmentClasses: Record<InputAppearance, string>;
 export declare const labelClasses = "mb-1 block font-sans text-13 font-medium text-text-secondary";
-export declare const errorClasses = "mt-1 font-sans text-13 text-palette-error-text";
+export declare const errorClasses: string;
 export declare const optionListClasses = "absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg";

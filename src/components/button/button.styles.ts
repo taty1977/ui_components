@@ -26,6 +26,6 @@ export const toneClasses: Record<ButtonTone, { solid: string; label: string; out
   mapPaletteTones((s) => ({
     solid: `${s.default} ${s.defaultText} ${s.defaultState}`,
     label: `${s.label} ${s.text} ${s.labelState}`,
-    outline: `border bg-transparent ${s.outline} ${s.text} ${s.subtleState}`,
-    text: `bg-transparent ${s.text} ${s.subtleState}`,
+    outline: `border ${s.mainBorder} bg-transparent ${s.outlineText} ${s.subtleState}`,
+    text: `bg-transparent ${s.buttonText} ${s.subtleState}`,
   }));

@@ -61,7 +61,7 @@ test.each(appearances)('keeps populated %s input errors readable without coverin
   const input = screen.getByRole('textbox', { name: 'Field' });
   expect(input).toHaveAttribute('aria-invalid', 'true');
   expect(input).toHaveAccessibleDescription('Required');
-  expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
+  expect(screen.getByRole('alert')).toHaveClass('text-palette-error-main');
   if (variant === 'outlined') expect(input).toHaveClass('relative', 'z-20');
   else expect(input).not.toHaveClass('z-20');
 });
@@ -163,7 +163,7 @@ describe.each(fields)('$name shared field variants', (field) => {
     expect(field.frame()).toHaveClass(toneBorder(field.name, 'error'));
     expect(field.frame()).not.toHaveClass('border-palette-success-graphic');
     expect(screen.getByRole('alert')).toHaveTextContent('Required');
-    expect(screen.getByText('Field')).toHaveClass('text-palette-error-text');
+    expect(screen.getByText('Field')).toHaveClass('text-palette-error-main');
   });
 
   test.each(appearances)('disabled %s fields use disabled colors even with an error', (variant) => {

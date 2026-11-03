@@ -112,6 +112,21 @@ const neutralColorCandidates = (primitives, misc) => [
   misc.snackbar,
 ];
 
+const readableToneColor = (candidates, backgrounds, reference, mode, tone) => {
+  const shades = [...candidates];
+  if (!shades.some((color) => minimumContrast(color, backgrounds) >= 4.5)) {
+    const channels = colorChannels(reference).rgb;
+    for (const target of [0, 255]) {
+      for (let step = 1; step <= 255; step++) {
+        shades.push(`#${channels.map((channel) =>
+          Math.round(channel + (target - channel) * step / 255).toString(16).padStart(2, '0'),
+        ).join('')}`);
+      }
+    }
+  }
+  return readableColor(shades, backgrounds, reference, mode, tone);
+};
+
 // Accessibility targets: text 4.5:1, graphics 3:1.
 const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
   const toneNames = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
@@ -120,6 +135,8 @@ const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
   for (const tone of toneNames) {
     const main = palette[`${tone}-main`];
     const dark = palette[`${tone}-dark`];
+    const toneCandidates = Object.values(primitives.Color[tone[0].toUpperCase() + tone.slice(1)])
+      .map((token) => token.$value);
     const backgrounds = [misc['body-bg'], misc.paper];
     const controlSurfaces = backgrounds.flatMap((surface) => [surface, compositeColor(theme['action-hover'], surface)]);
     const graphicCandidates = [
@@ -129,41 +146,22 @@ const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
       dark,
       palette[`${tone}-light`],
     ];
-    // Keep one readable foreground across resting and interactive fills.
-    const sharedForeground = neutralCandidates.some((color) => minimumContrast(color, [main, dark]) >= 4.5);
-    const preservePrimaryForeground = tone === 'primary' && (!sharedForeground || mode === 'Teal');
-    output[`${tone}-contrast`] = preservePrimaryForeground
-      ? misc['bg-white']
-      : readableColor(
-          neutralCandidates,
-          sharedForeground ? [main, dark] : [main],
-          misc['bg-white'],
+    // Preserve theme fills; correct only the solid foreground.
+    output[`${tone}-contrast`] = misc['bg-white'];
+    output[`${tone}-main`] = main;
+    output[`${tone}-dark`] = dark;
+    if (minimumContrast(misc['bg-white'], [main]) < 4.5) {
+        output[`${tone}-contrast`] = readableToneColor(
+          toneCandidates.filter((color) => luminance(color) < Math.min(luminance(main), luminance(dark))),
+          [main],
+          main,
           mode,
-          `${tone} solid`,
+          `${tone} solid text`,
         );
-    if (preservePrimaryForeground) {
-      output[`${tone}-main`] = readableColor(
-        graphicCandidates,
-        [output[`${tone}-contrast`]],
-        main,
-        mode,
-        `${tone} solid fill`,
-      );
     }
-    // Keep corrected primary hover visibly darker without losing text contrast.
-    const interactionCandidates = preservePrimaryForeground
-      ? graphicCandidates.filter(
-          (color) =>
-            luminance(color) < luminance(output[`${tone}-main`]) && contrastRatio(color, output[`${tone}-main`]) >= 1.2,
-        )
-      : graphicCandidates;
-    output[`${tone}-dark`] = readableColor(
-      interactionCandidates,
-      [output[`${tone}-contrast`]],
-      dark,
-      mode,
-      `${tone} solid interaction`,
-    );
+    output[`${tone}-contrast-dark`] = contrastRatio(output[`${tone}-contrast`], dark) >= 4.5
+      ? output[`${tone}-contrast`]
+      : readableToneColor(toneCandidates, [dark], dark, mode, `${tone} interactive solid text`);
     output[`${tone}-graphic`] = readableColor(graphicCandidates, controlSurfaces, main, mode, `${tone} graphic`, 3);
 
     // Opaque sticky surfaces avoid image/gradient contrast ambiguity.
@@ -181,6 +179,8 @@ const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
       mode,
       `${tone} text`,
     );
+    output[`${tone}-outline-text`] = main;
+    output[`${tone}-button-text`] = main;
   }
   return output;
 };

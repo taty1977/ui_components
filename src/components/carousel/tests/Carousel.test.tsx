@@ -92,9 +92,9 @@ describe('Carousel', () => {
 
   test.each([
     ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
-    ['outline', 'border-palette-info-graphic', 'text-palette-info-text'],
-    ['text', 'bg-transparent', 'text-palette-info-text'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
+    ['outline', 'border-palette-info-main', 'text-palette-info-outline-text'],
+    ['text', 'bg-transparent', 'text-palette-info-button-text'],
   ] as const)('applies the %s appearance to the frame and inline and modal controls', async (variant, bg, text) => {
     const user = userEvent.setup();
     render(<Carousel images={images} variant={variant} tone="info" />);
@@ -115,7 +115,7 @@ describe('Carousel', () => {
     render(<Carousel images={[{ ...images[0], badge: 'New' }, images[1]]} variant="label" tone={tone} />);
     expect(screen.getByRole('button', { name: 'Next image' })).toHaveClass(`bg-palette-${tone}-opacity-light`);
     expect(screen.getByRole('button', { name: 'Select Image one' })).toHaveClass(
-      `text-palette-${tone}-text`,
+      `text-palette-${tone}-${tone === 'primary' || tone === 'secondary' ? 'text' : 'main'}`,
       'ring-current',
     );
     expect(screen.getByRole('button', { name: 'Go to image 1' })).toHaveClass(`bg-palette-${tone}-main`);

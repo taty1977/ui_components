@@ -1,22 +1,9 @@
 import type { HTMLAttributes } from 'react';
-import { type TextTone } from '../../utils/text.styles';
-import { type HeadingColor, type HeadingTextTransform, type HeadingWeight } from '../heading/Heading';
-export type ParagraphSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-export type ParagraphWeight = HeadingWeight;
+import { type BodyTextStyleOptions } from '../../utils/text.styles';
+export type { BodyTextSize as ParagraphSize, BodyTextColor as ParagraphColor, BodyTextVariant, TextTransform as ParagraphTextTransform, TypographyWeight as ParagraphWeight, TypographyWeight as BodyTextWeight, TextTone as BodyTextTone, } from '../../utils/text.styles';
+export type { ParagraphProps as BodyTextProps };
 export type ParagraphFamily = 'sans';
-export type ParagraphColor = HeadingColor | 'text';
-export type ParagraphTextTransform = HeadingTextTransform;
-export type BodyTextVariant = 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'caption' | 'overline';
-export interface ParagraphProps extends HTMLAttributes<HTMLParagraphElement> {
-    size?: ParagraphSize;
-    weight?: ParagraphWeight;
+export interface ParagraphProps extends Omit<HTMLAttributes<HTMLParagraphElement>, 'color'>, BodyTextStyleOptions {
     family?: ParagraphFamily;
-    color?: ParagraphColor;
-    tone?: TextTone;
-    variant?: BodyTextVariant;
-    textTransform?: ParagraphTextTransform;
 }
-export type BodyTextProps = ParagraphProps;
-export type BodyTextTone = TextTone;
-export type BodyTextWeight = ParagraphWeight;
 export default function Paragraph({ size, variant, weight, family: _family, color, tone, textTransform, className, children, ...props }: ParagraphProps): import("react/jsx-runtime").JSX.Element;

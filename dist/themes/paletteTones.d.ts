@@ -13,6 +13,9 @@ export type PaletteToneStyles = {
     /** Border color. */
     outline: string;
     text: string;
+    outlineText: string;
+    buttonText: string;
+    mainBorder: string;
     /** Faint tint on hover/active/focus (enabled elements only). */
     subtleState: string;
     /** Form-field border with hover/focus-within states. */
