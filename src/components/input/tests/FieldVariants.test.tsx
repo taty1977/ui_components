@@ -61,7 +61,7 @@ test.each(appearances)('keeps populated %s input errors readable without coverin
   const input = screen.getByRole('textbox', { name: 'Field' });
   expect(input).toHaveAttribute('aria-invalid', 'true');
   expect(input).toHaveAccessibleDescription('Required');
-  expect(screen.getByRole('alert')).toHaveClass('text-palette-error-main');
+  expect(screen.getByRole('alert')).toHaveClass('text-palette-error-body-text');
   if (variant === 'outlined') expect(input).toHaveClass('relative', 'z-20');
   else expect(input).not.toHaveClass('z-20');
 });

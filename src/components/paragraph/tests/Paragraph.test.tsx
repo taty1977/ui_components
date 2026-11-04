@@ -19,7 +19,7 @@ test.each(paletteTones)('matches %s Button label and text tones', (tone) => {
     </>,
   );
   const textClass = paletteToneStyles[tone].text;
-  expect(screen.getByText('Status message')).toHaveClass(textClass);
+  expect(screen.getByText('Status message')).toHaveClass(paletteToneStyles[tone].bodyText);
   for (const variant of ['label']) {
     expect(screen.getByRole('button', { name: variant })).toHaveClass(textClass);
   }
@@ -59,7 +59,7 @@ test('shares legacy color, weight, transform, and explicit size overrides across
     'text-12',
     'leading-14',
     'font-semibold',
-    'text-palette-error-main',
+    'text-palette-error-body-text',
     'capitalize',
   ]);
   expect(bodyTextClasses({ color: 'text' })).toBe(bodyTextClasses());

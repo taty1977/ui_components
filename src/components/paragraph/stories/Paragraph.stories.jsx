@@ -1,7 +1,8 @@
 import React from 'react';
 import Paragraph from '../Paragraph';
 import Button from '../../button/Button';
-import { expect, within } from 'storybook/test';
+import { expect, userEvent, waitFor, within } from 'storybook/test';
+import { themeModes } from '../../../themes/themeTokens';
 import { paletteTones } from '../../../themes/paletteTones';
 import { textTones, textWeights } from '../../../utils/text.styles';
 const variants = ['subtitle1', 'subtitle2', 'body1', 'body2', 'caption', 'overline'];
@@ -12,11 +13,13 @@ export default {
   title: 'Data Display/Paragraph',
   component: Paragraph,
   tags: ['autodocs'],
+  includeStories: ['Playground', 'Variants', 'Tones', 'Weights', 'ButtonToneAlignment'],
   parameters: {
     layout: 'padded',
     docs: {
       description: {
-        component: 'Themed paragraph text with six typography variants, theme tones, and configurable weights. Palette tones match label Button foregrounds. Text and outline buttons receive selective foreground contrast correction; solid buttons keep white where readable and otherwise use darker tone-matched text.',
+        component:
+          'Themed paragraph text with six typography variants, theme tones, and configurable weights. Passing tone colors stay unchanged; failing text colors use nearby readable same-tone shades. Button fills and outline borders remain unchanged.',
       },
     },
   },
@@ -38,6 +41,7 @@ export default {
     tone: {
       control: 'select',
       options: tones,
+      description: 'Omitted tones use the default text color; only failing contrast combinations are corrected.',
       table: { category: 'Appearance' },
     },
     weight: {
@@ -55,18 +59,19 @@ export default {
     family: {
       control: false,
       description: 'Compatibility prop; paragraphs always use the theme sans font.',
-      table: { category: 'Typography' },
+      table: { category: 'Compatibility' },
     },
     color: {
       control: 'select',
       options: [...tones, 'title', 'Primary', 'Secondary', 'danger', 'text'],
       description: 'Legacy color override. Prefer tone; color takes precedence when set.',
-      table: { category: 'Appearance' },
+      table: { category: 'Compatibility' },
     },
     className: { control: 'text', table: { category: 'Layout' } },
   },
 };
 export const Playground = {
+  parameters: { docs: { description: { story: 'Adjust typography and tone using the controls.' } } },
   render: (args) => (
     <Frame>
       <Paragraph {...args} />
@@ -74,6 +79,8 @@ export const Playground = {
   ),
 };
 export const Variants = {
+  name: 'Typography Variants',
+  parameters: { controls: { exclude: ['variant'] } },
   render: (args) => (
     <Frame>
       {variants.map((variant) => (
@@ -85,6 +92,7 @@ export const Variants = {
   ),
 };
 export const Tones = {
+  parameters: { controls: { exclude: ['tone', 'color'] } },
   render: (args) => (
     <Frame>
       {tones.map((tone) => (
@@ -98,6 +106,7 @@ export const Tones = {
   ),
 };
 export const Weights = {
+  parameters: { controls: { exclude: ['weight'] } },
   render: (args) => (
     <Frame>
       {weights.map((weight) => (
@@ -110,6 +119,16 @@ export const Weights = {
 };
 
 export const ButtonToneAlignment = {
+  name: 'Button Tone Comparison',
+  parameters: {
+    controls: { exclude: ['children', 'tone', 'color'] },
+    docs: {
+      description: {
+        story:
+          'Compare Paragraph with Button appearances. Contrast checks cover Paragraph and text-only buttons in all themes.',
+      },
+    },
+  },
   render: (args) => (
     <div className="grid gap-6">
       {paletteTones.map((tone) => (
@@ -129,16 +148,50 @@ export const ButtonToneAlignment = {
     </div>
   ),
   play: async ({ canvasElement }) => {
-    for (const tone of paletteTones) {
-      const row = canvasElement.querySelector(`[data-tone-comparison="${tone}"]`);
-      const canvas = within(row);
-      const paragraphColor = getComputedStyle(row.querySelector('p')).color;
-      for (const variant of ['label']) {
-        await expect(getComputedStyle(canvas.getByRole('button', { name: variant })).color).toBe(paragraphColor);
+    const root = canvasElement.querySelector('[class*="min-h-screen"]');
+    const originalClass = root.className;
+    const luminance = (color) => {
+      const channels = color
+        .match(/[\d.]+/g)
+        .slice(0, 3)
+        .map((channel) => {
+          const value = Number(channel) / 255;
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+      return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+    };
+    const checkContrast = (element) => {
+      const style = getComputedStyle(element);
+      const surface = getComputedStyle(root)
+        .backgroundColor.match(/[\d.]+/g)
+        .slice(0, 3)
+        .map(Number);
+      const fill = style.backgroundColor.match(/[\d.]+/g).map(Number);
+      const alpha = fill[3] ?? 1;
+      const background = luminance(
+        `rgb(${surface.map((channel, index) => fill[index] * alpha + channel * (1 - alpha)).join(',')})`,
+      );
+      const foreground = luminance(style.color);
+      expect(
+        (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+      ).toBeGreaterThanOrEqual(4.5);
+    };
+    try {
+      for (const theme of themeModes) {
+        root.className = `${theme} min-h-screen bg-background-canvas`;
+        for (const tone of paletteTones) {
+          const row = canvasElement.querySelector(`[data-tone-comparison="${tone}"]`);
+          const canvas = within(row);
+          await waitFor(() => checkContrast(row.querySelector('p')));
+          const button = canvas.getByRole('button', { name: 'text' });
+          await waitFor(() => checkContrast(button));
+          await userEvent.click(button);
+          await waitFor(() => checkContrast(button));
+          button.blur();
+        }
       }
-      if (['error', 'warning', 'info', 'success'].includes(tone)) {
-        await expect(paragraphColor).toBe(getComputedStyle(canvas.getByRole('button', { name: 'default' })).backgroundColor);
-      }
+    } finally {
+      root.className = originalClass;
     }
   },
 };

@@ -15,6 +15,7 @@ export type PaletteToneStyles = {
   /** Border color. */
   outline: string;
   text: string;
+  bodyText: string;
   outlineText: string;
   buttonText: string;
   mainBorder: string;
@@ -38,6 +39,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-primary-opacity-main enabled:active:bg-palette-primary-opacity-main enabled:focus:bg-palette-primary-opacity-main',
     outline: 'border-palette-primary-graphic',
     text: 'text-palette-primary-text',
+    bodyText: 'text-palette-primary-body-text',
     outlineText: 'text-palette-primary-outline-text',
     buttonText: 'text-palette-primary-button-text',
     mainBorder: 'border-palette-primary-main',
@@ -57,6 +59,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-secondary-opacity-main enabled:active:bg-palette-secondary-opacity-main enabled:focus:bg-palette-secondary-opacity-main',
     outline: 'border-palette-secondary-graphic',
     text: 'text-palette-secondary-text',
+    bodyText: 'text-palette-secondary-body-text',
     outlineText: 'text-palette-secondary-outline-text',
     buttonText: 'text-palette-secondary-button-text',
     mainBorder: 'border-palette-secondary-main',
@@ -76,6 +79,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-error-opacity-main enabled:active:bg-palette-error-opacity-main enabled:focus:bg-palette-error-opacity-main',
     outline: 'border-palette-error-graphic',
     text: 'text-palette-error-main',
+    bodyText: 'text-palette-error-body-text',
     outlineText: 'text-palette-error-outline-text',
     buttonText: 'text-palette-error-button-text',
     mainBorder: 'border-palette-error-main',
@@ -95,6 +99,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-warning-opacity-main enabled:active:bg-palette-warning-opacity-main enabled:focus:bg-palette-warning-opacity-main',
     outline: 'border-palette-warning-graphic',
     text: 'text-palette-warning-main',
+    bodyText: 'text-palette-warning-body-text',
     outlineText: 'text-palette-warning-outline-text',
     buttonText: 'text-palette-warning-button-text',
     mainBorder: 'border-palette-warning-main',
@@ -114,6 +119,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-info-opacity-main enabled:active:bg-palette-info-opacity-main enabled:focus:bg-palette-info-opacity-main',
     outline: 'border-palette-info-graphic',
     text: 'text-palette-info-main',
+    bodyText: 'text-palette-info-body-text',
     outlineText: 'text-palette-info-outline-text',
     buttonText: 'text-palette-info-button-text',
     mainBorder: 'border-palette-info-main',
@@ -133,6 +139,7 @@ export const paletteToneStyles: Record<PaletteTone, PaletteToneStyles> = {
       'enabled:hover:bg-palette-success-opacity-main enabled:active:bg-palette-success-opacity-main enabled:focus:bg-palette-success-opacity-main',
     outline: 'border-palette-success-graphic',
     text: 'text-palette-success-main',
+    bodyText: 'text-palette-success-body-text',
     outlineText: 'text-palette-success-outline-text',
     buttonText: 'text-palette-success-button-text',
     mainBorder: 'border-palette-success-main',

@@ -179,8 +179,18 @@ const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
       mode,
       `${tone} text`,
     );
-    output[`${tone}-outline-text`] = main;
-    output[`${tone}-button-text`] = main;
+    const textButtonSurfaces = controlSurfaces.flatMap((surface) => [
+      surface,
+      compositeColor(palette[`${tone}-opacity-lighter`], surface),
+    ]);
+    output[`${tone}-button-text`] = readableToneColor(
+      [main, ...toneCandidates], textButtonSurfaces, main, mode, `${tone} text button`,
+    );
+    output[`${tone}-outline-text`] = output[`${tone}-button-text`];
+    const originalBodyText = tone === 'primary' || tone === 'secondary' ? output[`${tone}-text`] : main;
+    output[`${tone}-body-text`] = readableToneColor(
+      [originalBodyText, ...toneCandidates], backgrounds, originalBodyText, mode, `${tone} body text`,
+    );
   }
   return output;
 };

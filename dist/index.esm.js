@@ -2359,6 +2359,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-primary-opacity-main enabled:active:bg-palette-primary-opacity-main enabled:focus:bg-palette-primary-opacity-main",
     outline: "border-palette-primary-graphic",
     text: "text-palette-primary-text",
+    bodyText: "text-palette-primary-body-text",
     outlineText: "text-palette-primary-outline-text",
     buttonText: "text-palette-primary-button-text",
     mainBorder: "border-palette-primary-main",
@@ -2374,6 +2375,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-secondary-opacity-main enabled:active:bg-palette-secondary-opacity-main enabled:focus:bg-palette-secondary-opacity-main",
     outline: "border-palette-secondary-graphic",
     text: "text-palette-secondary-text",
+    bodyText: "text-palette-secondary-body-text",
     outlineText: "text-palette-secondary-outline-text",
     buttonText: "text-palette-secondary-button-text",
     mainBorder: "border-palette-secondary-main",
@@ -2389,6 +2391,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-error-opacity-main enabled:active:bg-palette-error-opacity-main enabled:focus:bg-palette-error-opacity-main",
     outline: "border-palette-error-graphic",
     text: "text-palette-error-main",
+    bodyText: "text-palette-error-body-text",
     outlineText: "text-palette-error-outline-text",
     buttonText: "text-palette-error-button-text",
     mainBorder: "border-palette-error-main",
@@ -2404,6 +2407,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-warning-opacity-main enabled:active:bg-palette-warning-opacity-main enabled:focus:bg-palette-warning-opacity-main",
     outline: "border-palette-warning-graphic",
     text: "text-palette-warning-main",
+    bodyText: "text-palette-warning-body-text",
     outlineText: "text-palette-warning-outline-text",
     buttonText: "text-palette-warning-button-text",
     mainBorder: "border-palette-warning-main",
@@ -2419,6 +2423,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-info-opacity-main enabled:active:bg-palette-info-opacity-main enabled:focus:bg-palette-info-opacity-main",
     outline: "border-palette-info-graphic",
     text: "text-palette-info-main",
+    bodyText: "text-palette-info-body-text",
     outlineText: "text-palette-info-outline-text",
     buttonText: "text-palette-info-button-text",
     mainBorder: "border-palette-info-main",
@@ -2434,6 +2439,7 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
     labelState: "enabled:hover:bg-palette-success-opacity-main enabled:active:bg-palette-success-opacity-main enabled:focus:bg-palette-success-opacity-main",
     outline: "border-palette-success-graphic",
     text: "text-palette-success-main",
+    bodyText: "text-palette-success-body-text",
     outlineText: "text-palette-success-outline-text",
     buttonText: "text-palette-success-button-text",
     mainBorder: "border-palette-success-main",
@@ -2523,7 +2529,7 @@ function yi({
 const Ta = {
   default: "text-text-primary",
   muted: "text-text-secondary",
-  ...$e((e) => e.text),
+  ...$e((e) => e.bodyText),
   inverse: "text-misc-bg-white"
 }, Wr = {
   regular: "font-regular",
@@ -2703,7 +2709,7 @@ const _r = $e((e) => e.notchBorder), Ae = wa(
   outlined: "",
   filled: "relative top-[0.5px] group-focus-within:top-px",
   standard: "relative top-[0.5px] group-focus-within:top-px"
-}, qr = "mb-1 block font-sans text-13 font-medium text-text-secondary", Xe = s("mt-1 font-sans text-13", Se.error.text), Ga = "absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg", La = (e, a) => ({
+}, qr = "mb-1 block font-sans text-13 font-medium text-text-secondary", Xe = s("mt-1 font-sans text-13", Se.error.bodyText), Ga = "absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg", La = (e, a) => ({
   "aria-hidden": e || void 0,
   role: e ? void 0 : "img",
   "aria-label": a

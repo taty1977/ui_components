@@ -51,8 +51,34 @@ describe('shared design tokens', () => {
       }
     }
     for (const tone of paletteTones) {
-      expect(colors.palette[`${tone}-outline-text`]).toBe(originalPalette[`${tone}-main`]);
-      expect(colors.palette[`${tone}-button-text`]).toBe(originalPalette[`${tone}-main`]);
+      const main = originalPalette[`${tone}-main`];
+      const surfaces = [colors.background.canvas, colors.background.surface];
+      const buttonSurfaces = surfaces
+        .flatMap((surface) => [surface, compositeColor(colors.action.hover, surface)])
+        .flatMap((surface) => [surface, compositeColor(colors.palette[`${tone}-opacity-lighter`], surface)]);
+      const originalBody = tone === 'primary' || tone === 'secondary' ? colors.palette[`${tone}-text`] : main;
+      for (const [key, original, backgrounds] of [
+        [`${tone}-button-text`, main, buttonSurfaces],
+        [`${tone}-outline-text`, main, buttonSurfaces],
+        [`${tone}-body-text`, originalBody, surfaces],
+      ] as const) {
+        if (backgrounds.every((surface) => contrastRatio(original, surface) >= 4.5)) {
+          expect(colors.palette[key]).toBe(original);
+        }
+        for (const surface of backgrounds) {
+          expect(contrastRatio(colors.palette[key], surface)).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+      expect(colors.palette[`${tone}-outline-text`]).toBe(colors.palette[`${tone}-button-text`]);
+      const distance = (color: string) => {
+        const original = colorChannels(main).rgb;
+        return colorChannels(color).rgb.reduce((sum, channel, index) => sum + (channel - original[index]) ** 2, 0);
+      };
+      for (const candidate of [main, ...Object.values(getThemeTokens(theme).core.color[tone])]) {
+        if (buttonSurfaces.every((surface) => contrastRatio(candidate, surface) >= 4.5)) {
+          expect(distance(colors.palette[`${tone}-outline-text`])).toBeLessThanOrEqual(distance(candidate));
+        }
+      }
     }
   });
 

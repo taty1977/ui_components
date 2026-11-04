@@ -12,7 +12,7 @@ describe('Heading', () => {
         <Button tone={tone}>Action</Button>
       </>,
     );
-    expect(screen.getByRole('heading', { name: 'Status' })).toHaveClass(`text-palette-${tone}-main`);
+    expect(screen.getByRole('heading', { name: 'Status' })).toHaveClass(`text-palette-${tone}-body-text`);
     expect(screen.getByRole('button', { name: 'Action' })).toHaveClass(`bg-palette-${tone}-main`);
   });
   test('uses h4 for both the omitted and explicit default variant', () => {
@@ -69,10 +69,10 @@ describe('Heading', () => {
     render(<Heading {...options} className="text-15">Title</Heading>);
     expect(resolveHeadingLevel(options)).toBe('h2');
     expect(headingTextClasses(options).split(' ')).toEqual([
-      'font-sans', 'text-38', 'leading-42', 'font-semibold', 'text-palette-error-main', 'capitalize',
+      'font-sans', 'text-38', 'leading-42', 'font-semibold', 'text-palette-error-body-text', 'capitalize',
     ]);
     const heading = screen.getByRole('heading', { level: 2 });
-    expect(heading).toHaveClass('text-15', 'font-semibold', 'capitalize', 'text-palette-error-main');
+    expect(heading).toHaveClass('text-15', 'font-semibold', 'capitalize', 'text-palette-error-body-text');
     expect(heading).not.toHaveClass('text-38');
   });
   test('uses theme tokens for size, weight, and family', () => {
@@ -100,7 +100,7 @@ describe('Heading', () => {
       </Heading>,
     );
 
-    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-main');
+    expect(screen.getByRole('heading', { name: 'Additional information' })).toHaveClass('text-palette-info-body-text');
   });
 
   test('supports selectable text transform', () => {
