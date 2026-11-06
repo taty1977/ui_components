@@ -37,6 +37,12 @@ jobs:
             echo "::error::Set CHROMATIC_PROJECT_TOKEN to the token for the ui_components web project, not the mobile project."
             exit 1
           fi
-      - run: npm run chromatic
+      - name: Run Chromatic visual tests
+        run: |
+          if [ "$GITHUB_REF" = "refs/heads/master" ]; then
+            npm run chromatic -- --auto-accept-changes
+          else
+            npm run chromatic
+          fi
         env:
           CHROMATIC_PROJECT_TOKEN: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
