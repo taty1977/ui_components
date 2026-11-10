@@ -94,7 +94,7 @@ describe('Table', () => {
     expect(screen.getByRole('cell', { name: 'Ada Lovelace' })).toBeVisible();
   });
 
-  test.each(paletteTones)('uses the accessible foreground for %s solid header separators', (tone) => {
+  test.each(paletteTones)('uses the original foreground for %s solid header separators', (tone) => {
     render(<Table columns={columns} data={rows} variant="filled" tone={tone} showColumnBorders />);
 
     for (const header of screen.getAllByRole('columnheader')) {
@@ -375,7 +375,7 @@ describe('Table', () => {
       'border-palette-info-graphic',
       'bg-palette-info-main',
       'text-palette-info-contrast',
-      'text-palette-info-main',
+      'text-palette-info-text',
     ],
   ] as const)(
     'applies the %s tone to the table frame, header, and pagination controls',
@@ -397,7 +397,7 @@ describe('Table', () => {
 
   test.each([
     ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
     ['outline', 'bg-transparent', 'text-palette-info-outline-text'],
     ['text', 'bg-transparent', 'text-palette-info-button-text'],
   ] as const)('matches the Button %s header treatment', (variant, background, text) => {

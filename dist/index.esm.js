@@ -2353,13 +2353,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
 }, Ca = ["primary", "secondary", "error", "warning", "info", "success"], Se = {
   primary: {
     default: "bg-palette-primary-main",
-    defaultState: "enabled:hover:bg-palette-primary-dark enabled:active:bg-palette-primary-dark enabled:focus:bg-palette-primary-dark enabled:hover:text-palette-primary-contrast-dark enabled:active:text-palette-primary-contrast-dark enabled:focus:text-palette-primary-contrast-dark focus-visible:outline-palette-primary-graphic",
+    defaultState: "enabled:hover:bg-palette-primary-dark enabled:active:bg-palette-primary-dark enabled:focus:bg-palette-primary-dark focus-visible:outline-palette-primary-graphic",
     defaultText: "text-palette-primary-contrast",
     label: "bg-palette-primary-opacity-light",
     labelState: "enabled:hover:bg-palette-primary-opacity-main enabled:active:bg-palette-primary-opacity-main enabled:focus:bg-palette-primary-opacity-main",
     outline: "border-palette-primary-graphic",
     text: "text-palette-primary-text",
-    bodyText: "text-palette-primary-body-text",
     outlineText: "text-palette-primary-outline-text",
     buttonText: "text-palette-primary-button-text",
     mainBorder: "border-palette-primary-main",
@@ -2369,13 +2368,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
   },
   secondary: {
     default: "bg-palette-secondary-main",
-    defaultState: "enabled:hover:bg-palette-secondary-dark enabled:active:bg-palette-secondary-dark enabled:focus:bg-palette-secondary-dark enabled:hover:text-palette-secondary-contrast-dark enabled:active:text-palette-secondary-contrast-dark enabled:focus:text-palette-secondary-contrast-dark focus-visible:outline-palette-secondary-graphic",
+    defaultState: "enabled:hover:bg-palette-secondary-dark enabled:active:bg-palette-secondary-dark enabled:focus:bg-palette-secondary-dark focus-visible:outline-palette-secondary-graphic",
     defaultText: "text-palette-secondary-contrast",
     label: "bg-palette-secondary-opacity-light",
     labelState: "enabled:hover:bg-palette-secondary-opacity-main enabled:active:bg-palette-secondary-opacity-main enabled:focus:bg-palette-secondary-opacity-main",
     outline: "border-palette-secondary-graphic",
     text: "text-palette-secondary-text",
-    bodyText: "text-palette-secondary-body-text",
     outlineText: "text-palette-secondary-outline-text",
     buttonText: "text-palette-secondary-button-text",
     mainBorder: "border-palette-secondary-main",
@@ -2385,13 +2383,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
   },
   error: {
     default: "bg-palette-error-main",
-    defaultState: "enabled:hover:bg-palette-error-dark enabled:active:bg-palette-error-dark enabled:focus:bg-palette-error-dark enabled:hover:text-palette-error-contrast-dark enabled:active:text-palette-error-contrast-dark enabled:focus:text-palette-error-contrast-dark focus-visible:outline-palette-error-graphic",
+    defaultState: "enabled:hover:bg-palette-error-dark enabled:active:bg-palette-error-dark enabled:focus:bg-palette-error-dark focus-visible:outline-palette-error-graphic",
     defaultText: "text-palette-error-contrast",
     label: "bg-palette-error-opacity-light",
     labelState: "enabled:hover:bg-palette-error-opacity-main enabled:active:bg-palette-error-opacity-main enabled:focus:bg-palette-error-opacity-main",
     outline: "border-palette-error-graphic",
-    text: "text-palette-error-main",
-    bodyText: "text-palette-error-body-text",
+    text: "text-palette-error-text",
     outlineText: "text-palette-error-outline-text",
     buttonText: "text-palette-error-button-text",
     mainBorder: "border-palette-error-main",
@@ -2401,13 +2398,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
   },
   warning: {
     default: "bg-palette-warning-main",
-    defaultState: "enabled:hover:bg-palette-warning-dark enabled:active:bg-palette-warning-dark enabled:focus:bg-palette-warning-dark enabled:hover:text-palette-warning-contrast-dark enabled:active:text-palette-warning-contrast-dark enabled:focus:text-palette-warning-contrast-dark focus-visible:outline-palette-warning-graphic",
+    defaultState: "enabled:hover:bg-palette-warning-dark enabled:active:bg-palette-warning-dark enabled:focus:bg-palette-warning-dark focus-visible:outline-palette-warning-graphic",
     defaultText: "text-palette-warning-contrast",
     label: "bg-palette-warning-opacity-light",
     labelState: "enabled:hover:bg-palette-warning-opacity-main enabled:active:bg-palette-warning-opacity-main enabled:focus:bg-palette-warning-opacity-main",
     outline: "border-palette-warning-graphic",
-    text: "text-palette-warning-main",
-    bodyText: "text-palette-warning-body-text",
+    text: "text-palette-warning-text",
     outlineText: "text-palette-warning-outline-text",
     buttonText: "text-palette-warning-button-text",
     mainBorder: "border-palette-warning-main",
@@ -2417,13 +2413,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
   },
   info: {
     default: "bg-palette-info-main",
-    defaultState: "enabled:hover:bg-palette-info-dark enabled:active:bg-palette-info-dark enabled:focus:bg-palette-info-dark enabled:hover:text-palette-info-contrast-dark enabled:active:text-palette-info-contrast-dark enabled:focus:text-palette-info-contrast-dark focus-visible:outline-palette-info-graphic",
+    defaultState: "enabled:hover:bg-palette-info-dark enabled:active:bg-palette-info-dark enabled:focus:bg-palette-info-dark focus-visible:outline-palette-info-graphic",
     defaultText: "text-palette-info-contrast",
     label: "bg-palette-info-opacity-light",
     labelState: "enabled:hover:bg-palette-info-opacity-main enabled:active:bg-palette-info-opacity-main enabled:focus:bg-palette-info-opacity-main",
     outline: "border-palette-info-graphic",
-    text: "text-palette-info-main",
-    bodyText: "text-palette-info-body-text",
+    text: "text-palette-info-text",
     outlineText: "text-palette-info-outline-text",
     buttonText: "text-palette-info-button-text",
     mainBorder: "border-palette-info-main",
@@ -2433,13 +2428,12 @@ const la = (e) => typeof e == "boolean" ? `${e}` : e === 0 ? "0" : e, na = ya, w
   },
   success: {
     default: "bg-palette-success-main",
-    defaultState: "enabled:hover:bg-palette-success-dark enabled:active:bg-palette-success-dark enabled:focus:bg-palette-success-dark enabled:hover:text-palette-success-contrast-dark enabled:active:text-palette-success-contrast-dark enabled:focus:text-palette-success-contrast-dark focus-visible:outline-palette-success-graphic",
+    defaultState: "enabled:hover:bg-palette-success-dark enabled:active:bg-palette-success-dark enabled:focus:bg-palette-success-dark focus-visible:outline-palette-success-graphic",
     defaultText: "text-palette-success-contrast",
     label: "bg-palette-success-opacity-light",
     labelState: "enabled:hover:bg-palette-success-opacity-main enabled:active:bg-palette-success-opacity-main enabled:focus:bg-palette-success-opacity-main",
     outline: "border-palette-success-graphic",
-    text: "text-palette-success-main",
-    bodyText: "text-palette-success-body-text",
+    text: "text-palette-success-text",
     outlineText: "text-palette-success-outline-text",
     buttonText: "text-palette-success-button-text",
     mainBorder: "border-palette-success-main",
@@ -2492,9 +2486,10 @@ function yi({
           "aria-expanded": x,
           "aria-controls": w,
           className: s(
-            "flex w-full items-center text-left font-medium text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current",
+            "flex w-full items-center text-left text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current",
             v === "small" ? "min-h-11 gap-2 px-4 text-15" : "min-h-12 gap-2.5 px-4 text-18",
             N,
+            "font-medium",
             C === "solid" && "focus-visible:outline-current",
             C === "outline" && (x && I != null ? "rounded-t-md" : "rounded-md")
           ),
@@ -2529,7 +2524,7 @@ function yi({
 const Ta = {
   default: "text-text-primary",
   muted: "text-text-secondary",
-  ...$e((e) => e.bodyText),
+  ...$e((e) => e.text),
   inverse: "text-misc-bg-white"
 }, Wr = {
   regular: "font-regular",
@@ -2709,7 +2704,7 @@ const _r = $e((e) => e.notchBorder), Ae = wa(
   outlined: "",
   filled: "relative top-[0.5px] group-focus-within:top-px",
   standard: "relative top-[0.5px] group-focus-within:top-px"
-}, qr = "mb-1 block font-sans text-13 font-medium text-text-secondary", Xe = s("mt-1 font-sans text-13", Se.error.bodyText), Ga = "absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg", La = (e, a) => ({
+}, qr = "mb-1 block font-sans text-13 font-medium text-text-secondary", Xe = s("mt-1 font-sans text-13", Se.error.text), Ga = "absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-md border border-border-subtle bg-background-surface py-2 font-sans text-15 text-text-primary shadow-lg", La = (e, a) => ({
   "aria-hidden": e || void 0,
   role: e ? void 0 : "img",
   "aria-label": a
@@ -4868,7 +4863,7 @@ function Ni({
                   title: "Visit project",
                   className: s(
                     ua,
-                    "inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-palette-primary-dark focus:bg-palette-primary-dark hover:text-palette-primary-contrast-dark focus:text-palette-primary-contrast-dark focus-visible:outline-palette-primary-graphic",
+                    "inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-palette-primary-dark focus:bg-palette-primary-dark focus-visible:outline-palette-primary-graphic",
                     Se.primary.default,
                     Se.primary.defaultText
                   ),

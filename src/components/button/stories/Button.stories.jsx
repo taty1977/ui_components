@@ -1,20 +1,8 @@
 import React from 'react';
-import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
+import { expect, fn, within } from 'storybook/test';
 import { ArrowRightIcon, PlusIcon } from '@heroicons/react/24/solid';
 import { paletteTones } from '../../../themes/paletteTones';
 import Button from '../Button';
-import { themeModes } from '../../../themes/themeTokens';
-
-const luminance = (color) => {
-  const channels = color
-    .match(/[\d.]+/g)
-    .slice(0, 3)
-    .map((channel) => {
-      const value = Number(channel) / 255;
-      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-    });
-  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-};
 
 const variants = ['default', 'label', 'outline', 'text'];
 const tones = paletteTones;
@@ -35,7 +23,7 @@ export default {
     docs: {
       description: {
         component:
-          'A themed button with solid, tinted, outline, and text appearances, six tones, and three sizes. Original theme fills are preserved. Filled text keeps white where readable and uses tone-matched contrast text where needed, including interaction states. Outline and text-only buttons preserve passing main-color text; only failing colors use the closest readable same-tone shade. Outline borders and backgrounds remain unchanged.',
+          'A themed button with solid, tinted, outline, and text appearances, six tones, and three sizes. Button colors follow the original theme palette tokens.',
       },
     },
   },
@@ -141,18 +129,18 @@ export const States = {
   ),
 };
 export const ColorTreatment = {
-  name: 'Contrast Comparison',
+  name: 'Tone Comparison',
   parameters: {
     controls: { disable: true },
     docs: {
       description: {
         story:
-          'Compare filled, outline, and text-only buttons. Interaction checks verify contrast in every theme without changing the original fills or borders.',
+          'Compare filled, outline, text-only, and tinted buttons using the original theme colors.',
       },
     },
   },
   render: () => (
-    <div className="grid gap-4">
+    <div className="grid gap-4 [&_button]:transition-none">
       {tones.map((tone) => (
         <div key={tone} className="flex gap-3">
           <Button tone={tone}>{tone} filled</Button>
@@ -162,71 +150,22 @@ export const ColorTreatment = {
           <Button tone={tone} variant="text">
             {tone} text
           </Button>
+          {['error', 'warning', 'info', 'success'].includes(tone) && (
+            <Button tone={tone} variant="label">
+              {tone} tinted
+            </Button>
+          )}
         </div>
       ))}
     </div>
   ),
-  play: async ({ canvasElement }) => {
+  play: ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const themeRoot = canvasElement.querySelector('[class*="min-h-screen"]');
-    const originalClass = themeRoot.className;
-    const checkFilled = (button, theme, tone) => {
-      const style = getComputedStyle(button);
-      const foreground = luminance(style.color);
-      const background = luminance(style.backgroundColor);
-      expect(
-        (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
-        `${theme} ${tone} filled contrast`,
-      ).toBeGreaterThanOrEqual(4.5);
-    };
-    const checkTransparentContrast = (button) => {
-      const style = getComputedStyle(button);
-      const surface = getComputedStyle(themeRoot)
-        .backgroundColor.match(/[\d.]+/g)
-        .slice(0, 3)
-        .map(Number);
-      const fill = style.backgroundColor.match(/[\d.]+/g).map(Number);
-      const alpha = fill[3] ?? 1;
-      const background = luminance(
-        `rgb(${surface.map((channel, index) => fill[index] * alpha + channel * (1 - alpha)).join(',')})`,
+    for (const tone of tones) {
+      expect(canvas.getByRole('button', { name: `${tone} filled` })).toHaveClass(
+        `bg-palette-${tone}-main`,
+        `text-palette-${tone}-contrast`,
       );
-      const foreground = luminance(style.color);
-      expect(
-        (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
-      ).toBeGreaterThanOrEqual(4.5);
-    };
-    try {
-      for (const theme of themeModes) {
-        themeRoot.className = `${theme} min-h-screen bg-background-canvas`;
-        for (const tone of tones) {
-          const filled = canvas.getByRole('button', { name: `${tone} filled` });
-          filled.blur();
-          await waitFor(() => checkFilled(filled, theme, tone));
-          await userEvent.click(filled);
-          await waitFor(() => checkFilled(filled, theme, tone));
-          const outline = canvas.getByRole('button', { name: `${tone} outline` });
-          await waitFor(() => expect(outline.getAnimations()).toHaveLength(0));
-          const color = getComputedStyle(outline).color;
-          const borderColor = getComputedStyle(outline).borderTopColor;
-          expect(getComputedStyle(outline).borderTopWidth).toBe('1px');
-          checkTransparentContrast(outline);
-          await userEvent.click(outline);
-          await waitFor(() => {
-            expect(getComputedStyle(outline).color).toBe(color);
-            expect(getComputedStyle(outline).borderTopColor).toBe(borderColor);
-            checkTransparentContrast(outline);
-          });
-          const text = canvas.getByRole('button', { name: `${tone} text` });
-          await waitFor(() => {
-            expect(text.getAnimations()).toHaveLength(0);
-            checkTransparentContrast(text);
-          });
-          await userEvent.click(text);
-          await waitFor(() => checkTransparentContrast(text));
-        }
-      }
-    } finally {
-      themeRoot.className = originalClass;
     }
   },
 };

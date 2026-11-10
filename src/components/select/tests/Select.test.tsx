@@ -107,7 +107,7 @@ describe('Select', () => {
     expect(select).toHaveAttribute('aria-invalid', 'true');
     expect(select).toHaveAttribute('aria-describedby', 'country-error');
     expect(screen.getByRole('alert')).toHaveTextContent('Country is required');
-    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-body-text');
+    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
   });
 
   test('only references the listbox while it exists', () => {
@@ -127,7 +127,7 @@ describe('Select', () => {
     expect(trigger).not.toHaveAttribute('aria-controls');
   });
 
-  test.each(paletteTones)('uses the accessible %s border color', (tone) => {
+  test.each(paletteTones)('uses the original %s border color', (tone) => {
     render(
       <Select label="Country" tone={tone}>
         <option value="us">United States</option>

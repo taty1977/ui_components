@@ -146,7 +146,7 @@ describe('Gallery', () => {
       'enabled:hover:bg-palette-primary-dark',
     );
   });
-  test('uses shared Button contrast styles for selected and unselected filters', () => {
+  test('uses primary button text for selected filters and shared tinted styles for unselected filters', () => {
     render(<Gallery items={items} filterStyle="pill" />);
     expect(screen.getByRole('button', { name: 'All', pressed: true })).toHaveClass(
       'bg-palette-primary-main',

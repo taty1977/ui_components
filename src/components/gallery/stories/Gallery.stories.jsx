@@ -1,17 +1,5 @@
 import { expect, fn, userEvent, waitFor, within } from 'storybook/test';
-import { themeModes } from '../../../themes/themeTokens';
 import Gallery from '../Gallery';
-
-const luminance = (color) => {
-  const [red, green, blue] = color
-    .match(/[\d.]+/g)
-    .slice(0, 3)
-    .map((channel) => {
-      const value = Number(channel) / 255;
-      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-    });
-  return red * 0.2126 + green * 0.7152 + blue * 0.0722;
-};
 
 const createProjectImage = (background, accent, artwork) =>
   `data:image/svg+xml,${encodeURIComponent(`
@@ -113,7 +101,7 @@ export default {
     docs: {
       description: {
         component:
-          'A responsive, category-filtered image gallery with keyboard-operable previews. Filters use the shared Button contrast tokens. Examples use self-contained SVG artwork without remote image dependencies. The preview dialog supports Escape, arrow-key navigation, a focus trap, and restoring focus to the image that opened it.',
+          'A responsive, category-filtered image gallery with keyboard-operable previews. Filters use the shared Button theme colors. Examples use self-contained SVG artwork without remote image dependencies. The preview dialog supports Escape, arrow-key navigation, a focus trap, and restoring focus to the image that opened it.',
       },
     },
   },
@@ -161,33 +149,6 @@ export const Playground = {
     for (const image of canvas.getAllByRole('img')) {
       await image.decode();
       await expect(image.naturalWidth).toBeGreaterThan(0);
-    }
-    const themeRoot = canvasElement.querySelector('[class*="min-h-screen"]');
-    const originalClass = themeRoot.className;
-    try {
-      for (const theme of themeModes) {
-        themeRoot.className = `${theme} min-h-screen bg-background-canvas`;
-        const selected = canvas.getByRole('button', { name: 'All', pressed: true });
-        await waitFor(() => {
-          const style = getComputedStyle(selected);
-          const foreground = luminance(style.color);
-          const background = luminance(getComputedStyle(themeRoot).backgroundColor);
-          const contrast = (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
-          expect(contrast, `${theme} selected-filter contrast`).toBeGreaterThanOrEqual(4.5);
-        });
-        for (const title of canvasElement.querySelectorAll('p[aria-hidden="true"]')) {
-          const titleStyle = getComputedStyle(title);
-          await expect(titleStyle.backgroundColor).not.toBe('rgba(0, 0, 0, 0)');
-          const titleForeground = luminance(titleStyle.color);
-          const titleBackground = luminance(titleStyle.backgroundColor);
-          const titleContrast =
-            (Math.max(titleForeground, titleBackground) + 0.05) /
-            (Math.min(titleForeground, titleBackground) + 0.05);
-          await expect(titleContrast, `${theme} hover-title contrast`).toBeGreaterThanOrEqual(4.5);
-        }
-      }
-    } finally {
-      themeRoot.className = originalClass;
     }
   },
 };

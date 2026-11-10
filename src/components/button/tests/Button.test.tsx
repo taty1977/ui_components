@@ -84,7 +84,7 @@ describe('Button Component', () => {
             ? `text-palette-${tone}-outline-text`
             : variant === 'text'
               ? `text-palette-${tone}-button-text`
-              : `text-palette-${tone}-${tone === 'primary' || tone === 'secondary' ? 'text' : 'main'}`,
+              : `text-palette-${tone}-text`,
       );
       if (variant === 'default') expect(button).toHaveClass(`bg-palette-${tone}-main`);
       if (variant === 'label') expect(button).toHaveClass(`bg-palette-${tone}-opacity-light`);

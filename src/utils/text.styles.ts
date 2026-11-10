@@ -38,7 +38,7 @@ export interface LinkStyleOptions extends BodyTextStyleOptions {
 export const textToneClasses: Record<TextTone, string> = {
   default: 'text-text-primary',
   muted: 'text-text-secondary',
-  ...mapPaletteTones((s) => s.bodyText),
+  ...mapPaletteTones((s) => s.text),
   inverse: 'text-misc-bg-white',
 };
 export const textTones = Object.keys(textToneClasses) as TextTone[];

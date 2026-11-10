@@ -33,7 +33,7 @@ describe('Autocomplete Component', () => {
     const input = screen.getByRole('combobox');
     expect(input.parentElement).toHaveClass('bg-background-surface');
     expect(input).toHaveAttribute('aria-invalid', 'true');
-    expect(screen.getByText('Choose a fruit.')).toHaveClass('text-palette-error-body-text');
+    expect(screen.getByText('Choose a fruit.')).toHaveClass('text-palette-error-text');
   });
 
   test('renders without crashing', () => {
@@ -145,7 +145,7 @@ describe('Autocomplete Component', () => {
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input).toHaveAttribute('aria-describedby');
     expect(screen.getByRole('alert')).toHaveTextContent('Fruit is required');
-    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-body-text');
+    expect(screen.getByRole('alert')).toHaveClass('text-palette-error-text');
   });
 
   test('applies custom className to the container', () => {

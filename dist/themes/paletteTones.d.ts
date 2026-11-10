@@ -13,7 +13,6 @@ export type PaletteToneStyles = {
     /** Border color. */
     outline: string;
     text: string;
-    bodyText: string;
     outlineText: string;
     buttonText: string;
     mainBorder: string;

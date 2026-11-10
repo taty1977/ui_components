@@ -19,13 +19,15 @@ test.each(paletteTones)('matches %s Button label and text tones', (tone) => {
     </>,
   );
   const textClass = paletteToneStyles[tone].text;
-  expect(screen.getByText('Status message')).toHaveClass(paletteToneStyles[tone].bodyText);
+  expect(screen.getByText('Status message')).toHaveClass(textClass);
   for (const variant of ['label']) {
     expect(screen.getByRole('button', { name: variant })).toHaveClass(textClass);
   }
   expect(screen.getByRole('button', { name: 'text' })).toHaveClass(paletteToneStyles[tone].buttonText);
   expect(screen.getByRole('button', { name: 'outline' })).toHaveClass(paletteToneStyles[tone].outlineText, paletteToneStyles[tone].mainBorder);
-  expect(screen.getByRole('button', { name: 'Solid' })).toHaveClass(paletteToneStyles[tone].defaultText);
+  expect(screen.getByRole('button', { name: 'Solid' })).toHaveClass(
+    paletteToneStyles[tone].defaultText,
+  );
 });
 
 const variants: Array<[BodyTextVariant, string, string]> = [
@@ -59,7 +61,7 @@ test('shares legacy color, weight, transform, and explicit size overrides across
     'text-12',
     'leading-14',
     'font-semibold',
-    'text-palette-error-body-text',
+    'text-palette-error-text',
     'capitalize',
   ]);
   expect(bodyTextClasses({ color: 'text' })).toBe(bodyTextClasses());

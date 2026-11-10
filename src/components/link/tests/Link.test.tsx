@@ -53,7 +53,7 @@ describe('Link', () => {
       'leading-28',
       'font-bold',
       'capitalize',
-      'text-palette-error-body-text',
+      'text-palette-error-text',
       'custom',
     );
   });

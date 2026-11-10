@@ -10,92 +10,38 @@ const require = createRequire(import.meta.url);
 const preset = require('../../../tailwind.preset.cjs');
 const { themeColors } = require('../../../utils/tailwindTokenUtils.cjs');
 
-const colorChannels = (value: string) => {
-  const hex = value.slice(1);
-  return {
-    rgb: [0, 2, 4].map((index) => Number.parseInt(hex.slice(index, index + 2), 16)),
-    alpha: hex.length === 8 ? Number.parseInt(hex.slice(6, 8), 16) / 255 : 1,
-  };
-};
-const compositeColor = (foreground: string, background: string) => {
-  const fg = colorChannels(foreground);
-  const bg = colorChannels(background);
-  return `#${fg.rgb
-    .map((channel, index) =>
-      Math.round(channel * fg.alpha + bg.rgb[index] * (1 - fg.alpha))
-        .toString(16)
-        .padStart(2, '0'),
-    )
-    .join('')}`;
-};
-const luminance = (value: string) => {
-  const channels = colorChannels(value).rgb.map((channel) => channel / 255);
-  const linear = channels.map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-};
-const contrastRatio = (foreground: string, background: string) => {
-  const first = luminance(foreground);
-  const second = luminance(background);
-  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-};
-
 describe('shared design tokens', () => {
-  test.each(themeModes)('%s preserves original button fills and text colors', (theme) => {
-    const mode = Object.keys(figmaTokens.Variables).find((name) => name.toLowerCase() === theme);
+  test.each(themeModes)('%s keeps original palette colors and text treatments', (theme) => {
+    const mode = (Object.keys(figmaTokens.Variables) as (keyof typeof figmaTokens.Variables)[]).find(
+      (name) => name.toLowerCase() === theme,
+    );
     if (!mode) throw new Error(`Missing Figma theme: ${theme}`);
     const colors = themeColors(figmaTokens, mode);
-    const originalPalette = getThemeTokens(theme).core.color.palette;
-    for (const tone of paletteTones) {
-      for (const shade of ['main', 'dark']) {
-        expect(colors.palette[`${tone}-${shade}`]).toBe(originalPalette[`${tone}-${shade}`]);
-      }
-    }
+    const originalPalette = getThemeTokens(theme).core.color.palette as Record<string, string>;
     for (const tone of paletteTones) {
       const main = originalPalette[`${tone}-main`];
-      const surfaces = [colors.background.canvas, colors.background.surface];
-      const buttonSurfaces = surfaces
-        .flatMap((surface) => [surface, compositeColor(colors.action.hover, surface)])
-        .flatMap((surface) => [surface, compositeColor(colors.palette[`${tone}-opacity-lighter`], surface)]);
-      const originalBody = tone === 'primary' || tone === 'secondary' ? colors.palette[`${tone}-text`] : main;
-      for (const [key, original, backgrounds] of [
-        [`${tone}-button-text`, main, buttonSurfaces],
-        [`${tone}-outline-text`, main, buttonSurfaces],
-        [`${tone}-body-text`, originalBody, surfaces],
-      ] as const) {
-        if (backgrounds.every((surface) => contrastRatio(original, surface) >= 4.5)) {
-          expect(colors.palette[key]).toBe(original);
-        }
-        for (const surface of backgrounds) {
-          expect(contrastRatio(colors.palette[key], surface)).toBeGreaterThanOrEqual(4.5);
-        }
-      }
-      expect(colors.palette[`${tone}-outline-text`]).toBe(colors.palette[`${tone}-button-text`]);
-      const distance = (color: string) => {
-        const original = colorChannels(main).rgb;
-        return colorChannels(color).rgb.reduce((sum, channel, index) => sum + (channel - original[index]) ** 2, 0);
-      };
-      for (const candidate of [main, ...Object.values(getThemeTokens(theme).core.color[tone])]) {
-        if (buttonSurfaces.every((surface) => contrastRatio(candidate, surface) >= 4.5)) {
-          expect(distance(colors.palette[`${tone}-outline-text`])).toBeLessThanOrEqual(distance(candidate));
-        }
-      }
+      expect(colors.palette[`${tone}-main`]).toBe(main);
+      expect(colors.palette[`${tone}-dark`]).toBe(originalPalette[`${tone}-dark`]);
+      expect(colors.palette[`${tone}-light`]).toBe(originalPalette[`${tone}-light`]);
+      expect(colors.palette[`${tone}-contrast`]).toBe(colors.misc['bg-white']);
+      expect(colors.palette[`${tone}-graphic`]).toBe(main);
+      expect(colors.palette[`${tone}-text`]).toBe(main);
+      expect(colors.palette[`${tone}-outline-text`]).toBe(main);
+      expect(colors.palette[`${tone}-button-text`]).toBe(main);
     }
+    expect(colors.text.primary).toBe(getThemeTokens(theme).semantic.color.text.primary);
+    expect(colors.text.secondary).toBe(getThemeTokens(theme).semantic.color.text.secondary);
+    expect(colors.text.muted).toBe(getThemeTokens(theme).semantic.color.text.muted);
+    expect(colors.border.input).toBe(figmaTokens.Variables[mode].Theme['input-border'].$value);
+    expect(colors['table-divider']).toBe(figmaTokens.Variables[mode].Theme.divider.$value);
   });
 
-  test.each(paletteTones)('%s controls use accessible border and focus colors', (tone) => {
+  test.each(paletteTones)('%s controls use original tone colors for borders and focus', (tone) => {
     const styles = paletteToneStyles[tone];
     expect(styles.fieldBorder).toContain(`border-palette-${tone}-graphic`);
     expect(styles.notchBorder).toContain(`border-palette-${tone}-graphic`);
     expect(styles.defaultState).toContain(`focus-visible:outline-palette-${tone}-graphic`);
-  });
-
-  test.each(['Light', 'Dark', 'Teal'] as const)('%s keeps readable text on original primary solid fills', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    for (const shade of ['main', 'dark']) {
-      expect(
-        contrastRatio(colors.palette[shade === 'main' ? 'primary-contrast' : 'primary-contrast-dark'], colors.palette[`primary-${shade}`]),
-      ).toBeGreaterThanOrEqual(4.5);
-    }
+    expect(styles.defaultState).not.toContain('enabled:hover:text-');
   });
 
   test('exposes the reference palette and numeric scales without metadata', () => {
@@ -128,113 +74,6 @@ describe('shared design tokens', () => {
     expect(getThemeTokens('pulse').core.color.palette['primary-main']).toBe('#087EA4');
     expect(getThemeTokens('pulse').core.color.palette['secondary-main']).toBe('#404756');
     expect(getThemeTokens('pulse').semantic.color.background).toEqual({ canvas: '#F6F7F9', surface: '#ffffff' });
-  });
-
-  test.each(Object.keys(figmaTokens.Variables))('%s tone text meets WCAG AA contrast', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    const surfaces = [colors.background.canvas, colors.background.surface];
-
-    for (const tone of ['primary', 'secondary', 'error', 'warning', 'info', 'success']) {
-      const palette = colors.palette as Record<string, string>;
-      const solidText = palette[`${tone}-contrast`];
-      const whitePasses = contrastRatio('#ffffff', palette[`${tone}-main`]) >= 4.5;
-      if (whitePasses) expect(solidText).toBe('#ffffff');
-      else expect(luminance(solidText)).toBeLessThan(luminance(palette[`${tone}-main`]));
-      for (const shade of ['main', 'dark']) {
-        expect(contrastRatio(shade === 'main' ? solidText : palette[`${tone}-contrast-dark`], palette[`${tone}-${shade}`])).toBeGreaterThanOrEqual(4.5);
-      }
-
-      const graphic = palette[`${tone}-graphic`];
-      for (const background of [
-        ...surfaces,
-        ...surfaces.map((surface) => compositeColor(colors.action.hover, surface)),
-      ]) {
-        expect(contrastRatio(graphic, background)).toBeGreaterThanOrEqual(3);
-      }
-
-      const toneText = palette[`${tone}-text`];
-      const labelSurfaces = surfaces.flatMap((surface) =>
-        ['opacity-lighter', 'opacity-light', 'opacity-main'].map((shade) =>
-          compositeColor(palette[`${tone}-${shade}`], surface),
-        ),
-      );
-      for (const background of [...surfaces, ...labelSurfaces]) {
-        expect(contrastRatio(toneText, background)).toBeGreaterThanOrEqual(4.5);
-      }
-    }
-  });
-
-  test.each(Object.keys(figmaTokens.Variables))('%s tone text meets WCAG AA on tinted surfaces', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    const surfaces = [colors.background.canvas, colors.background.surface];
-
-    for (const tone of ['primary', 'secondary', 'error', 'warning', 'info', 'success']) {
-      const palette = colors.palette as Record<string, string>;
-      const toneText = palette[`${tone}-text`];
-      const tintedSurfaces = [
-        ...surfaces,
-        ...surfaces.map((surface) => compositeColor(colors.action.hover, surface)),
-      ].flatMap((surface) =>
-        ['opacity-lighter', 'opacity-light', 'opacity-main'].map((shade) =>
-          compositeColor(palette[`${tone}-${shade}`], surface),
-        ),
-      );
-      for (const background of [...surfaces, ...tintedSurfaces]) {
-        expect(contrastRatio(toneText, background)).toBeGreaterThanOrEqual(4.5);
-      }
-    }
-  });
-
-  test.each(Object.keys(figmaTokens.Variables))('%s sticky table surfaces are opaque and readable', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    const surface = colors.background.surface;
-    const hoverSurface = colors.action['hover-surface'];
-    expect(hoverSurface).toBe(compositeColor(colors.action.hover, surface));
-    expect(hoverSurface).toMatch(/^#[\da-f]{6}$/i);
-    expect(contrastRatio(colors.text.primary, hoverSurface)).toBeGreaterThanOrEqual(4.5);
-
-    for (const tone of ['primary', 'secondary', 'error', 'warning', 'info', 'success']) {
-      const toneSurface = colors.palette[`${tone}-surface`];
-      expect(toneSurface).toBe(compositeColor(colors.palette[`${tone}-opacity-light`], surface));
-      expect(toneSurface).toMatch(/^#[\da-f]{6}$/i);
-      expect(contrastRatio(colors.palette[`${tone}-text`], toneSurface)).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-
-  test.each(Object.keys(figmaTokens.Variables))('%s table dividers meet 3:1 contrast on table surfaces', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    const tableDivider = colors['table-divider'];
-    const surfaces = [colors.background.canvas, colors.background.surface];
-    const tableSurfaces = [
-      ...surfaces,
-      ...surfaces.map((surface) => compositeColor(colors.action.hover, surface)),
-      ...['primary', 'secondary', 'error', 'warning', 'info', 'success'].flatMap((tone) =>
-        surfaces.map((surface) => compositeColor(colors.palette[`${tone}-opacity-light`], surface)),
-      ),
-    ];
-
-    for (const surface of tableSurfaces) {
-      expect(contrastRatio(tableDivider, surface)).toBeGreaterThanOrEqual(3);
-    }
-  });
-
-  test.each(Object.keys(figmaTokens.Variables))('%s semantic text and input borders meet contrast targets', (mode) => {
-    const colors = themeColors(figmaTokens, mode);
-    const surfaces = [colors.background.canvas, colors.background.surface];
-    const textSurfaces = [
-      ...surfaces,
-      ...surfaces.flatMap((surface) =>
-        ['hover', 'selected', 'focus'].map((state) => compositeColor(colors.action[state], surface)),
-      ),
-    ];
-    for (const role of ['primary', 'secondary', 'muted']) {
-      for (const surface of textSurfaces) {
-        expect(contrastRatio(colors.text[role], surface)).toBeGreaterThanOrEqual(4.5);
-      }
-    }
-    for (const surface of surfaces) {
-      expect(contrastRatio(colors.border.input, surface)).toBeGreaterThanOrEqual(3);
-    }
   });
 
   test('keeps token font sizes and weights distinct from color and family classes', () => {

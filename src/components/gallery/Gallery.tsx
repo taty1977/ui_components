@@ -164,7 +164,7 @@ export default function Gallery({
                 </button>
                 {showHoverActions && (
                   <div className="pointer-events-none absolute inset-1.5 flex flex-col items-center justify-center gap-4 rounded-sm bg-background-surface text-text-primary transition-opacity duration-300 motion-reduce:transition-none [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
-                    {/* Hide inactive titles so contrast checks do not sample the image underneath. */}
+                    {/* Hide the title while its overlay is inactive. */}
                     <Paragraph
                       size="sm"
                       weight="semibold"
@@ -184,7 +184,7 @@ export default function Gallery({
                           title="Visit project"
                           className={cn(
                             hoverActionClasses,
-                            'inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-palette-primary-dark focus:bg-palette-primary-dark hover:text-palette-primary-contrast-dark focus:text-palette-primary-contrast-dark focus-visible:outline-palette-primary-graphic',
+                            'inline-flex size-10 items-center justify-center rounded-full transition-colors hover:bg-palette-primary-dark focus:bg-palette-primary-dark focus-visible:outline-palette-primary-graphic',
                             paletteToneStyles.primary.default,
                             paletteToneStyles.primary.defaultText,
                           )}

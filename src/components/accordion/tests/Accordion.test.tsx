@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { paletteTones } from '../../../themes/paletteTones';
 import { Accordion } from '../Accordion';
 
 const testItems = [
@@ -72,7 +73,7 @@ describe('Accordion', () => {
 
   test.each([
     ['default', 'bg-palette-info-main', 'text-palette-info-contrast'],
-    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-main'],
+    ['label', 'bg-palette-info-opacity-light', 'text-palette-info-text'],
     ['outline', 'bg-transparent', 'text-palette-info-outline-text'],
     ['text', 'bg-transparent', 'text-palette-info-button-text'],
   ] as const)('matches the Button %s treatment', (variant, background, text) => {
@@ -81,6 +82,14 @@ describe('Accordion', () => {
     expect(button).toHaveClass(background, text);
     expect(button.parentElement).toHaveClass('rounded-md');
     if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-main');
+  });
+
+  test.each(paletteTones)('uses the same header font weight for the %s tone', (tone) => {
+    for (const variant of ['default', 'label', 'outline', 'text'] as const) {
+      const { unmount } = render(<Accordion items={testItems} variant={variant} tone={tone} />);
+      expect(screen.getByRole('button', { name: /panel one/i })).toHaveClass('font-medium');
+      unmount();
+    }
   });
 
   test.each([

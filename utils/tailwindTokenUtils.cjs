@@ -56,7 +56,6 @@ const colorChannels = (value) => {
   };
 };
 
-// Accessibility: flatten alpha over an opaque surface for contrast checks.
 const compositeColor = (foreground, background) => {
   const fg = colorChannels(foreground);
   const bg = colorChannels(background);
@@ -69,171 +68,22 @@ const compositeColor = (foreground, background) => {
     .join('')}`;
 };
 
-// Accessibility: WCAG luminance uses linearized sRGB.
-const luminance = (value) => {
-  const channels = colorChannels(value).rgb.map((channel) => channel / 255);
-  const linear = channels.map((channel) => (channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4));
-  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-};
-
-const contrastRatio = (foreground, background) => {
-  const first = luminance(foreground);
-  const second = luminance(background);
-  return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-};
-
-const minimumContrast = (foreground, backgrounds) =>
-  Math.min(...backgrounds.map((background) => contrastRatio(foreground, background)));
-
-const colorDistance = (first, second) => {
-  const a = colorChannels(first).rgb;
-  const b = colorChannels(second).rgb;
-  return Math.sqrt(a.reduce((total, channel, index) => total + (channel - b[index]) ** 2, 0));
-};
-
-// Accessibility: prefer the closest passing token; text needs 4.5:1.
-const readableColor = (candidates, backgrounds, reference, mode, tone, minimumRatio = 4.5) => {
-  const selected = [...new Set(candidates)]
-    .map((color) => ({ color, contrast: minimumContrast(color, backgrounds) }))
-    .filter(({ contrast }) => contrast >= minimumRatio)
-    .sort(
-      (first, second) =>
-        colorDistance(first.color, reference) - colorDistance(second.color, reference) ||
-        second.contrast - first.contrast,
-    )[0];
-  if (!selected) throw new Error(`${mode}: no WCAG AA text color found for ${tone}`);
-  return selected.color;
-};
-
-const neutralColorCandidates = (primitives, misc) => [
-  ...Object.values(primitives.Color.Gray).map((token) => token.$value),
-  misc['bg-white'],
-  misc['bg-black'],
-  misc.snackbar,
-];
-
-const readableToneColor = (candidates, backgrounds, reference, mode, tone) => {
-  const shades = [...candidates];
-  if (!shades.some((color) => minimumContrast(color, backgrounds) >= 4.5)) {
-    const channels = colorChannels(reference).rgb;
-    for (const target of [0, 255]) {
-      for (let step = 1; step <= 255; step++) {
-        shades.push(`#${channels.map((channel) =>
-          Math.round(channel + (target - channel) * step / 255).toString(16).padStart(2, '0'),
-        ).join('')}`);
-      }
-    }
-  }
-  return readableColor(shades, backgrounds, reference, mode, tone);
-};
-
-// Accessibility targets: text 4.5:1, graphics 3:1.
-const accessiblePaletteColors = (mode, palette, primitives, misc, theme) => {
-  const toneNames = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
-  const neutralCandidates = neutralColorCandidates(primitives, misc);
-  const output = {};
-  for (const tone of toneNames) {
-    const main = palette[`${tone}-main`];
-    const dark = palette[`${tone}-dark`];
-    const toneCandidates = Object.values(primitives.Color[tone[0].toUpperCase() + tone.slice(1)])
-      .map((token) => token.$value);
-    const backgrounds = [misc['body-bg'], misc.paper];
-    const controlSurfaces = backgrounds.flatMap((surface) => [surface, compositeColor(theme['action-hover'], surface)]);
-    const graphicCandidates = [
-      ...Object.values(primitives.Color[tone[0].toUpperCase() + tone.slice(1)]).map((token) => token.$value),
-      ...neutralCandidates,
-      main,
-      dark,
-      palette[`${tone}-light`],
-    ];
-    // Preserve theme fills; correct only the solid foreground.
-    output[`${tone}-contrast`] = misc['bg-white'];
-    output[`${tone}-main`] = main;
-    output[`${tone}-dark`] = dark;
-    if (minimumContrast(misc['bg-white'], [main]) < 4.5) {
-        output[`${tone}-contrast`] = readableToneColor(
-          toneCandidates.filter((color) => luminance(color) < Math.min(luminance(main), luminance(dark))),
-          [main],
-          main,
-          mode,
-          `${tone} solid text`,
-        );
-    }
-    output[`${tone}-contrast-dark`] = contrastRatio(output[`${tone}-contrast`], dark) >= 4.5
-      ? output[`${tone}-contrast`]
-      : readableToneColor(toneCandidates, [dark], dark, mode, `${tone} interactive solid text`);
-    output[`${tone}-graphic`] = readableColor(graphicCandidates, controlSurfaces, main, mode, `${tone} graphic`, 3);
-
-    // Opaque sticky surfaces avoid image/gradient contrast ambiguity.
-    output[`${tone}-surface`] = compositeColor(palette[`${tone}-opacity-light`], misc.paper);
-    // Include tints layered over hovered rows.
-    const labelBackgrounds = controlSurfaces.flatMap((surface) =>
-      ['opacity-lighter', 'opacity-light', 'opacity-main'].map((shade) =>
-        compositeColor(palette[`${tone}-${shade}`], surface),
-      ),
-    );
-    output[`${tone}-text`] = readableColor(
-      graphicCandidates,
-      [...controlSurfaces, ...labelBackgrounds],
-      main,
-      mode,
-      `${tone} text`,
-    );
-    const textButtonSurfaces = controlSurfaces.flatMap((surface) => [
-      surface,
-      compositeColor(palette[`${tone}-opacity-lighter`], surface),
-    ]);
-    output[`${tone}-button-text`] = readableToneColor(
-      [main, ...toneCandidates], textButtonSurfaces, main, mode, `${tone} text button`,
-    );
-    output[`${tone}-outline-text`] = output[`${tone}-button-text`];
-    const originalBodyText = tone === 'primary' || tone === 'secondary' ? output[`${tone}-text`] : main;
-    output[`${tone}-body-text`] = readableToneColor(
-      [originalBodyText, ...toneCandidates], backgrounds, originalBodyText, mode, `${tone} body text`,
-    );
-  }
-  return output;
-};
-
-// Share one color tree across theme variables and utilities.
 const themeColors = (figmaTokens, mode) => {
   const variables = figmaTokens.Variables[mode];
-  const primitives = figmaTokens.Primitives[mode];
   const theme = tokenValues(variables.Theme);
   const misc = tokenValues(variables.Misc);
   const palette = colorPalette(figmaTokens, variables['Color-Palette']);
-  Object.assign(palette, accessiblePaletteColors(mode, palette, primitives, misc, theme));
-  const tableSurfaces = [misc['body-bg'], misc.paper];
-  const contentSurfaces = [
-    ...tableSurfaces,
-    ...tableSurfaces.flatMap((surface) =>
-      ['action-hover', 'action-selected', 'action-focus'].map((state) => compositeColor(theme[state], surface)),
-    ),
-  ];
-  const neutralCandidates = neutralColorCandidates(primitives, misc);
-  const readableText = (token) =>
-    readableColor(
-      [token, ...neutralCandidates].map((color) => compositeColor(color, misc.paper)),
-      contentSurfaces,
-      compositeColor(token, misc.paper),
-      mode,
-      'semantic text',
-    );
-  // Accessibility: dividers need 3:1 across supported row backgrounds.
-  const tableDivider = readableColor(
-    neutralCandidates,
-    [
-      ...tableSurfaces,
-      ...tableSurfaces.map((surface) => compositeColor(theme['action-hover'], surface)),
-      ...['primary', 'secondary', 'error', 'warning', 'info', 'success'].flatMap((tone) =>
-        tableSurfaces.map((surface) => compositeColor(palette[`${tone}-opacity-light`], surface)),
-      ),
-    ],
-    compositeColor(theme.divider, misc.paper),
-    mode,
-    'table divider',
-    3,
-  );
+  const toneNames = ['primary', 'secondary', 'error', 'warning', 'info', 'success'];
+  for (const tone of toneNames) {
+    const main = palette[`${tone}-main`];
+    palette[`${tone}-contrast`] = misc['bg-white'];
+    palette[`${tone}-graphic`] = main;
+    palette[`${tone}-surface`] = compositeColor(palette[`${tone}-opacity-light`], misc.paper);
+    palette[`${tone}-text`] = main;
+    palette[`${tone}-outline-text`] = main;
+    palette[`${tone}-button-text`] = main;
+  }
+  const primitives = figmaTokens.Primitives[mode];
 
   return {
     background: {
@@ -254,24 +104,17 @@ const themeColors = (figmaTokens, mode) => {
       'bg-linkedin': misc['bg-linkedin'],
     },
     text: {
-      primary: readableText(theme['text-primary']),
-      secondary: readableText(theme['text-secondary']),
-      muted: readableText(theme['text-subtitle']),
+      primary: theme['text-primary'],
+      secondary: theme['text-secondary'],
+      muted: theme['text-subtitle'],
       disabled: theme['text-disabled'],
     },
     border: {
       subtle: theme['outline-border'],
-      input: readableColor(
-        [compositeColor(theme['input-border'], misc.paper), ...neutralCandidates],
-        tableSurfaces,
-        compositeColor(theme['input-border'], misc.paper),
-        mode,
-        'input border',
-        3,
-      ),
+      input: theme['input-border'],
     },
     divider: theme.divider,
-    'table-divider': tableDivider,
+    'table-divider': theme.divider,
     'chip-background': theme['chip-background'],
     'filled-input-bg': theme['filled-input-bg'],
     'backdrop-overlay': theme['backdrop-overlay'],
