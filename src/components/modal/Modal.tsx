@@ -18,6 +18,9 @@ interface ModalBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
   closeButtonLabel?: string;
   panelClassName?: string;
   titleClassName?: string;
+  headerClassName?: string;
+  contentClassName?: string;
+  closeButtonClassName?: string;
 }
 
 export type ModalProps = ModalBaseProps &
@@ -50,6 +53,9 @@ export default function Modal({
   className,
   panelClassName,
   titleClassName,
+  headerClassName,
+  contentClassName,
+  closeButtonClassName,
   ...props
 }: ModalProps) {
   const titleId = useId();
@@ -112,7 +118,11 @@ export default function Modal({
         className,
       )}
       onMouseDown={(event) => {
-        if (closeOnBackdrop && event.target === event.currentTarget) onClose();
+        if (closeOnBackdrop && event.target === event.currentTarget) {
+          // Keep the backdrop from stealing restored focus.
+          event.preventDefault();
+          onClose();
+        }
       }}
     >
       <div
@@ -131,7 +141,7 @@ export default function Modal({
         )}
       >
         {(title !== undefined || showCloseButton) && (
-          <div className="mb-4 flex items-start justify-between gap-4">
+          <div className={cn('mb-4 flex items-start justify-between gap-4', headerClassName)}>
             {title !== undefined && (
               <Heading
                 level="h2"
@@ -147,7 +157,10 @@ export default function Modal({
                 type="button"
                 onClick={onClose}
                 aria-label={closeButtonLabel}
-                className="ml-auto inline-flex size-9 shrink-0 items-center justify-center rounded-full text-text-primary hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                className={cn(
+                  'ml-auto inline-flex size-9 shrink-0 items-center justify-center rounded-full text-text-primary hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current',
+                  closeButtonClassName,
+                )}
               >
                 <XMarkIcon aria-hidden="true" className="size-5" />
               </button>
@@ -159,7 +172,7 @@ export default function Modal({
             {description}
           </Paragraph>
         )}
-        <div>{children}</div>
+        <div className={contentClassName}>{children}</div>
       </div>
     </div>,
     document.body,

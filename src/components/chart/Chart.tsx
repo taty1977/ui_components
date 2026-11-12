@@ -84,14 +84,14 @@ function ChartLabel({
   children,
   horizontalOffset,
   verticalOffset,
-  style,
+  textColor,
 }: {
   x: number | string;
   y: number | string;
   children: React.ReactNode;
   horizontalOffset: number;
   verticalOffset: number;
-  style: React.CSSProperties;
+  textColor?: string;
 }) {
   const labelRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 1, height: 1 });
@@ -120,7 +120,11 @@ function ChartLabel({
       height={size.height}
       overflow="visible"
     >
-      <div ref={labelRef} style={style}>
+      <div
+        ref={labelRef}
+        className="w-max whitespace-nowrap bg-background-surface p-px font-sans text-13 leading-20 text-text-primary"
+        style={textColor ? { color: textColor } : undefined}
+      >
         {children}
       </div>
     </foreignObject>
@@ -172,7 +176,7 @@ export const Chart: React.FC<ChartProps> = ({
     [palette],
   );
 
-  const { gridColor, textColor, customTooltipStyle, tooltipItemStyle, tooltipLabelStyle, axisTickStyle, legendStyle } =
+  const { gridColor, textColor, customTooltipStyle, tooltipItemStyle, tooltipLabelStyle, legendStyle } =
     useMemo(() => {
       const grid = customGridColor || 'var(--border-subtle)';
       const text = customTextColor || 'var(--text-primary)';
@@ -203,11 +207,6 @@ export const Chart: React.FC<ChartProps> = ({
           fontFamily,
           fontWeight: 600,
         },
-        axisTickStyle: {
-          fill: text,
-          fontSize,
-          fontFamily,
-        },
         legendStyle: {
           color: text,
           fontSize,
@@ -233,16 +232,7 @@ export const Chart: React.FC<ChartProps> = ({
       y={y}
       horizontalOffset={horizontalOffset}
       verticalOffset={verticalOffset}
-      style={{
-        color: textColor,
-        backgroundColor: 'var(--background-surface)',
-        fontSize: axisTickStyle.fontSize,
-        fontFamily: axisTickStyle.fontFamily,
-        lineHeight: '20px',
-        padding: '1px',
-        width: 'max-content',
-        whiteSpace: 'nowrap',
-      }}
+      textColor={customTextColor}
     >
       {value}
     </ChartLabel>

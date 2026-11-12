@@ -1,11 +1,39 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { BodyText, Paragraph, type BodyTextVariant } from '../index';
-import { bodyTextClasses } from '../../../utils/text.styles';
+import { expectTypeOf } from 'vitest';
+import { BodyText, Paragraph, type BodyTextVariant, type ParagraphProps } from '../index';
+import type { HeadingProps } from '../../heading';
+import type { LinkProps } from '../../link';
+import { bodyTextClasses, headingTextClasses, linkTextClasses, textTones, textToneClasses, type TextWeight } from '../../../utils/text.styles';
 import { paletteTones, paletteToneStyles } from '../../../themes/paletteTones';
 import Button from '../../button/Button';
 
 test('exports BodyText as the web-compatible Paragraph alias', () => {
   expect(BodyText).toBe(Paragraph);
+});
+
+test('exposes tone without the removed color prop across typography components', () => {
+  expectTypeOf<HeadingProps>().not.toHaveProperty('color');
+  expectTypeOf<ParagraphProps>().not.toHaveProperty('color');
+  expectTypeOf<LinkProps>().not.toHaveProperty('color');
+});
+
+test('uses regular rather than normal for shared typography weights', () => {
+  expectTypeOf<'regular'>().toExtend<TextWeight>();
+  expectTypeOf<'normal'>().not.toExtend<TextWeight>();
+});
+
+test.each<[TextWeight, string]>([
+  ['regular', 'font-regular'],
+  ['medium', 'font-medium'],
+  ['semibold', 'font-semibold'],
+  ['bold', 'font-bold'],
+  ['semiBold', 'font-semibold'],
+  ['light', 'font-light'],
+  ['extraBold', 'font-extrabold'],
+])('supports the shared %s weight across typography styles', (weight, className) => {
+  for (const classes of [bodyTextClasses({ weight }), headingTextClasses({ weight }), linkTextClasses({ weight })]) {
+    expect(classes.split(' ')).toContain(className);
+  }
 });
 
 test.each(paletteTones)('matches %s Button label and text tones', (tone) => {
@@ -47,13 +75,18 @@ test.each(variants)('%s matches the shared size and default weight', (variant, s
   if (variant === 'overline') expect(text).toHaveClass('uppercase', 'tracking-wider');
 });
 
-test('shares legacy color, weight, transform, and explicit size overrides across native elements', () => {
+test.each(textTones)('supports the %s text tone', (tone) => {
+  render(<Paragraph tone={tone}>Body text</Paragraph>);
+  expect(screen.getByText('Body text')).toHaveClass(textToneClasses[tone]);
+  expect(screen.getByText('Body text')).not.toHaveAttribute('tone');
+});
+
+test('shares tone, weight, transform, and explicit size overrides across native elements', () => {
   const classes = bodyTextClasses({
     variant: 'subtitle1',
     size: 'xs',
     weight: 'semiBold',
-    color: 'danger',
-    tone: 'muted',
+    tone: 'error',
     textTransform: 'capitalize',
   }).split(' ');
   expect(classes).toEqual([
@@ -64,7 +97,7 @@ test('shares legacy color, weight, transform, and explicit size overrides across
     'text-palette-error-text',
     'capitalize',
   ]);
-  expect(bodyTextClasses({ color: 'text' })).toBe(bodyTextClasses());
+  expect(bodyTextClasses({ tone: 'default' })).toBe(bodyTextClasses());
 });
 
 test('allows tone and weight overrides without losing the variant size', () => {

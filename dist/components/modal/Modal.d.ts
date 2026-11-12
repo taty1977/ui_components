@@ -11,6 +11,9 @@ interface ModalBaseProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
     closeButtonLabel?: string;
     panelClassName?: string;
     titleClassName?: string;
+    headerClassName?: string;
+    contentClassName?: string;
+    closeButtonClassName?: string;
 }
 export type ModalProps = ModalBaseProps & ({
     title: ReactNode;
@@ -19,5 +22,5 @@ export type ModalProps = ModalBaseProps & ({
     title?: never;
     ariaLabel: string;
 });
-export default function Modal({ open, onClose, title, ariaLabel, description, children, size, closeOnBackdrop, showCloseButton, closeButtonLabel, className, panelClassName, titleClassName, ...props }: ModalProps): import("react").ReactPortal | null;
+export default function Modal({ open, onClose, title, ariaLabel, description, children, size, closeOnBackdrop, showCloseButton, closeButtonLabel, className, panelClassName, titleClassName, headerClassName, contentClassName, closeButtonClassName, ...props }: ModalProps): import("react").ReactPortal | null;
 export {};

@@ -88,6 +88,48 @@ describe('Autocomplete Component', () => {
     expect(queryByText('Banana')).not.toBeInTheDocument();
   });
 
+  test('matches case-insensitively without trimming nonblank searches', () => {
+    render(<Autocomplete options={['Apple', 'Pine Apple']} onSelect={vi.fn()} />);
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: ' APP' } });
+    expect(screen.getByRole('option', { name: 'Pine Apple' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Apple' })).not.toBeInTheDocument();
+
+    fireEvent.change(input, { target: { value: '   ' } });
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Clear input' })).not.toBeInTheDocument();
+  });
+
+  test('keeps controlled values owned by the parent when selecting or clearing', () => {
+    const onSelect = vi.fn();
+    const { rerender } = render(
+      <Autocomplete value="Ap" options={options} onSelect={onSelect} />,
+    );
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.click(screen.getByRole('option', { name: 'Apple' }));
+    expect(onSelect).toHaveBeenLastCalledWith('Apple');
+    expect(input).toHaveValue('Ap');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+
+    rerender(<Autocomplete value="Apple" options={options} onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Clear input' }));
+    expect(onSelect).toHaveBeenLastCalledWith('');
+    expect(input).toHaveValue('Apple');
+  });
+
+  test('allows the consumer to prevent built-in keyboard selection', () => {
+    const onSelect = vi.fn();
+    render(
+      <Autocomplete options={options} onSelect={onSelect} onKeyDown={(event) => event.preventDefault()} />,
+    );
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'Ap' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.getByRole('option', { name: 'Apple' })).toBeInTheDocument();
+  });
+
   test('keeps suggestions in document flow so they do not obscure nearby content', () => {
     const { getByRole } = render(
       <>
@@ -120,6 +162,36 @@ describe('Autocomplete Component', () => {
     expect(screen.queryByText('Apple')).not.toBeInTheDocument();
     expect(screen.queryByText('Banana')).not.toBeInTheDocument();
     expect(screen.queryByText('Cherry')).not.toBeInTheDocument();
+  });
+
+  test('preserves native sizing, message order, and accessible clear actions in the shared control', () => {
+    render(
+      <Autocomplete
+        id="fruit"
+        size={24}
+        label="Fruit"
+        helperText="Choose a fruit."
+        aria-describedby="hint"
+        iconRight={<span data-testid="trailing-icon">Search</span>}
+        onSelect={vi.fn()}
+        options={options}
+      />,
+    );
+    const input = screen.getByRole('combobox', { name: 'Fruit' });
+    expect(input).toHaveAttribute('size', '24');
+    expect(input).toHaveAttribute('aria-describedby', 'hint fruit-helper');
+    expect(input.parentElement).toHaveClass('min-h-12', 'pr-3');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: 'Ap' } });
+
+    const clearButton = screen.getByRole('button', { name: 'Clear input' });
+    expect(clearButton.closest('[aria-hidden="true"]')).toBeNull();
+    expect(screen.queryByTestId('trailing-icon')).not.toBeInTheDocument();
+    const list = screen.getByRole('listbox');
+    expect(list.nextElementSibling).toBe(screen.getByText('Choose a fruit.'));
+    fireEvent.click(clearButton);
+    expect(input).toHaveFocus();
+    expect(screen.getByTestId('trailing-icon').parentElement).toHaveAttribute('aria-hidden', 'true');
   });
 
   test('renders custom icon nodes in both icon slots', () => {
@@ -173,6 +245,32 @@ describe('Autocomplete Component', () => {
     fireEvent.change(input, { target: { value: 'a' } });
     fireEvent.keyDown(input, { key: 'Escape' });
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  });
+
+  test('clamps keyboard navigation to the first and last suggestions', () => {
+    const onSelect = vi.fn();
+    render(<Autocomplete options={options} onSelect={onSelect} />);
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'a' } });
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    expect(screen.getByRole('option', { name: 'Apple' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(screen.getByRole('option', { name: 'Banana' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(input, { key: 'ArrowUp' });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onSelect).toHaveBeenCalledWith('Apple');
+  });
+
+  test('does not select or prevent Enter when there are no suggestions', () => {
+    const onSelect = vi.fn();
+    render(<Autocomplete options={options} onSelect={onSelect} />);
+    const input = screen.getByRole('combobox');
+    fireEvent.change(input, { target: { value: 'no matches' } });
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(fireEvent.keyDown(input, { key: 'Enter' })).toBe(true);
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(input).not.toHaveAttribute('aria-activedescendant');
   });
 
   test('clear remains keyboard accessible and restores focus to the input', async () => {

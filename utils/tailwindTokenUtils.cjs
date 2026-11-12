@@ -1,5 +1,6 @@
 const themeKey = (mode) => mode.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 
+// Extracts the $value from each token in a group, ignoring metadata like $type.
 const tokenValues = (tokens) =>
   Object.fromEntries(
     Object.entries(tokens)
@@ -26,6 +27,7 @@ const resolveTokenReference = (figmaTokens, value) => {
   return resolveTokenReference(figmaTokens, target.$value);
 };
 
+// Converts a map of token names and values to CSS variable references with a given prefix.
 const toVars = (map, prefix) =>
   Object.fromEntries(Object.entries(map).map(([name, value]) => [`--${prefix}-${name}`, value]));
 
@@ -37,16 +39,18 @@ const unionVarRefs = (figmaTokens, pick, prefix) => {
   return Object.fromEntries(names.map((name) => [name, `var(--${prefix}-${name})`]));
 };
 
+// Utility function to create a color scale from a token group with a given prefix.
 const colorScale = (tokens, prefix) =>
   Object.fromEntries(
     Object.entries(tokenValues(tokens)).map(([name, value]) => [name.replace(`${prefix}-`, ''), value]),
   );
-
+// Utility function to create a color palette from a token group, resolving Figma references.
 const colorPalette = (figmaTokens, tokens) =>
   Object.fromEntries(
     Object.entries(tokenValues(tokens)).map(([name, value]) => [name, resolveTokenReference(figmaTokens, value)]),
   );
 
+// Utility function to extract RGB and alpha channels from a hex color value.
 const colorChannels = (value) => {
   const match = /^#([\da-f]{6})([\da-f]{2})?$/i.exec(value);
   if (!match) throw new Error(`Unsupported color token: ${value}`);
@@ -56,6 +60,7 @@ const colorChannels = (value) => {
   };
 };
 
+// Utility function to composite a foreground color over a background color, accounting for alpha transparency.
 const compositeColor = (foreground, background) => {
   const fg = colorChannels(foreground);
   const bg = colorChannels(background);
@@ -150,7 +155,7 @@ const colorVariablesForMode = (figmaTokens, mode) => {
   return flatten(themeColors(figmaTokens, mode), [], {});
 };
 
-// Variable references let unprefixed utilities follow the active theme.
+// It connects Tailwind color utilities to theme-switchable CSS variables.
 const adaptiveColors = (figmaTokens) => {
   const modes = Object.keys(figmaTokens.Variables);
   const defaultMode = modes.includes('Pulse') ? 'Pulse' : modes[0];
@@ -164,6 +169,7 @@ const adaptiveColors = (figmaTokens) => {
   return build(themeColors(figmaTokens, defaultMode), []);
 };
 
+// Turns dimension tokens into a simpler key/value map for Tailwind utilities.
 const dimensionScale = (tokens) =>
   Object.fromEntries(
     Object.entries(tokenValues(tokens)).map(([name, value]) => [
@@ -172,14 +178,18 @@ const dimensionScale = (tokens) =>
     ]),
   );
 
+// It gets each theme’s dimension tokens, cleans their names with dimensionScale, then uses unionVarRefs to include keys found across all themes.
+// Returns a map of CSS variable references for the given dimension primitive and theme mode.
 const dimensions = (figmaTokens, primitiveName, variablePrefix) =>
   unionVarRefs(figmaTokens, (primitives) => dimensionScale(primitives[primitiveName]), variablePrefix);
 
+// Generates CSS variable references for dimension tokens for a specific theme mode.
 const dimensionVariablesForMode = (figmaTokens, mode) => ({
   ...toVars(dimensionScale(figmaTokens.Primitives[mode].Gap), 'spacing'),
   ...toVars(dimensionScale(figmaTokens.Primitives[mode]['Border-Radius']), 'radius'),
 });
 
+// Generates CSS variable references for typography tokens for a specific theme mode.
 const typographyVariablesForMode = (figmaTokens, mode) => {
   const typography = figmaTokens.Primitives[mode].Typography;
 
@@ -191,6 +201,7 @@ const typographyVariablesForMode = (figmaTokens, mode) => {
   };
 };
 
+// Generates CSS variable references for a specific scale (e.g., font-size) across all themes.
 const scaleUtilities = (figmaTokens, scaleName) =>
   unionVarRefs(figmaTokens, (primitives) => tokenValues(primitives.Typography[scaleName]), scaleName);
 

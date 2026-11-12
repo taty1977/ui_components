@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { paletteTones } from '../../../themes/paletteTones';
 import { Carousel } from '../Carousel';
@@ -28,6 +28,55 @@ const overflowImages = Array.from({ length: 30 }, (_, index) => {
 });
 
 describe('Carousel', () => {
+  test.each([
+    ['desktop', '4.5rem', 'max-w-5xl'],
+    ['tablet', '3.75rem', 'max-w-3xl'],
+    ['mobile', '3.25rem', 'max-w-none'],
+  ] as const)('preserves %s dimensions across the modal portal', async (breakpoint, thumbnailSize, widthClass) => {
+    const user = userEvent.setup();
+    const { container } = render(<Carousel images={images} breakpoint={breakpoint} />);
+    await user.click(screen.getByRole('button', { name: /open image gallery: image one/i }));
+    const dialog = screen.getByRole('dialog');
+    expect(container.contains(dialog)).toBe(false);
+    expect(dialog.style.getPropertyValue('--carousel-thumb-size')).toBe(thumbnailSize);
+    expect(dialog).toHaveClass(widthClass, 'font-sans', 'overflow-hidden');
+    expect(within(dialog).getByRole('button', { name: 'Close image gallery' })).toHaveFocus();
+  });
+
+  test('uses Modal scroll locking and backdrop dismissal', async () => {
+    const user = userEvent.setup();
+    const previousOverflow = document.body.style.overflow;
+    render(<Carousel images={images} />);
+    const opener = screen.getByRole('button', { name: /open image gallery: image one/i });
+    await user.click(opener);
+    const dialog = screen.getByRole('dialog');
+    expect(document.body.style.overflow).toBe('hidden');
+    await user.click(within(dialog).getByRole('button', { name: 'Next image' }));
+    expect(dialog).toHaveAccessibleName('Image gallery: 2 of 10');
+    await user.click(dialog.parentElement!);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe(previousOverflow);
+    expect(opener).toHaveFocus();
+  });
+
+  test('closes the modal and releases scroll locking when all images are removed', async () => {
+    const user = userEvent.setup();
+    const previousOverflow = document.body.style.overflow;
+    const { rerender } = render(<Carousel images={images} />);
+    await user.click(screen.getByRole('button', { name: /open image gallery: image one/i }));
+    rerender(<Carousel images={[]} />);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.body.style.overflow).toBe(previousOverflow);
+  });
+
+  test('copies scoped theme tokens to the portaled panel', () => {
+    render(<Carousel images={images} />);
+    const opener = screen.getByRole('button', { name: /open image gallery: image one/i });
+    opener.style.setProperty('--text-primary', '#123456');
+    fireEvent.click(opener);
+    expect(screen.getByRole('dialog').style.getPropertyValue('--text-primary')).toBe('#123456');
+  });
+
   test.each([NaN, Infinity, -Infinity, 1.5])('rejects invalid initialIndex=%s explicitly', (initialIndex) => {
     expect(() => render(<Carousel images={images} initialIndex={initialIndex} />)).toThrow(
       'Carousel initialIndex must be a finite integer.',

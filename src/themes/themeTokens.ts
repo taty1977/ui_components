@@ -3,7 +3,9 @@ import figmaTokens, { themeKeys } from './generatedTokens';
 export type FigmaThemeMode = keyof typeof figmaTokens.Variables;
 export type ThemeMode = (typeof themeKeys)[FigmaThemeMode];
 
+// Resolves a token reference to its concrete value, following Figma alias paths recursively.
 function resolve(value: string): string {
+  // Figma aliases use paths like {Primitives.Dark.Color.Gray.gray-500}; follow them to the concrete value.
   const reference = value.match(/^\{(.+)\}$/);
   if (!reference) return value;
   let target: unknown = figmaTokens;
@@ -20,12 +22,18 @@ function resolve(value: string): string {
 }
 
 type TokenGroup = Record<string, { readonly $value: string } | string>;
+
+// Utility function to extract resolved values from a token group
 const values = (group: TokenGroup): Record<string, string> =>
   Object.fromEntries(
-    Object.entries(group).flatMap(([key, token]) => (typeof token === 'string' ? [] : [[key, resolve(token.$value)]])),
+       Object.entries(group).flatMap(([key, token]) => (typeof token === 'string' ? [] : [[key, resolve(token.$value)]])),
   );
+
+// Utility functions for scaling color
 const scale = (group: TokenGroup, prefix = ''): Record<string, string> =>
   Object.fromEntries(Object.entries(values(group)).map(([key, value]) => [key.replace(prefix, ''), value]));
+
+// Utility functions for scaling dimensions
 const dimensions = (group: TokenGroup, prefix: string | RegExp = ''): Record<string, number> =>
   Object.fromEntries(
     Object.entries(values(group)).map(([key, value]) => [key.replace(prefix, ''), Number.parseFloat(value)]),
@@ -74,5 +82,6 @@ const themes = Object.fromEntries(
 ) as Record<ThemeMode, ReturnType<typeof createThemeTokens>>;
 
 export const themeModes = Object.values(themeKeys).sort((a, b) => a.localeCompare(b));
+// Keep the top-level tokens on the reference pulse theme; `themes` exposes every mode.
 export const themeTokens = { core: themes.pulse.core, semantic: themes.pulse.semantic, themes };
 export const getThemeTokens = (mode: ThemeMode) => themes[mode];

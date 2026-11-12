@@ -1,6 +1,6 @@
 export { default as Paragraph, default as BodyText } from './Paragraph';
 export type {
-  ParagraphColor,
+  ParagraphTone,
   ParagraphFamily,
   ParagraphProps,
   ParagraphSize,

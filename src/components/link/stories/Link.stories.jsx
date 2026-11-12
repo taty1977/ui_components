@@ -14,7 +14,7 @@ export default {
     docs: {
       description: {
         component:
-          'A native anchor sharing Paragraph typography, tones, color aliases, and text transforms. Underlines can be always visible, hover/focus only, or disabled. New-tab links include noopener and noreferrer.',
+          'A native anchor sharing Paragraph typography, tones, and text transforms. Underlines can be always visible, hover/focus only, or disabled. New-tab links include noopener and noreferrer.',
       },
     },
   },
@@ -25,11 +25,6 @@ export default {
     size: { control: 'select', options: ['xs', 'sm', 'md', 'lg', 'xl'], table: { category: 'Typography' } },
     weight: { control: 'select', options: textWeights, table: { category: 'Typography' } },
     tone: { control: 'select', options: textTones, table: { category: 'Appearance' } },
-    color: {
-      control: 'select',
-      options: [...textTones, 'title', 'Primary', 'Secondary', 'danger', 'text'],
-      table: { category: 'Appearance' },
-    },
     textTransform: {
       control: 'select',
       options: ['none', 'capitalize', 'uppercase', 'lowercase'],

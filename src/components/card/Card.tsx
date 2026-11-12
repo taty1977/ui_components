@@ -1,6 +1,6 @@
 import type { HTMLAttributes, ReactNode } from 'react';
 import { cn } from '../../utils/cn';
-import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
+import { resolveVariantTone, type ComponentVariant } from '../../types/variants';
 import { toneClasses, type ButtonTone } from '../button/button.styles';
 import { bodyTextClasses } from '../../utils/text.styles';
 
@@ -14,15 +14,6 @@ export interface CardProps extends Omit<HTMLAttributes<HTMLElement>, 'title'> {
   contentClassName?: string;
 }
 
-const cardAppearanceClasses: Record<ComponentVariant, string> = {
-  default: 'border border-border-subtle bg-background-surface shadow-sm',
-  primary: '',
-  secondary: '',
-  label: '',
-  outline: 'border bg-background-surface',
-  text: 'border-0 bg-transparent shadow-none',
-};
-
 export default function Card({
   title,
   description,
@@ -35,36 +26,50 @@ export default function Card({
   children,
   ...props
 }: CardProps) {
-  const appearance = componentVariantAppearances[variant];
   const accent = resolveVariantTone(variant, tone ?? 'primary');
-  const defaultTone = variant === 'default' && tone !== undefined;
+  const styles = toneClasses[accent];
+  const variantClasses: Record<ComponentVariant, string> = {
+    // Default cards stay neutral unless a tone is provided.
+    default: cn(
+      'border border-border-subtle bg-background-surface shadow-sm',
+      tone !== undefined && styles.label,
+      tone !== undefined && 'text-text-primary',
+    ),
+    primary: styles.solid,
+    secondary: styles.solid,
+    label: styles.label,
+    outline: cn(styles.outline, 'bg-background-surface'),
+    text: 'border-0 bg-transparent shadow-none',
+  };
+  const headerClasses = cn(
+    'flex min-h-12 items-start justify-between gap-2.5 px-4 py-4',
+    children != null && 'border-b border-border-subtle',
+    headerClassName,
+  );
   return (
     <section
       {...props}
       className={cn(
         'overflow-hidden rounded-md font-sans text-text-primary transition-colors',
-        cardAppearanceClasses[variant],
-        appearance === 'solid' && variant !== 'default' && toneClasses[accent].solid,
-        defaultTone && toneClasses[accent].label,
-        appearance === 'label' && toneClasses[accent].label,
-        appearance === 'outline' && `${toneClasses[accent].outline} border bg-background-surface`,
-        defaultTone && 'text-text-primary',
+        variantClasses[variant],
         className,
       )}
       data-variant={variant}
       data-tone={tone !== undefined || variant === 'primary' || variant === 'secondary' ? accent : undefined}
     >
       {(title != null || description != null || actions != null) && (
-        <header
-          className={cn(
-            'flex min-h-12 items-start justify-between gap-2.5 px-4 py-4',
-            children != null && 'border-b border-border-subtle',
-            headerClassName,
-          )}
-        >
+        <header className={headerClasses}>
           <div className="min-w-0">
-            {title != null && <div className={cn(bodyTextClasses({ variant: 'subtitle1' }), 'text-inherit leading-[inherit]')}>{title}</div>}
-            {description != null && <div className={cn(bodyTextClasses({ tone: 'muted' }), 'mt-1 leading-[inherit]')}>{description}</div>}
+            {title != null && (
+              <div className={cn(bodyTextClasses({ variant: 'subtitle1' }), 'text-inherit leading-[inherit]')}>
+                {title}
+              </div>
+            )}
+            {description != null && (
+              <div className={cn(bodyTextClasses({ tone: 'muted' }), 'mt-1 leading-[inherit]')}>
+                {description}
+              </div>
+            )}
           </div>
           {actions != null && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </header>

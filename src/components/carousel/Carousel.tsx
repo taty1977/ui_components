@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import {
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -10,7 +10,7 @@ import { cn } from '../../utils/cn';
 import type { Breakpoint } from '../../utils/breakpoints';
 import type { PaletteTone } from '../../themes/paletteTones';
 import { componentVariantAppearances, resolveVariantTone, type ComponentVariant } from '../../types/variants';
-import Heading from '../heading/Heading';
+import Modal from '../modal/Modal';
 import { toneClasses } from '../button/button.styles';
 import { toneTextClasses } from '../shared/fields/field.styles';
 
@@ -67,19 +67,20 @@ export function Carousel({
   breakpoint = 'desktop',
   openOnClick = true,
 }: CarouselProps) {
-  const titleId = useId();
   const [activeIndex, setActiveIndex] = useState(() => initialImageIndex(initialIndex, images.length));
   const [open, setOpen] = useState(false);
   const [thumbStart, setThumbStart] = useState(0);
   const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const closeRef = useRef<HTMLButtonElement>(null);
-  const openerRef = useRef<HTMLElement | null>(null);
-  const dialogRef = useRef<HTMLDivElement>(null);
+  const [themeStyle, setThemeStyle] = useState<CSSProperties>({});
   const index = Math.min(activeIndex, Math.max(0, images.length - 1));
   const image = images[index];
   const slots = thumbnailsPosition === 'bottom' ? 8 : 5;
   const mobile = breakpoint === 'mobile';
   const stageHeight = mobile ? '10rem' : breakpoint === 'tablet' ? '15rem' : '25rem';
+  // Portaled content cannot inherit the carousel's CSS variables.
+  const carouselStyle = {
+    '--carousel-thumb-size': mobile ? '3.25rem' : breakpoint === 'tablet' ? '3.75rem' : '4.5rem',
+  } as CSSProperties;
   const legacy = variant === 'primary' || variant === 'secondary';
   const accent = resolveVariantTone(variant, tone);
   const appearance = componentVariantAppearances[variant];
@@ -96,32 +97,6 @@ export function Carousel({
     setThumbStart((previous) => Math.min(previous, Math.max(images.length - slots, 0)));
     if (!images.length) setOpen(false);
   }, [images.length, slots]);
-
-  useEffect(() => {
-    if (!open) return;
-    const trigger = openerRef.current;
-    closeRef.current?.focus();
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-      if (event.key === 'Tab' && dialogRef.current) {
-        const focusable = dialogRef.current.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]');
-        const first = focusable[0];
-        const last = focusable[focusable.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    document.addEventListener('keydown', handleKey);
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      trigger?.focus();
-    };
-  }, [open]);
 
   if (!image)
     return (
@@ -143,7 +118,14 @@ export function Carousel({
     onImageChange?.(selected, images[selected]);
   };
   const openGallery = (opener: HTMLElement) => {
-    openerRef.current = opener;
+    // Keep scoped theme tokens across the portal.
+    const computed = getComputedStyle(opener);
+    const variables: Record<string, string> = {};
+    for (const property of computed) {
+      if (property.startsWith('--')) variables[property] = computed.getPropertyValue(property);
+    }
+    setThemeStyle(variables);
+    opener.focus();
     ensureVisible(index);
     setOpen(true);
   };
@@ -312,11 +294,7 @@ export function Carousel({
       className={cn('grid w-full min-w-0 gap-4 rounded-md p-6 font-sans', surfaceClasses, className)}
       data-variant={variant}
       data-tone={accent}
-      style={
-        {
-          '--carousel-thumb-size': mobile ? '3.25rem' : breakpoint === 'tablet' ? '3.75rem' : '4.5rem',
-        } as CSSProperties
-      }
+      style={carouselStyle}
     >
       <div className={bodyClasses}>
         {thumbnails('left')}
@@ -345,51 +323,29 @@ export function Carousel({
           {thumbnails('bottom')}
         </div>
       )}
-      {open && (
-        <div
-          role="presentation"
-          className="fixed inset-0 z-[1000] grid place-items-center bg-backdrop-overlay p-4"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            tabIndex={-1}
-            onClick={(event) => event.stopPropagation()}
-            className={cn(
-              'grid max-h-[90dvh] w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-md border border-border-subtle bg-background-surface',
-              breakpoint === 'tablet' ? 'max-w-3xl' : mobile ? 'max-h-dvh' : 'max-w-5xl',
-            )}
-          >
-            <div className="flex items-center justify-between gap-4 border-b border-border-subtle p-4">
-              <Heading
-                id={titleId}
-                level="h4"
-                weight="medium"
-              >{`Image gallery: ${index + 1} ${ofText} ${images.length}`}</Heading>
-              <button
-                ref={closeRef}
-                type="button"
-                aria-label="Close image gallery"
-                className={cn(controlClasses, controlAppearance)}
-                onClick={() => setOpen(false)}
-              >
-                <span aria-hidden="true">&#10005;</span>
-              </button>
-            </div>
-            <div className={cn('grid gap-4 overflow-auto p-4', mobile && 'gap-2 p-2')}>
-              <div className={bodyClasses}>
-                {thumbnails('left', true)}
-                {stage(true)}
-                {thumbnails('right', true)}
-              </div>
-              {thumbnails('bottom', true)}
-            </div>
-          </div>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Image gallery: ${index + 1} ${ofText} ${images.length}`}
+        closeButtonLabel="Close image gallery"
+        className="z-[1000] p-4 sm:p-4"
+        panelClassName={cn(
+          'grid max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-0 font-sans sm:p-0',
+          breakpoint === 'tablet' ? 'max-w-3xl' : mobile ? 'max-h-dvh max-w-none' : 'max-w-5xl',
+        )}
+        headerClassName="mb-0 items-center border-b border-border-subtle p-4"
+        titleClassName="text-24 font-medium leading-28"
+        closeButtonClassName={cn(controlClasses, controlAppearance)}
+        contentClassName={cn('grid gap-4 overflow-auto p-4', mobile && 'gap-2 p-2')}
+        style={{ ...themeStyle, ...carouselStyle }}
+      >
+        <div className={bodyClasses}>
+          {thumbnails('left', true)}
+          {stage(true)}
+          {thumbnails('right', true)}
         </div>
-      )}
+        {thumbnails('bottom', true)}
+      </Modal>
     </section>
   );
 }

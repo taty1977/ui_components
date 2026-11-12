@@ -5,18 +5,16 @@ import {
   resolveHeadingLevel,
   type HeadingStyleOptions,
   type TextTone,
-  type TypographyWeight,
-  type TextColor,
+  type TextWeight,
   type TextTransform,
 } from '../../utils/text.styles';
 
-export { headingSizeClasses, weightClasses, transformClasses, resolveTextTone } from '../../utils/text.styles';
+export { headingSizeClasses, weightClasses, transformClasses } from '../../utils/text.styles';
 export type { HeadingLevel, HeadingVariant } from '../../utils/text.styles';
 
 export type HeadingTone = TextTone;
-export type HeadingWeight = TypographyWeight;
+export type HeadingWeight = TextWeight;
 export type HeadingFamily = 'sans';
-export type HeadingColor = TextColor;
 export type HeadingTextTransform = TextTransform;
 export interface HeadingProps extends Omit<HTMLAttributes<HTMLHeadingElement>, 'color'>, HeadingStyleOptions {
   family?: HeadingFamily;
@@ -27,7 +25,6 @@ export default function Heading({
   variant = 'default',
   weight = 'bold',
   family: _family,
-  color,
   tone = 'default',
   textTransform = 'none',
   className,
@@ -39,7 +36,7 @@ export default function Heading({
     <Tag
       className={cn(
         'm-0',
-        headingTextClasses({ level, variant, weight, color, tone, textTransform }),
+        headingTextClasses({ level, variant, weight, tone, textTransform }),
         className,
       )}
       {...props}

@@ -70,7 +70,7 @@ describe('Chart', () => {
     act(() => labelObservers.forEach((resize) => resize([{ contentRect: { width: 60.25, height: 20 } }])));
     expect(box).toHaveAttribute('width', '63');
     expect(box).toHaveAttribute('height', '22');
-    expect(label).toHaveStyle({ padding: '1px' });
+    expect(label).toHaveClass('p-px');
     expect(Number(box?.getAttribute('x')) + 63 / 2).toBe(center);
   });
 
@@ -182,7 +182,7 @@ describe('Chart', () => {
     const pieLabels = document.querySelectorAll('foreignObject > div');
     expect(pieLabels.length).toBeGreaterThan(0);
     for (const label of pieLabels) {
-      expect(label).toHaveStyle({ color: 'var(--text-primary)', backgroundColor: 'var(--background-surface)' });
+      expect(label).toHaveClass('text-text-primary', 'bg-background-surface', 'font-sans', 'text-13', 'leading-20');
     }
   });
 
@@ -190,9 +190,18 @@ describe('Chart', () => {
     const { container } = render(
       <Chart data={sampleData} series={sampleSeries} type={type} isAnimationActive={false} />,
     );
-    const labels = container.querySelectorAll('foreignObject > div, .recharts-legend-item-text > span');
-    expect(labels.length).toBeGreaterThan(sampleSeries.length);
+    const labels = container.querySelectorAll('foreignObject > div');
+    expect(labels.length).toBeGreaterThan(0);
     for (const label of labels) {
+      expect(label).toHaveClass(
+        'text-text-primary', 'bg-background-surface', 'font-sans', 'text-13', 'leading-20',
+        'p-px', 'w-max', 'whitespace-nowrap',
+      );
+      expect(label).not.toHaveAttribute('style');
+    }
+    const legendLabels = container.querySelectorAll('.recharts-legend-item-text > span');
+    expect(legendLabels).toHaveLength(sampleSeries.length);
+    for (const label of legendLabels) {
       expect(label).toHaveStyle({ color: 'var(--text-primary)', backgroundColor: 'var(--background-surface)' });
     }
     expect(container.querySelector('foreignObject')).toHaveTextContent('Jan');
@@ -200,7 +209,7 @@ describe('Chart', () => {
   });
 
   test('accepts custom color props to override theme palette', () => {
-    render(
+    const { container } = render(
       <Chart
         colors={['#ff0000', '#00ff00']}
         gridColor="#cccccc"
@@ -214,6 +223,13 @@ describe('Chart', () => {
     );
 
     expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    const labels = container.querySelectorAll('foreignObject > div');
+    expect(labels.length).toBeGreaterThan(0);
+    for (const label of labels) {
+      expect(label).toHaveClass('text-text-primary', 'bg-background-surface');
+      expect(label).toHaveStyle({ color: '#333333' });
+      expect(label.getAttribute('style')).toBe('color: rgb(51, 51, 51);');
+    }
   });
 
   test('applies accessible ARIA region roles and labelling', () => {

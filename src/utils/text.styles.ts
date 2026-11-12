@@ -2,13 +2,10 @@ import { mapPaletteTones, type PaletteTone } from '../themes/paletteTones';
 import { cn } from './cn';
 
 export type TextTone = 'default' | 'muted' | PaletteTone | 'inverse';
-export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
-export type TypographyWeight = TextWeight | 'normal' | 'semiBold' | 'light' | 'extraBold';
-export type TextColor = TextTone | 'title' | 'Primary' | 'Secondary' | 'danger';
+export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold' | 'semiBold' | 'light' | 'extraBold';
 export type TextTransform = 'none' | 'capitalize' | 'uppercase' | 'lowercase';
 export type BodyTextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 export type BodyTextVariant = 'subtitle1' | 'subtitle2' | 'body1' | 'body2' | 'caption' | 'overline';
-export type BodyTextColor = TextColor | 'text';
 export type HeadingLevel = 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 export type HeadingVariant = HeadingLevel | 'default';
 export type LinkUnderline = 'always' | 'hover' | 'none';
@@ -16,8 +13,7 @@ export type LinkUnderline = 'always' | 'hover' | 'none';
 export interface HeadingStyleOptions {
   level?: HeadingLevel;
   variant?: HeadingVariant;
-  weight?: TypographyWeight;
-  color?: TextColor;
+  weight?: TextWeight;
   tone?: TextTone;
   textTransform?: TextTransform;
 }
@@ -25,8 +21,7 @@ export interface HeadingStyleOptions {
 export interface BodyTextStyleOptions {
   size?: BodyTextSize;
   variant?: BodyTextVariant;
-  weight?: TypographyWeight;
-  color?: BodyTextColor;
+  weight?: TextWeight;
   tone?: TextTone;
   textTransform?: TextTransform;
 }
@@ -42,17 +37,18 @@ export const textToneClasses: Record<TextTone, string> = {
   inverse: 'text-misc-bg-white',
 };
 export const textTones = Object.keys(textToneClasses) as TextTone[];
-export const textWeightClasses: Record<TextWeight, string> = {
+
+// Keep controls focused on canonical weights while accepting legacy aliases below.
+export const textWeightClasses = {
   regular: 'font-regular',
   medium: 'font-medium',
   semibold: 'font-semibold',
   bold: 'font-bold',
-};
+} satisfies Partial<Record<TextWeight, string>>;
 export const textWeights = Object.keys(textWeightClasses) as TextWeight[];
 
-export const weightClasses: Record<TypographyWeight, string> = {
+export const weightClasses: Record<TextWeight, string> = {
   ...textWeightClasses,
-  normal: 'font-regular',
   semiBold: 'font-semibold',
   light: 'font-light',
   extraBold: 'font-extrabold',
@@ -63,20 +59,6 @@ export const transformClasses: Record<TextTransform, string> = {
   uppercase: 'uppercase',
   lowercase: 'lowercase',
 };
-export function resolveTextTone(color: TextColor): TextTone {
-  switch (color) {
-    case 'title':
-      return 'default';
-    case 'Primary':
-      return 'primary';
-    case 'Secondary':
-      return 'secondary';
-    case 'danger':
-      return 'error';
-    default:
-      return color;
-  }
-}
 
 const bodyTextSizes: Record<BodyTextSize, string> = {
   xs: 'text-12 leading-14',
@@ -85,7 +67,7 @@ const bodyTextSizes: Record<BodyTextSize, string> = {
   lg: 'text-18 leading-22',
   xl: 'text-24 leading-28',
 };
-const bodyTextVariants: Record<BodyTextVariant, { size: BodyTextSize; weight: TypographyWeight }> = {
+const bodyTextVariants: Record<BodyTextVariant, { size: BodyTextSize; weight: TextWeight }> = {
   subtitle1: { size: 'lg', weight: 'medium' },
   subtitle2: { size: 'md', weight: 'medium' },
   body1: { size: 'md', weight: 'regular' },
@@ -93,24 +75,6 @@ const bodyTextVariants: Record<BodyTextVariant, { size: BodyTextSize; weight: Ty
   caption: { size: 'xs', weight: 'regular' },
   overline: { size: 'xs', weight: 'medium' },
 };
-export function bodyTextClasses({
-  size,
-  variant = 'body1',
-  weight,
-  color,
-  tone = 'default',
-  textTransform = 'none',
-}: BodyTextStyleOptions = {}) {
-  const resolvedTone = color ? resolveTextTone(color === 'text' ? 'default' : color) : tone;
-  return cn(
-    'font-sans',
-    bodyTextSizes[size ?? bodyTextVariants[variant].size],
-    weightClasses[weight ?? bodyTextVariants[variant].weight],
-    textToneClasses[resolvedTone],
-    transformClasses[textTransform],
-    variant === 'overline' && 'uppercase tracking-wider',
-  );
-}
 
 export const headingSizeClasses: Record<HeadingLevel, string> = {
   h1: 'text-46 leading-56',
@@ -121,15 +85,40 @@ export const headingSizeClasses: Record<HeadingLevel, string> = {
   h6: 'text-15 leading-20',
 };
 
+const linkUnderlineClasses: Record<LinkUnderline, string> = {
+  always: 'underline',
+  hover: 'no-underline hover:underline focus-visible:underline',
+  none: 'no-underline',
+};
+
 export function resolveHeadingLevel({ level, variant = 'default' }: HeadingStyleOptions = {}): HeadingLevel {
   return level ?? (variant === 'default' ? 'h4' : variant);
+}
+
+export function bodyTextClasses({
+  size,
+  variant = 'body1',
+  weight,
+  tone = 'default',
+  textTransform = 'none',
+}: BodyTextStyleOptions = {}) {
+  const defaults = bodyTextVariants[variant];
+
+  return cn(
+    'font-sans',
+    bodyTextSizes[size ?? defaults.size],
+    weightClasses[weight ?? defaults.weight],
+    textToneClasses[tone],
+    transformClasses[textTransform],
+    // Overline stays uppercase even when another transform is requested.
+    variant === 'overline' && 'uppercase tracking-wider',
+  );
 }
 
 export function headingTextClasses({
   level,
   variant,
   weight = 'bold',
-  color,
   tone = 'default',
   textTransform = 'none',
 }: HeadingStyleOptions = {}) {
@@ -137,16 +126,10 @@ export function headingTextClasses({
     'font-sans',
     headingSizeClasses[resolveHeadingLevel({ level, variant })],
     weightClasses[weight],
-    textToneClasses[color ? resolveTextTone(color) : tone],
+    textToneClasses[tone],
     transformClasses[textTransform],
   );
 }
-
-const linkUnderlineClasses: Record<LinkUnderline, string> = {
-  always: 'underline',
-  hover: 'no-underline hover:underline focus-visible:underline',
-  none: 'no-underline',
-};
 
 export function linkTextClasses({ underline = 'always', ...textOptions }: LinkStyleOptions = {}) {
   return cn(

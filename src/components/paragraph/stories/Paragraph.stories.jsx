@@ -59,12 +59,6 @@ export default {
       description: 'Compatibility prop; paragraphs always use the theme sans font.',
       table: { category: 'Compatibility' },
     },
-    color: {
-      control: 'select',
-      options: [...tones, 'title', 'Primary', 'Secondary', 'danger', 'text'],
-      description: 'Legacy color override. Prefer tone; color takes precedence when set.',
-      table: { category: 'Compatibility' },
-    },
     className: { control: 'text', table: { category: 'Layout' } },
   },
 };
@@ -90,7 +84,7 @@ export const Variants = {
   ),
 };
 export const Tones = {
-  parameters: { controls: { exclude: ['tone', 'color'] } },
+  parameters: { controls: { exclude: ['tone'] } },
   render: (args) => (
     <Frame>
       {tones.map((tone) => (
@@ -119,7 +113,7 @@ export const Weights = {
 export const ButtonToneAlignment = {
   name: 'Button Tone Comparison',
   parameters: {
-    controls: { exclude: ['children', 'tone', 'color'] },
+    controls: { exclude: ['children', 'tone'] },
     docs: {
       description: {
         story:

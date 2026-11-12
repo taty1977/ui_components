@@ -32,17 +32,17 @@ describe('Link', () => {
       </Link>,
     );
     expect(screen.getByRole('link')).toHaveClass(textToneClasses[tone]);
+    expect(screen.getByRole('link')).not.toHaveAttribute('tone');
   });
 
-  test('supports size, weight, transform, legacy color precedence, and custom classes', () => {
+  test('supports size, weight, transform, tone, and custom classes', () => {
     render(
       <Link
         href="#work"
         size="xl"
         weight="bold"
         textTransform="capitalize"
-        tone="success"
-        color="danger"
+        tone="error"
         className="custom"
       >
         Work

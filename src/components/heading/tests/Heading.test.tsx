@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import Heading, { resolveTextTone } from '../Heading';
-import { headingTextClasses, resolveHeadingLevel, textTones } from '../../../utils/text.styles';
+import Heading from '../Heading';
+import { headingTextClasses, resolveHeadingLevel, textTones, textToneClasses } from '../../../utils/text.styles';
 import Button from '../../button/Button';
 
 describe('Heading', () => {
@@ -32,17 +32,10 @@ describe('Heading', () => {
     expect(screen.getByRole('heading', { level: 2 })).toHaveClass('text-38');
   });
 
-  test.each([
-    ['title', 'default'],
-    ['Primary', 'primary'],
-    ['Secondary', 'secondary'],
-    ['danger', 'error'],
-  ] as const)('resolves the legacy %s color to %s', (color, tone) => {
-    expect(resolveTextTone(color)).toBe(tone);
-  });
-
-  test.each(textTones)('preserves the canonical %s tone', (tone) => {
-    expect(resolveTextTone(tone)).toBe(tone);
+  test.each(textTones)('supports the %s text tone', (tone) => {
+    render(<Heading tone={tone}>Title</Heading>);
+    expect(screen.getByRole('heading')).toHaveClass(textToneClasses[tone]);
+    expect(screen.getByRole('heading')).not.toHaveAttribute('tone');
   });
 
   test.each([
@@ -62,8 +55,7 @@ describe('Heading', () => {
       level: 'h2',
       variant: 'h6',
       weight: 'semiBold',
-      color: 'danger',
-      tone: 'success',
+      tone: 'error',
       textTransform: 'capitalize',
     } as const;
     render(<Heading {...options} className="text-15">Title</Heading>);
@@ -95,7 +87,7 @@ describe('Heading', () => {
 
   test('uses semantic theme colors for notification text', () => {
     render(
-      <Heading level="h4" color="info">
+      <Heading level="h4" tone="info">
         Additional information
       </Heading>,
     );

@@ -6,5 +6,8 @@ export {
   componentVariantAppearances,
   resolveVariantTone,
   type ComponentAppearance,
+  type ComponentSize,
   type ComponentVariant,
+  type ComponentWidth,
+  type ComponentShape,
 } from './types/variants';

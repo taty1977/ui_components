@@ -4,6 +4,29 @@ import userEvent from '@testing-library/user-event';
 import Input from '../Input';
 
 describe('Input', () => {
+  test('preserves controlled values and native input overrides through the shared control', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <Input
+        id="email"
+        label="Email"
+        value="first@example.com"
+        inputClassName="text-24"
+        aria-describedby="hint"
+        helperText="Use your work email."
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Email' });
+    expect(input).toHaveClass('text-24');
+    expect(input).toHaveAttribute('aria-describedby', 'hint email-helper');
+    fireEvent.change(input, { target: { value: 'second@example.com' } });
+    expect(onChange).toHaveBeenCalledOnce();
+    expect(input).toHaveValue('first@example.com');
+    rerender(<Input id="email" label="Email" value="second@example.com" onChange={onChange} />);
+    expect(input).toHaveValue('second@example.com');
+  });
+
   test('renders optional icon slots and forwards input changes', () => {
     const onChange = vi.fn();
 

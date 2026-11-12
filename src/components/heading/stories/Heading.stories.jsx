@@ -47,12 +47,6 @@ export default {
       description: 'Compatibility prop; headings always use the theme sans font.',
       table: { category: 'Typography' },
     },
-    color: {
-      control: 'select',
-      options: [...tones, 'title', 'Primary', 'Secondary', 'danger'],
-      description: 'Legacy color override. Prefer tone; color takes precedence when set.',
-      table: { category: 'Appearance' },
-    },
     className: { control: 'text', table: { category: 'Layout' } },
   },
 };

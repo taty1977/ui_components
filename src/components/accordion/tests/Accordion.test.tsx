@@ -39,6 +39,18 @@ describe('Accordion', () => {
     expect(button).toHaveClass('focus-visible:-outline-offset-2', 'focus-visible:outline-current');
   });
 
+  test('keeps outline corners rounded when expanded without content', async () => {
+    const { user } = renderWithUser(
+      <Accordion items={[{ id: 'empty', title: 'Empty panel' }]} variant="outline" />,
+    );
+    const button = screen.getByRole('button', { name: 'Empty panel' });
+    await user.click(button);
+    expect(button).toHaveAttribute('aria-expanded', 'true');
+    expect(button).toHaveClass('rounded-md');
+    expect(button).not.toHaveClass('rounded-t-md');
+    expect(document.getElementById(button.getAttribute('aria-controls')!)).toHaveAttribute('hidden');
+  });
+
   test('supports field appearances and tone variants', () => {
     const { container, rerender } = render(<Accordion items={testItems} variant="outlined" />);
 
@@ -80,6 +92,12 @@ describe('Accordion', () => {
     render(<Accordion items={testItems} variant={variant} tone="info" />);
     const button = screen.getByRole('button', { name: /panel one/i });
     expect(button).toHaveClass(background, text);
+    expect(button).toHaveClass(
+      'focus-visible:outline',
+      'focus-visible:outline-2',
+      'focus-visible:-outline-offset-2',
+      'focus-visible:outline-current',
+    );
     expect(button.parentElement).toHaveClass('rounded-md');
     if (variant === 'outline') expect(button).toHaveClass('border', 'border-palette-info-main');
   });

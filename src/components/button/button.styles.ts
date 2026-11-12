@@ -2,14 +2,14 @@
 import { mapPaletteTones, type PaletteTone } from '../../themes/paletteTones';
 
 export type ButtonTone = PaletteTone;
-export type { ComponentVariant as ButtonVariant } from '../../types/variants';
-export type ButtonSize = 'default' | 'sm' | 'md' | 'lg';
+export type { ComponentVariant as ButtonVariant, ComponentSize as ButtonSize } from '../../types/variants';
 
 export const buttonStyles = cva(
   'inline-flex box-border items-center justify-center rounded-md font-sans font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current',
   {
     variants: {
       size: {
+        // "default" preserves the medium size.
         default: 'min-h-11 gap-2 px-4 text-15',
         sm: 'min-h-9 gap-1.5 px-3 text-13',
         md: 'min-h-11 gap-2 px-4 text-15',
@@ -22,6 +22,7 @@ export const buttonStyles = cva(
   },
 );
 
+// Shared by Button and Accordion.
 export const toneClasses: Record<ButtonTone, { solid: string; label: string; outline: string; text: string }> =
   mapPaletteTones((s) => ({
     solid: `${s.default} ${s.defaultText} ${s.defaultState}`,

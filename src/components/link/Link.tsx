@@ -15,7 +15,6 @@ export default function Link({
   size,
   weight,
   family: _family,
-  color,
   tone,
   textTransform,
   underline = 'always',
@@ -35,7 +34,7 @@ export default function Link({
           : rel
       }
       className={cn(
-        linkTextClasses({ variant, size, weight, color, tone, textTransform, underline }),
+        linkTextClasses({ variant, size, weight, tone, textTransform, underline }),
         className,
       )}
     >

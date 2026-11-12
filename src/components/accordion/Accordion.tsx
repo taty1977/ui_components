@@ -35,7 +35,18 @@ export function Accordion({
   const prefix = useId();
   const accent = resolveVariantTone(variant, tone);
   const appearance = componentVariantAppearances[variant];
-  const headerClasses = toneClasses[accent][appearance];
+  const headerClasses = cn(
+    'flex w-full items-center px-4 text-left text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current',
+    size === 'small' ? 'min-h-11 gap-2 text-15' : 'min-h-12 gap-2.5 text-18',
+    toneClasses[accent][appearance],
+    'font-medium',
+    // Solid focus outlines must match the text, not the tone.
+    appearance === 'solid' && 'focus-visible:outline-current',
+  );
+  const panelClasses = cn(
+    'border-t border-border-subtle bg-background-surface px-4 text-text-secondary',
+    size === 'small' ? 'py-3 text-13' : 'py-4 text-15',
+  );
   const panels = Children.toArray(children);
   return (
     <div className={cn('grid gap-2 font-sans', className)} data-variant={variant} data-tone={accent}>
@@ -58,11 +69,7 @@ export function Accordion({
               aria-expanded={expanded}
               aria-controls={panelId}
               className={cn(
-                'flex w-full items-center text-left text-text-primary outline-none transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-current',
-                size === 'small' ? 'min-h-11 gap-2 px-4 text-15' : 'min-h-12 gap-2.5 px-4 text-18',
                 headerClasses,
-                'font-medium',
-                appearance === 'solid' && 'focus-visible:outline-current',
                 appearance === 'outline' && (expanded && content != null ? 'rounded-t-md' : 'rounded-md'),
               )}
               onClick={() =>
@@ -83,10 +90,7 @@ export function Accordion({
               role="region"
               aria-labelledby={buttonId}
               hidden={!expanded || content == null}
-              className={cn(
-                'border-t border-border-subtle bg-background-surface px-4 text-text-secondary',
-                size === 'small' ? 'py-3 text-13' : 'py-4 text-15',
-              )}
+              className={panelClasses}
             >
               {expanded ? content : null}
             </div>

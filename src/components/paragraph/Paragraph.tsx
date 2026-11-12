@@ -3,11 +3,11 @@ import { cn } from '../../utils/cn';
 import { bodyTextClasses, type BodyTextStyleOptions } from '../../utils/text.styles';
 export type {
   BodyTextSize as ParagraphSize,
-  BodyTextColor as ParagraphColor,
+  TextTone as ParagraphTone,
   BodyTextVariant,
   TextTransform as ParagraphTextTransform,
-  TypographyWeight as ParagraphWeight,
-  TypographyWeight as BodyTextWeight,
+  TextWeight as ParagraphWeight,
+  TextWeight as BodyTextWeight,
   TextTone as BodyTextTone,
 } from '../../utils/text.styles';
 export type { ParagraphProps as BodyTextProps };
@@ -23,7 +23,6 @@ export default function Paragraph({
   variant,
   weight,
   family: _family,
-  color,
   tone,
   textTransform,
   className,
@@ -32,7 +31,7 @@ export default function Paragraph({
 }: ParagraphProps) {
   return (
     <p
-      className={cn('m-0', bodyTextClasses({ size, variant, weight, color, tone, textTransform }), className)}
+      className={cn('m-0', bodyTextClasses({ size, variant, weight, tone, textTransform }), className)}
       {...props}
     >
       {children}
